@@ -1,0 +1,57 @@
+# This is a basic workflow to run tests on commit/PRs on develop
+
+name: CI-main
+
+# Controls when the action will run.
+on:
+
+  pull_request:
+    branches:
+      - '**'
+
+  push:
+    branches:
+      - '**'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs
+# that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build-test"
+  build_and_test:
+    # The type of runner that the job will run on Ubuntu 18.04 (latest)
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be
+    # executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE,
+      # so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Build aperturedb
+        run: |
+          mkdir /tmp/aperturedb-client
+          cp -r * /tmp/aperturedb-client/
+          cd docker/test
+          mv /tmp/aperturedb-client .
+          docker build -t aperturedb-client-testing .
+
+      - name: Run tests
+        run: |
+          docker run aperturedb-client-testing
+
+  trailing-spaces:
+
+    # The type of runner that the job will run on Ubuntu 18.04 (latest)
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be
+    # executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE,
+      # so your job can access it
+      - uses: actions/checkout@v2
+      - uses: luisremis/find-trailing-whitespace@master
