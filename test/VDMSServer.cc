@@ -28,7 +28,7 @@
  *
  */
 
-#include "VDMSClient.h"
+#include "VDMSServer.h"
 
 #include "gcc_util.h" // DISABLE_WARNING
 DISABLE_WARNING(effc++)
@@ -39,49 +39,53 @@ ENABLE_WARNING(suggest-override)
 ENABLE_WARNING(useless-cast)
 ENABLE_WARNING(effc++)
 
-#include "ConnClient.h"
 #include "Connection.h"
+#include "ConnServer.h"
+#include "ExceptionComm.h"
 
 using namespace VDMS;
 
-VDMSClient::VDMSClient(std::string addr, int port,
-                       comm::Protocol protocols,
-                       std::string ca_certfificate) :
-    _client(new comm::ConnClient({addr, port}, {protocols, ca_certfificate}))
+VDMSServer::VDMSServer(int port, comm::ConnServerConfig config) :
+    _server(new comm::ConnServer(port, config))
 {
-    _connection = _client->connect();
+    auto thread_function = [&]()
+    {
+        auto server_conn = _server->accept();
+
+        while (!_stop_signal) {
+            std::basic_string<uint8_t> message_received;
+
+            try {
+                message_received = server_conn->recv_message();
+            } catch (comm::Exception exception) {
+                if (exception.num == comm::ConnectionShutDown) {
+                    return;
+                }
+
+                throw exception;
+            }
+
+            protobufs::queryMessage protobuf_response;
+            protobuf_response.ParseFromArray(message_received.data(), message_received.length());
+
+            protobufs::queryMessage cmd;
+            cmd.set_json(protobuf_response.json());
+
+            std::basic_string<uint8_t> msg(cmd.ByteSizeLong(), 0);
+            cmd.SerializeToArray(const_cast<uint8_t*>(msg.data()), msg.length());
+
+            server_conn->send_message(msg.data(), msg.length());
+        }
+    };
+
+    _work_thread = std::unique_ptr<std::thread>(new std::thread(thread_function));
 }
 
-VDMSClient::~VDMSClient() = default;
-
-VDMS::Response VDMSClient::query(const std::string &json,
-                                 const std::vector<std::string *> blobs)
+VDMSServer::~VDMSServer()
 {
-    protobufs::queryMessage cmd;
-    cmd.set_json(json);
+    _stop_signal = true;
 
-    for (auto& it : blobs) {
-        std::string *blob = cmd.add_blobs();
-        *blob = *it;
+    if (_work_thread->joinable()) {
+        _work_thread->join();
     }
-
-    std::basic_string<uint8_t> msg(cmd.ByteSizeLong(), 0);
-    cmd.SerializeToArray(const_cast<uint8_t*>(msg.data()), msg.length());
-
-    _connection->send_message(msg.data(), msg.length());
-
-    // Wait for response (blocking call)
-    msg = _connection->recv_message();
-
-    protobufs::queryMessage protobuf_response;
-    protobuf_response.ParseFromArray(msg.data(), msg.length());
-
-    VDMS::Response response;
-    response.json = protobuf_response.json();
-
-    for (auto& it : protobuf_response.blobs()) {
-        response.blobs.push_back(it);
-    }
-
-    return response;
 }

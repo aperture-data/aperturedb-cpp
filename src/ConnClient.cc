@@ -27,6 +27,8 @@
  *
  */
 
+#include "ConnClient.h"
+
 #include <string>
 #include <cstring>
 #include <unistd.h>
@@ -35,71 +37,89 @@
 #include <netdb.h>
 #include <netinet/tcp.h>
 
-#include "Connection.h"
+#include "ExceptionComm.h"
+#include "TCPConnection.h"
+#include "TLS.h"
+#include "TLSConnection.h"
+#include "Variables.h"
 
 using namespace comm;
 
-ConnClient::ConnClient() :
-    Connection(-1),
-    _server({"", 0})
+ConnClient::ConnClient(const Address& server_address, ConnClientConfig config) :
+    _config(std::move(config)),
+    _server(std::move(server_address))
 {
-    //create TCP/IP socket
-    _socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+    _ssl_ctx = create_client_context();
 
-    if (_socket_fd < 0) {
-        throw ExceptionComm(SocketFail);
-    }
+    // Always verify the server certificate
+    SSL_CTX_set_verify(_ssl_ctx, SSL_VERIFY_PEER, ::SSL_CTX_get_verify_callback(_ssl_ctx));
 
-    int option = 1; // To set REUSEADDR to true
-    if (setsockopt(_socket_fd, SOL_SOCKET,
-            SO_REUSEADDR, &option, sizeof option) == -1) {
-        throw ExceptionComm(SocketFail, "Unable to bind client socket");
-    }
-
-    if( setsockopt(_socket_fd, IPPROTO_TCP, TCP_NODELAY,
-                     &option, sizeof(option)) < 0) {
-        throw ExceptionComm(SocketFail, "Unable to turn Nagle's off");
-    }
-
-    if (setsockopt(_socket_fd, IPPROTO_TCP, TCP_QUICKACK,
-                     &option, sizeof(option)) < 0) {
-        throw ExceptionComm(SocketFail, "Unable to turn quick ack on");
+    if (!_config.ca_certificate.empty()) {
+        ::set_ca_certificate(_ssl_ctx, _config.ca_certificate);
     }
 }
 
-ConnClient::ConnClient(const ServerAddress& srv) :
-                    ConnClient(srv.addr, srv.port)
+std::shared_ptr<Connection> ConnClient::connect()
 {
-}
+    if (!_connection)
+    {
+        if (_server.port <= 0 || static_cast<unsigned>(_server.port) > MAX_PORT_NUMBER) {
+            throw ExceptionComm(PortError);
+        }
 
-ConnClient::ConnClient(std::string addr, int port) : ConnClient()
-{
-    if (port <= 0 || static_cast<unsigned>(port) > MAX_PORT_NUMBER) {
-        throw ExceptionComm(PortError);
+        // Create a TCP/IP socket
+        auto tcp_socket = TCPSocket::create();
+
+        /*if (!tcp_socket->set_boolean_option(SOL_SOCKET, SO_REUSEADDR, true)) {
+            throw ExceptionComm(SocketFail, "Unable to bind client socket");
+        }
+
+        if (!tcp_socket->set_boolean_option(IPPROTO_TCP, TCP_NODELAY, true)) {
+            throw ExceptionComm(SocketFail, "Unable to turn Nagle's off");
+        }
+
+        if (!tcp_socket->set_boolean_option(IPPROTO_TCP, TCP_QUICKACK, true)) {
+            throw ExceptionComm(SocketFail, "Unable to turn quick ack on");
+        }*/
+
+        if (!tcp_socket->connect(_server)) {
+            throw ExceptionComm(ConnectionError);
+        }
+
+        auto tcp_connection = std::unique_ptr<TCPConnection>(new TCPConnection(std::move(tcp_socket)));
+
+        Protocol requested_protocol = _config.allowed_protocols;
+
+        tcp_connection->send_message(reinterpret_cast<uint8_t*>(&requested_protocol), sizeof(requested_protocol));
+
+        auto response = tcp_connection->recv_message();
+
+        if (response.length() != sizeof(Protocol)) {
+            throw ExceptionComm(InvalidMessageSize);
+        }
+
+        Protocol accepted_protocol = static_cast<Protocol>(response.data()[0]);
+
+        if (accepted_protocol == Protocol::None) {
+            throw ExceptionComm(ProtocolError, "Server rejected protocol");
+        }
+        else if ((accepted_protocol & Protocol::TLS) == Protocol::TLS) {
+            tcp_socket = tcp_connection->release_socket();
+
+            auto tls_socket = TLSSocket::create(std::move(tcp_socket), _ssl_ctx);
+
+            tls_socket->connect();
+
+            _connection = std::unique_ptr<TLSConnection>(new TLSConnection(std::move(tls_socket)));
+        }
+        else if ((accepted_protocol & Protocol::TCP) == Protocol::TCP) {
+            // Nothing to do, already using TCP
+            _connection = std::move(tcp_connection);
+        }
+        else {
+            throw ExceptionComm(ProtocolError);
+        }
     }
 
-    _server.addr = addr;
-    _server.port = port;
-    connect();
-}
-
-void ConnClient::connect()
-{
-    struct hostent *server = gethostbyname(_server.addr.c_str());
-
-    if (server == NULL) {
-        throw ExceptionComm(ServerAddError);
-    }
-
-    struct sockaddr_in svrAddr;
-    memset(&svrAddr, 0, sizeof(svrAddr));
-    svrAddr.sin_family = AF_INET;
-
-    memcpy(&svrAddr.sin_addr.s_addr, server->h_addr, server->h_length);
-    svrAddr.sin_port = htons(_server.port);
-
-    if (::connect(_socket_fd, reinterpret_cast<const sockaddr*>(&svrAddr),
-                  sizeof(svrAddr)) < 0) {
-        throw ExceptionComm(ConnectionError);
-    }
+    return std::static_pointer_cast<Connection>(_connection);
 }

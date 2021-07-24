@@ -31,43 +31,35 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
-#include "Protocol.h"
+#include <openssl/ssl.h>
+
+#include "TCPSocket.h"
 
 namespace comm {
 
-    class ConnClient;
-    class Connection;
-
-}
-
-namespace VDMS {
-
-    struct Response {
-        std::string json{};
-        std::vector<std::string> blobs{};
-    };
-
-    class VDMSClient {
-        static const int VDMS_PORT = 55555;
-
-        // The constructor of the ConnClient class already connects to the
-        // server if instantiated with the right address and port and it gets
-        // disconnected when the class goes out of scope. For now, we
-        // will leave the functioning like that. If the client has a need to
-        // disconnect and connect specifically, then we can add explicit calls.
-        std::unique_ptr<comm::ConnClient> _client;
-        std::shared_ptr<comm::Connection> _connection;
+    class TLSSocket
+    {
+        friend class TLSConnection;
 
     public:
-        VDMSClient(std::string addr = "localhost", int port = VDMS_PORT,
-                   comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
-                   std::string ca_certfificate = "");
-        ~VDMSClient();
 
-        // Blocking call
-        VDMS::Response query(const std::string &json_query,
-                             const std::vector<std::string*> blobs = {});
+        TLSSocket(const TLSSocket&) = delete;
+        ~TLSSocket();
+
+        TLSSocket& operator=(const TLSSocket&) = delete;
+
+        static std::unique_ptr<TLSSocket> create(std::unique_ptr<TCPSocket> tcp_socket, SSL_CTX* ssl_ctx);
+
+        void accept();
+        void connect();
+
+    private:
+
+        explicit TLSSocket(std::unique_ptr<TCPSocket> tcp_socket, SSL* ssl);
+
+        SSL* _ssl{nullptr};
+        std::unique_ptr<TCPSocket> _tcp_socket;
     };
+
 };

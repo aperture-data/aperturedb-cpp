@@ -29,45 +29,21 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
-#include <vector>
 
-#include "Protocol.h"
+#include <openssl/ssl.h>
 
-namespace comm {
+class OpenSSLInitializer
+{
+public:
+   static OpenSSLInitializer& instance();
 
-    class ConnClient;
-    class Connection;
-
-}
-
-namespace VDMS {
-
-    struct Response {
-        std::string json{};
-        std::vector<std::string> blobs{};
-    };
-
-    class VDMSClient {
-        static const int VDMS_PORT = 55555;
-
-        // The constructor of the ConnClient class already connects to the
-        // server if instantiated with the right address and port and it gets
-        // disconnected when the class goes out of scope. For now, we
-        // will leave the functioning like that. If the client has a need to
-        // disconnect and connect specifically, then we can add explicit calls.
-        std::unique_ptr<comm::ConnClient> _client;
-        std::shared_ptr<comm::Connection> _connection;
-
-    public:
-        VDMSClient(std::string addr = "localhost", int port = VDMS_PORT,
-                   comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
-                   std::string ca_certfificate = "");
-        ~VDMSClient();
-
-        // Blocking call
-        VDMS::Response query(const std::string &json_query,
-                             const std::vector<std::string*> blobs = {});
-    };
+private:
+    OpenSSLInitializer();
 };
+
+SSL_CTX* create_client_context();
+SSL_CTX* create_server_context();
+void set_ca_certificate(SSL_CTX* ssl_ctx, const std::string& ca_certificate);
+void set_tls_certificate(SSL_CTX* ssl_ctx, const std::string& tls_certificate);
+void set_tls_private_key(SSL_CTX* ssl_ctx, const std::string& tls_private_key);

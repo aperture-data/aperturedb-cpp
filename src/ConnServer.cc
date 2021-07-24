@@ -27,6 +27,8 @@
  *
  */
 
+#include "ConnServer.h"
+
 #include <string>
 #include <cstring>
 #include <unistd.h>
@@ -35,90 +37,98 @@
 #include <netdb.h>
 #include <netinet/tcp.h>
 
-#include "Connection.h"
+#include "ExceptionComm.h"
+#include "TCPConnection.h"
+#include "TLS.h"
+#include "TLSConnection.h"
 
 using namespace comm;
 
-ConnServer::ConnServer(int port):
-    _port(port),
-    _socket_fd(-1)
+ConnServer::ConnServer(int port, ConnServerConfig config) :
+    _config(std::move(config)),
+    _open_ssl_initializer(OpenSSLInitializer::instance()),
+    _port(port)
 {
+    _ssl_ctx = create_server_context();
+
+    if (!_config.ca_certificate.empty()) {
+        ::set_ca_certificate(_ssl_ctx, _config.ca_certificate);
+    }
+
+    if (!_config.tls_certificate.empty()) {
+        ::set_tls_certificate(_ssl_ctx, _config.tls_certificate);
+    }
+
+    if (!_config.tls_private_key.empty()) {
+        ::set_tls_private_key(_ssl_ctx, _config.tls_private_key);
+    }
+
     if (_port <= 0 || static_cast<unsigned>(_port) > MAX_PORT_NUMBER) {
         throw ExceptionComm(PortError);
     }
 
-    //create TCP/IP socket
-    _socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+    // Create a TCP/IP socket
+    _listening_socket = TCPSocket::create();
 
-    if (_socket_fd < 0) {
-        throw ExceptionComm(SocketFail);
-    }
-
-    int option = 1; // To set REUSEADDR to true
-    int ret = setsockopt(_socket_fd, SOL_SOCKET, SO_REUSEADDR,
-                     &option, sizeof(option));
-    if (ret < 0) {
+    if (!_listening_socket->set_boolean_option(SOL_SOCKET, SO_REUSEADDR, true)) {
         throw ExceptionComm(SocketFail, "Unable to create reusable socket");
     }
 
-    ret = setsockopt(_socket_fd, IPPROTO_TCP, TCP_NODELAY,
-                     &option, sizeof(option));
-    if (ret < 0) {
+    /*if (!_listening_socket->set_boolean_option(IPPROTO_TCP, TCP_NODELAY, true)) {
         throw ExceptionComm(SocketFail, "Unable to turn Nagle's off");
     }
 
-    ret = setsockopt(_socket_fd, IPPROTO_TCP, TCP_QUICKACK,
-                     &option, sizeof(option));
-    if (ret < 0) {
+    if (!_listening_socket->set_boolean_option(IPPROTO_TCP, TCP_QUICKACK, true)) {
         throw ExceptionComm(SocketFail, "Unable to turn quick ack on");
     }
 
     struct timeval tv = { MAX_RECV_TIMEOUT_SECS, 0 };
-    ret = setsockopt(_socket_fd, SOL_SOCKET, SO_RCVTIMEO,
-                     &tv, sizeof(tv));
-    if (ret < 0) {
+    if (!_listening_socket->set_timeval_option(SOL_SOCKET, SO_RCVTIMEO, tv)) {
         throw ExceptionComm(SocketFail, "Unable to set receive timeout");
-    }
+    }*/
 
-    struct sockaddr_in svr_addr;
-    memset(&svr_addr, 0, sizeof(svr_addr));
-    svr_addr.sin_family = AF_INET;
-    svr_addr.sin_addr.s_addr = INADDR_ANY;
-    svr_addr.sin_port = htons(_port);
-
-    // bind socket : "assigning a name to a socket"
-    ret = ::bind(_socket_fd, reinterpret_cast<const sockaddr*>(&svr_addr), sizeof(svr_addr));
-    if (ret < 0) {
+    if (!_listening_socket->bind(_port)) {
         throw ExceptionComm(BindFail);
     }
 
-    //mark socket as pasive
-    if (::listen(_socket_fd, MAX_CONN_QUEUE) == -1) {
+    // Mark socket as pasive
+    if (!_listening_socket->listen()) {
         throw ExceptionComm(ListentFail);
     }
 }
 
-ConnServer::~ConnServer()
+std::unique_ptr<Connection> ConnServer::accept()
 {
-    if (_socket_fd != -1) {
-        ::close(_socket_fd);
-        _socket_fd = -1;
-    }
-}
+    auto connected_socket = TCPSocket::accept(_listening_socket);
 
-Connection ConnServer::accept()
-{
-    struct sockaddr_in clnt_addr;
-    socklen_t len = sizeof(clnt_addr); //store size of the address
+    auto tcp_connection = std::unique_ptr<TCPConnection>(new TCPConnection(std::move(connected_socket)));
 
-    // This is where client connects.
-    // Server will stall here until incoming connection
-    // unless the socket is marked and nonblocking
-    int connfd = ::accept(_socket_fd, reinterpret_cast<sockaddr*>(&clnt_addr), &len);
+    auto response = tcp_connection->recv_message();
 
-    if (connfd < 0) {
-        throw ExceptionComm(ConnectionError);
+    if (response.length() != 1) {
+        throw ExceptionComm(ProtocolError);
     }
 
-    return Connection(connfd);
+    Protocol requested_protocol = static_cast<Protocol>(response.data()[0]);
+
+    Protocol accepted_protocol = requested_protocol & _config.allowed_protocols;
+
+    tcp_connection->send_message(reinterpret_cast<uint8_t*>(&accepted_protocol), sizeof(accepted_protocol));
+
+    if ((accepted_protocol & Protocol::TLS) == Protocol::TLS) {
+        auto tcp_socket = tcp_connection->release_socket();
+
+        auto tls_socket = TLSSocket::create(std::move(tcp_socket), _ssl_ctx);
+
+        tls_socket->accept();
+
+        return std::unique_ptr<TLSConnection>(new TLSConnection(std::move(tls_socket)));
+    }
+    else if ((accepted_protocol & Protocol::TCP) == Protocol::TCP) {
+        // Nothing to do, already using TCP
+        return tcp_connection;
+    }
+    else {
+        throw ExceptionComm(ProtocolError);
+    }
 }

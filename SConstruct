@@ -54,27 +54,41 @@ client_env.Replace(CXXFLAGS = re.sub("-Wsuggest-override",        "-Wno-suggest-
 
 compileProtoFiles(client_env)
 
-comm_cc = ['src/VDMSClient.cc',
+comm_cc = [
+           'src/ConnClient.cc',
            'src/Connection.cc',
            'src/ConnServer.cc',
-           'src/ConnClient.cc',
            'src/Exception.cc',
            'src/queryMessage.pb.cc',
+           'src/TCPConnection.cc',
+           'src/TCPSocket.cc',
+           'src/TLS.cc',
+           'src/TLSConnection.cc',
+           'src/TLSSocket.cc',
+           'src/VDMSClient.cc'
           ]
 
 client_env.ParseConfig('pkg-config --cflags --libs protobuf')
+client_env.ParseConfig('pkg-config --cflags --libs openssl')
 ulib = client_env.SharedLibrary('lib/aperturedb-client', comm_cc)
 
 CXXFLAGS = env['CXXFLAGS']
 
 # Comm Testing
-comm_test_env = Environment(CPPPATH  = ['include/aperturedb'],
+comm_test_env = Environment(CPPPATH  = ['include/aperturedb', 'src'],
                             CXXFLAGS = CXXFLAGS,
-                            LIBS     = ["aperturedb-client", 'pthread', 'gtest', 'glog'],
+                            LIBS     = ['aperturedb-client', 'pthread', 'gtest', 'glog'],
                             LIBPATH  = ['lib/']
                             )
 
-comm_test_source_files = "test/UnitTests.cc";
+comm_test_env.ParseConfig('pkg-config --cflags --libs protobuf')
+
+comm_test_source_files = [
+                          'test/TCPConnectionTests.cc',
+                          'test/TLSConnectionTests.cc',
+                          'test/VDMSServer.cc',
+                          'test/VDMSServerTests.cc'
+                         ]
 comm_test = comm_test_env.Program('test/comm_test', comm_test_source_files)
 
 prefix = str(GetOption('prefix'))

@@ -31,43 +31,38 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
-#include "Protocol.h"
+#include "Address.h"
 
 namespace comm {
 
-    class ConnClient;
-    class Connection;
-
-}
-
-namespace VDMS {
-
-    struct Response {
-        std::string json{};
-        std::vector<std::string> blobs{};
-    };
-
-    class VDMSClient {
-        static const int VDMS_PORT = 55555;
-
-        // The constructor of the ConnClient class already connects to the
-        // server if instantiated with the right address and port and it gets
-        // disconnected when the class goes out of scope. For now, we
-        // will leave the functioning like that. If the client has a need to
-        // disconnect and connect specifically, then we can add explicit calls.
-        std::unique_ptr<comm::ConnClient> _client;
-        std::shared_ptr<comm::Connection> _connection;
+    class TCPSocket
+    {
+        friend class TCPConnection;
+        friend class TLSSocket;
 
     public:
-        VDMSClient(std::string addr = "localhost", int port = VDMS_PORT,
-                   comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
-                   std::string ca_certfificate = "");
-        ~VDMSClient();
 
-        // Blocking call
-        VDMS::Response query(const std::string &json_query,
-                             const std::vector<std::string*> blobs = {});
+        TCPSocket(const TCPSocket&) = delete;
+        ~TCPSocket();
+
+        TCPSocket& operator=(const TCPSocket&) = delete;
+
+        static std::unique_ptr<TCPSocket> create();
+        static std::unique_ptr<TCPSocket> accept(const std::unique_ptr<TCPSocket>& listening_socket);
+
+        bool bind(int port);
+        bool connect(const Address& address);
+        bool listen();
+        bool set_boolean_option(int level, int option_name, bool value);
+        bool set_timeval_option(int level, int option_name, timeval value);
+        void shutdown();
+
+    private:
+
+        explicit TCPSocket(int socket_fd);
+
+        int _socket_fd{-1};
     };
+
 };

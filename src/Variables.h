@@ -29,45 +29,15 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "Protocol.h"
-
 namespace comm {
 
-    class ConnClient;
-    class Connection;
+const unsigned MAX_PORT_NUMBER       = 65535;
 
-}
+const unsigned MAX_CONN_QUEUE        = 2048;
+const unsigned MAX_RECV_TIMEOUT_SECS = 600;             // 10 mins should be plenty
 
-namespace VDMS {
+const unsigned MIN_BUFFER_SIZE       = 1024*1;          //   1KB
+const unsigned MAX_BUFFER_SIZE       = 1024*1024*1024;  //   1GB
+const unsigned DEFAULT_BUFFER_SIZE   = 1024*1024*256;   // 256MB
 
-    struct Response {
-        std::string json{};
-        std::vector<std::string> blobs{};
-    };
-
-    class VDMSClient {
-        static const int VDMS_PORT = 55555;
-
-        // The constructor of the ConnClient class already connects to the
-        // server if instantiated with the right address and port and it gets
-        // disconnected when the class goes out of scope. For now, we
-        // will leave the functioning like that. If the client has a need to
-        // disconnect and connect specifically, then we can add explicit calls.
-        std::unique_ptr<comm::ConnClient> _client;
-        std::shared_ptr<comm::Connection> _connection;
-
-    public:
-        VDMSClient(std::string addr = "localhost", int port = VDMS_PORT,
-                   comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
-                   std::string ca_certfificate = "");
-        ~VDMSClient();
-
-        // Blocking call
-        VDMS::Response query(const std::string &json_query,
-                             const std::vector<std::string*> blobs = {});
-    };
 };

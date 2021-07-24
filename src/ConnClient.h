@@ -31,43 +31,48 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
+#include <openssl/ssl.h>
+
+#include "Address.h"
+#include "Connection.h"
 #include "Protocol.h"
 
 namespace comm {
 
-    class ConnClient;
-    class Connection;
+    struct ConnClientConfig
+    {
+        Protocol allowed_protocols{Protocol::TCP};
+        std::string ca_certificate{};
 
-}
+        ConnClientConfig() = default;
 
-namespace VDMS {
-
-    struct Response {
-        std::string json{};
-        std::vector<std::string> blobs{};
+        ConnClientConfig(Protocol allowed_protocols_, std::string ca_certificate_) :
+            allowed_protocols(allowed_protocols_),
+            ca_certificate(std::move(ca_certificate_))
+        {
+        }
     };
 
-    class VDMSClient {
-        static const int VDMS_PORT = 55555;
-
-        // The constructor of the ConnClient class already connects to the
-        // server if instantiated with the right address and port and it gets
-        // disconnected when the class goes out of scope. For now, we
-        // will leave the functioning like that. If the client has a need to
-        // disconnect and connect specifically, then we can add explicit calls.
-        std::unique_ptr<comm::ConnClient> _client;
-        std::shared_ptr<comm::Connection> _connection;
+    // Implementation of a client
+    class ConnClient
+    {
 
     public:
-        VDMSClient(std::string addr = "localhost", int port = VDMS_PORT,
-                   comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
-                   std::string ca_certfificate = "");
-        ~VDMSClient();
 
-        // Blocking call
-        VDMS::Response query(const std::string &json_query,
-                             const std::vector<std::string*> blobs = {});
+        explicit ConnClient(const Address& server_address, ConnClientConfig config = {});
+        ConnClient(const ConnClient&) = delete;
+
+        ConnClient& operator=(const ConnClient&) = delete;
+
+        std::shared_ptr<Connection> connect();
+
+    private:
+
+        ConnClientConfig _config;
+        std::shared_ptr<Connection> _connection;
+        Address _server;
+        SSL_CTX* _ssl_ctx{nullptr};
     };
-};
+
+}

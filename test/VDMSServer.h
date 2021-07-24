@@ -29,45 +29,27 @@
 
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
-#include "Protocol.h"
-
-namespace comm {
-
-    class ConnClient;
-    class Connection;
-
-}
+#include "ConnServer.h"
 
 namespace VDMS {
 
-    struct Response {
-        std::string json{};
-        std::vector<std::string> blobs{};
-    };
-
-    class VDMSClient {
-        static const int VDMS_PORT = 55555;
-
-        // The constructor of the ConnClient class already connects to the
-        // server if instantiated with the right address and port and it gets
-        // disconnected when the class goes out of scope. For now, we
-        // will leave the functioning like that. If the client has a need to
-        // disconnect and connect specifically, then we can add explicit calls.
-        std::unique_ptr<comm::ConnClient> _client;
-        std::shared_ptr<comm::Connection> _connection;
+    class VDMSServer {
+        std::unique_ptr<comm::ConnServer> _server;
 
     public:
-        VDMSClient(std::string addr = "localhost", int port = VDMS_PORT,
-                   comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
-                   std::string ca_certfificate = "");
-        ~VDMSClient();
+        VDMSServer(int port, comm::ConnServerConfig config = {});
+        ~VDMSServer();
 
-        // Blocking call
-        VDMS::Response query(const std::string &json_query,
-                             const std::vector<std::string*> blobs = {});
+    private:
+
+        std::atomic<bool> _stop_signal{false};
+        std::unique_ptr<std::thread> _work_thread{};
+
     };
 };

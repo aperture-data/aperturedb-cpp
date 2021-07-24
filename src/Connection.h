@@ -29,45 +29,38 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
-#include <vector>
 
-#include "Protocol.h"
+#include "Variables.h"
 
 namespace comm {
 
-    class ConnClient;
-    class Connection;
-
-}
-
-namespace VDMS {
-
-    struct Response {
-        std::string json{};
-        std::vector<std::string> blobs{};
-    };
-
-    class VDMSClient {
-        static const int VDMS_PORT = 55555;
-
-        // The constructor of the ConnClient class already connects to the
-        // server if instantiated with the right address and port and it gets
-        // disconnected when the class goes out of scope. For now, we
-        // will leave the functioning like that. If the client has a need to
-        // disconnect and connect specifically, then we can add explicit calls.
-        std::unique_ptr<comm::ConnClient> _client;
-        std::shared_ptr<comm::Connection> _connection;
+    class Connection
+    {
 
     public:
-        VDMSClient(std::string addr = "localhost", int port = VDMS_PORT,
-                   comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
-                   std::string ca_certfificate = "");
-        ~VDMSClient();
 
-        // Blocking call
-        VDMS::Response query(const std::string &json_query,
-                             const std::vector<std::string*> blobs = {});
+        virtual ~Connection() = default;
+
+        void send_message(const uint8_t* data, uint32_t size);
+        const std::basic_string<uint8_t>& recv_message();
+
+        std::string msg_size_to_str_KB(uint32_t size) {
+            return std::to_string(size / 1024);
+        }
+
+        void set_max_buffer_size(uint32_t max_buffer_size) {
+            _max_buffer_size = std::max(MIN_BUFFER_SIZE, max_buffer_size);
+            _max_buffer_size = std::min(MAX_BUFFER_SIZE, _max_buffer_size);
+        }
+
+    protected:
+
+        virtual size_t read(uint8_t* buffer, size_t length) = 0;
+        virtual size_t write(const uint8_t* buffer, size_t length) = 0;
+
+        std::basic_string<uint8_t> _buffer_str{};
+        uint32_t _max_buffer_size{DEFAULT_BUFFER_SIZE};
     };
+
 };

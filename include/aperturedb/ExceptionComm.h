@@ -47,6 +47,9 @@ namespace comm {
         ConnectionError,
         ConnectionShutDown,
 
+        ProtocolError,
+        TLSError,
+
         InvalidMessageSize,
         Undefined = 100,// Any undefined error
     };
