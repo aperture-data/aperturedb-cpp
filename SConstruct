@@ -95,3 +95,15 @@ prefix = str(GetOption('prefix'))
 
 env.Alias('install',
         env.Install(os.path.join(prefix, "lib"), source="lib/libaperturedb-client.so"))
+
+
+# Mock-up Server
+server_env = Environment(CPPPATH  = ['include/aperturedb', 'src', 'test'],
+                            CXXFLAGS = CXXFLAGS,
+                            LIBS     = ['aperturedb-client', 'pthread', 'gtest', 'glog'],
+                            LIBPATH  = ['lib/']
+                            )
+
+server_cc = ['server/server.cc']
+
+server = server_env.Program('server/server', server_cc)
