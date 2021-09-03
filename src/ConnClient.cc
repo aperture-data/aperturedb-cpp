@@ -63,8 +63,7 @@ ConnClient::ConnClient(const Address& server_address, ConnClientConfig config) :
 
 std::shared_ptr<Connection> ConnClient::connect()
 {
-    if (!_connection)
-    {
+    if (!_connection) {
         if (_server.port <= 0 || static_cast<unsigned>(_server.port) > MAX_PORT_NUMBER) {
             throw ExceptionComm(PortError);
         }

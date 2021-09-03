@@ -58,8 +58,7 @@ void TLSSocket::accept()
 {
     auto result = ::SSL_accept(_ssl);
 
-    if (result < 1)
-    {
+    if (result < 1) {
         throw ExceptionComm(TLSError,
                             "Error accepting connection. SSL Error: " +
                             std::to_string(result));
@@ -70,8 +69,7 @@ void TLSSocket::connect()
 {
     auto result = ::SSL_connect(_ssl);
 
-    if (result < 1)
-    {
+    if (result < 1) {
         throw ExceptionComm(TLSError);
     }
 }
