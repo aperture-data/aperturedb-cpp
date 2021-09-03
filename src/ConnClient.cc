@@ -53,8 +53,9 @@ ConnClient::ConnClient(const Address& server_address, ConnClientConfig config) :
 
     set_default_verify_paths(_ssl_ctx);
 
-    // Always verify the server certificate
-    SSL_CTX_set_verify(_ssl_ctx, SSL_VERIFY_PEER, ::SSL_CTX_get_verify_callback(_ssl_ctx));
+    if (config.verify_certificate) {
+        SSL_CTX_set_verify(_ssl_ctx, SSL_VERIFY_PEER, ::SSL_CTX_get_verify_callback(_ssl_ctx));
+    }
 
     if (!_config.ca_certificate.empty()) {
         ::set_ca_certificate(_ssl_ctx, _config.ca_certificate);

@@ -44,14 +44,16 @@ namespace comm {
     struct ConnServerConfig
     {
         Protocol allowed_protocols{Protocol::TCP};
+        bool auto_generate_certificate{true};
         std::string ca_certificate{};
         std::string tls_certificate{};
         std::string tls_private_key{};
 
         ConnServerConfig() = default;
 
-        ConnServerConfig(Protocol allowed_protocols_, std::string ca_certificate_, std::string tls_certificate_, std::string tls_private_key_) :
+        ConnServerConfig(Protocol allowed_protocols_, bool auto_generate_certificate_ = true, std::string ca_certificate_ = "", std::string tls_certificate_ = "", std::string tls_private_key_ = "") :
             allowed_protocols(allowed_protocols_),
+            auto_generate_certificate(auto_generate_certificate_),
             ca_certificate(std::move(ca_certificate_)),
             tls_certificate(std::move(tls_certificate_)),
             tls_private_key(std::move(tls_private_key_))

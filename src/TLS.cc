@@ -223,7 +223,7 @@ void set_tls_certificate(SSL_CTX* ssl_ctx, const std::string& tls_certificate)
 
     while (x509_ca) {
         res = SSL_CTX_add0_chain_cert(ssl_ctx, x509_ca.get());
-        
+
         if (!res) {
             throw ExceptionComm(TLSError, "Unable to load the certificate");
         }

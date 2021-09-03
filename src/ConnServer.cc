@@ -53,16 +53,24 @@ ConnServer::ConnServer(int port, ConnServerConfig config) :
 
     set_default_verify_paths(_ssl_ctx);
 
-    if (!_config.ca_certificate.empty()) {
-        ::set_ca_certificate(_ssl_ctx, _config.ca_certificate);
-    }
+    if (_config.auto_generate_certificate) {
+        auto certificates = generate_certificate();
 
-    if (!_config.tls_certificate.empty()) {
-        ::set_tls_certificate(_ssl_ctx, _config.tls_certificate);
-    }
+        ::set_tls_private_key(_ssl_ctx, std::get<0>(certificates));
 
-    if (!_config.tls_private_key.empty()) {
-        ::set_tls_private_key(_ssl_ctx, _config.tls_private_key);
+        ::set_tls_certificate(_ssl_ctx, std::get<1>(certificates));
+    } else {
+        if (!_config.ca_certificate.empty()) {
+            ::set_ca_certificate(_ssl_ctx, _config.ca_certificate);
+        }
+
+        if (!_config.tls_certificate.empty()) {
+            ::set_tls_certificate(_ssl_ctx, _config.tls_certificate);
+        }
+
+        if (!_config.tls_private_key.empty()) {
+            ::set_tls_private_key(_ssl_ctx, _config.tls_private_key);
+        }
     }
 
     if (_port <= 0 || static_cast<unsigned>(_port) > MAX_PORT_NUMBER) {

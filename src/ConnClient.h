@@ -44,12 +44,14 @@ namespace comm {
     {
         Protocol allowed_protocols{Protocol::TCP};
         std::string ca_certificate{};
+        bool verify_certificate{false};
 
         ConnClientConfig() = default;
 
-        ConnClientConfig(Protocol allowed_protocols_, std::string ca_certificate_) :
+        ConnClientConfig(Protocol allowed_protocols_, std::string ca_certificate_ = "", bool verify_certificate_ = false) :
             allowed_protocols(allowed_protocols_),
-            ca_certificate(std::move(ca_certificate_))
+            ca_certificate(std::move(ca_certificate_)),
+            verify_certificate(verify_certificate_)
         {
         }
     };

@@ -44,7 +44,7 @@
 
 typedef std::basic_string<uint8_t> BytesBuffer;
 
-static const comm::ConnServerConfig connServerConfig{comm::Protocol::TLS, ca_certificate, server_certificate, server_private_key};
+static const comm::ConnServerConfig connServerConfig{comm::Protocol::TLS, false, ca_certificate, server_certificate, server_private_key};
 
 // Ping-pong messages between server and client
 TEST(VDMSServerTests, SyncMessages)
