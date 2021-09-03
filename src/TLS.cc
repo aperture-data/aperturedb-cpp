@@ -112,6 +112,11 @@ void set_ca_certificate(SSL_CTX* ssl_ctx, const std::string& ca_certificate)
     }
 }
 
+bool set_default_verify_paths(SSL_CTX* ssl_ctx)
+{
+    return ::SSL_CTX_set_default_verify_paths(ssl_ctx) == 1;
+}
+
 void set_tls_certificate(SSL_CTX* ssl_ctx, const std::string& tls_certificate)
 {
     auto bio = BIO_new_mem_buf(static_cast<const void*>(tls_certificate.c_str()), static_cast<int>(tls_certificate.length()));
@@ -122,7 +127,7 @@ void set_tls_certificate(SSL_CTX* ssl_ctx, const std::string& tls_certificate)
     }
 
     // TODO: add support for setting a passphrase
-    auto x509 = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
+    auto x509 = PEM_read_bio_X509_AUX(bio, nullptr, nullptr, nullptr);
 
     if (!x509)
     {
@@ -131,15 +136,48 @@ void set_tls_certificate(SSL_CTX* ssl_ctx, const std::string& tls_certificate)
         throw ExceptionComm(TLSError, "Unable to read the certificate");
     }
 
+    auto cleanup = [&]() {
+        X509_free(x509);
+        BIO_free(bio);
+    };
+
     auto res = SSL_CTX_use_certificate(ssl_ctx, x509);
 
     if (res != 1)
     {
-        X509_free(x509);
-        BIO_free(bio);
+        cleanup();
 
         throw ExceptionComm(TLSError, "Unable to load the certificate");
     }
+
+    res = SSL_CTX_clear_chain_certs(ssl_ctx);
+
+    if (res == 0) {
+        cleanup();
+
+        throw ExceptionComm(TLSError, "Unable to load the certificate");
+    }
+
+    X509* ca{nullptr};
+
+    // TODO: add support for setting a passphrase
+    while ((ca = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr)) != NULL) {
+        res = SSL_CTX_add0_chain_cert(ssl_ctx, ca);
+        
+        if (!res) {
+            X509_free(ca);
+            
+            cleanup();
+
+            throw ExceptionComm(TLSError, "Unable to load the certificate");
+        }
+    }
+
+    if (ca) {
+        X509_free(ca);
+    }
+
+    cleanup();
 }
 
 void set_tls_private_key(SSL_CTX* ssl_ctx, const std::string& tls_private_key)

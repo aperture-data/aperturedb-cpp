@@ -51,6 +51,8 @@ ConnClient::ConnClient(const Address& server_address, ConnClientConfig config) :
 {
     _ssl_ctx = create_client_context();
 
+    set_default_verify_paths(_ssl_ctx);
+
     // Always verify the server certificate
     SSL_CTX_set_verify(_ssl_ctx, SSL_VERIFY_PEER, ::SSL_CTX_get_verify_callback(_ssl_ctx));
 

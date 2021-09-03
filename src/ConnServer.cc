@@ -51,6 +51,8 @@ ConnServer::ConnServer(int port, ConnServerConfig config) :
 {
     _ssl_ctx = create_server_context();
 
+    set_default_verify_paths(_ssl_ctx);
+
     if (!_config.ca_certificate.empty()) {
         ::set_ca_certificate(_ssl_ctx, _config.ca_certificate);
     }

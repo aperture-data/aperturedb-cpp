@@ -45,5 +45,6 @@ private:
 SSL_CTX* create_client_context();
 SSL_CTX* create_server_context();
 void set_ca_certificate(SSL_CTX* ssl_ctx, const std::string& ca_certificate);
+bool set_default_verify_paths(SSL_CTX* ssl_ctx);
 void set_tls_certificate(SSL_CTX* ssl_ctx, const std::string& tls_certificate);
 void set_tls_private_key(SSL_CTX* ssl_ctx, const std::string& tls_private_key);
