@@ -27,10 +27,14 @@
  *
  */
 
+#include <memory>
+
 #include <openssl/err.h>
 
 #include "ExceptionComm.h"
 #include "TLS.h"
+
+std::string bio_to_string(const std::unique_ptr<BIO, decltype(&BIO_free)>& bio);
 
 OpenSSLInitializer::OpenSSLInitializer()
 {
@@ -45,6 +49,18 @@ OpenSSLInitializer& OpenSSLInitializer::instance()
     static OpenSSLInitializer initializer{};
 
     return initializer;
+}
+
+std::string bio_to_string(const std::unique_ptr<BIO, decltype(&BIO_free)>& bio)
+{
+    std::string result;
+
+    auto size = BIO_ctrl_pending(bio.get());
+    result.resize(size);
+    auto length = BIO_read(bio.get(), &result[0], size);
+    result.resize(length);
+
+    return result;
 }
 
 SSL_CTX* create_client_context()
@@ -78,6 +94,64 @@ SSL_CTX* create_server_context()
     }
 
     return ctx;
+}
+
+std::tuple<std::string, std::string> generate_certificate()
+{
+    constexpr int rsa_key_length = 2048;
+    constexpr int expires_in = 24 * 3600; // seconds
+
+    std::unique_ptr<RSA, void(*)(RSA*)> rsa { RSA_new(), RSA_free };
+    std::unique_ptr<BIGNUM, void(*)(BIGNUM*)> bn { BN_new(), BN_free };
+
+    BN_set_word(bn.get(), RSA_F4);
+
+    int res = RSA_generate_key_ex(rsa.get(), rsa_key_length, bn.get(), nullptr);
+
+    if (res != 1) {
+        throw ExceptionComm(TLSError, "Unable to create the private key");
+    }
+
+    std::unique_ptr<X509, void(*)(X509*)> cert { X509_new(), X509_free };
+    std::unique_ptr<EVP_PKEY, void(*)(EVP_PKEY*)> pkey { EVP_PKEY_new(), EVP_PKEY_free};
+
+    EVP_PKEY_assign(pkey.get(), EVP_PKEY_RSA, reinterpret_cast<char*>(rsa.release()));
+    ASN1_INTEGER_set(X509_get_serialNumber(cert.get()), 1);
+
+    X509_gmtime_adj(X509_get_notBefore(cert.get()), 0); // now
+    X509_gmtime_adj(X509_get_notAfter(cert.get()), expires_in);
+
+    X509_set_pubkey(cert.get(), pkey.get());
+
+    auto name = X509_get_subject_name(cert.get());
+
+    constexpr unsigned char country[] = "US";
+    constexpr unsigned char company[] = "ApertureData Inc.";
+    constexpr unsigned char common_name[] = "localhost";
+
+    X509_NAME_add_entry_by_txt(name, "C",  MBSTRING_ASC, country, -1, -1, 0);
+    X509_NAME_add_entry_by_txt(name, "O",  MBSTRING_ASC, company, -1, -1, 0);
+    X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, common_name, -1, -1, 0);
+
+    X509_set_issuer_name(cert.get(), name);
+    X509_sign(cert.get(), pkey.get(), EVP_sha256());
+
+    std::unique_ptr<BIO, decltype(&BIO_free)> private_key_bio { BIO_new(BIO_s_mem()), BIO_free };
+    std::unique_ptr<BIO, int(*)(BIO*)> cert_bio { BIO_new(BIO_s_mem()), BIO_free };
+
+    res  = PEM_write_bio_PrivateKey(private_key_bio.get(), pkey.get(), nullptr, nullptr, 0, nullptr, nullptr);
+
+    if (res != 1) {
+        throw ExceptionComm(TLSError, "Unable to write the private key");
+    }
+
+    res = PEM_write_bio_X509(cert_bio.get(), cert.get());
+
+    if (res != 1) {
+        throw ExceptionComm(TLSError, "Unable to write the certificate");
+    }
+
+    return {bio_to_string(private_key_bio), bio_to_string(cert_bio)};
 }
 
 void set_ca_certificate(SSL_CTX* ssl_ctx, const std::string& ca_certificate)
