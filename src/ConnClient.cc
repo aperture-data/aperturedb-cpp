@@ -38,6 +38,7 @@
 #include <netinet/tcp.h>
 
 #include "ExceptionComm.h"
+#include "HelloMessage.h"
 #include "TCPConnection.h"
 #include "TLS.h"
 #include "TLSConnection.h"
@@ -90,22 +91,29 @@ std::shared_ptr<Connection> ConnClient::connect()
 
         auto tcp_connection = std::unique_ptr<TCPConnection>(new TCPConnection(std::move(tcp_socket)));
 
-        Protocol requested_protocol = _config.allowed_protocols;
+        HelloMessage client_hello_message;
 
-        tcp_connection->send_message(reinterpret_cast<uint8_t*>(&requested_protocol), sizeof(requested_protocol));
+        client_hello_message.version = PROTOCOL_VERSION;
+        client_hello_message.protocol = _config.allowed_protocols;
+
+        tcp_connection->send_message(reinterpret_cast<uint8_t*>(&client_hello_message), sizeof(client_hello_message));
 
         auto response = tcp_connection->recv_message();
 
-        if (response.length() != sizeof(Protocol)) {
+        if (response.length() != sizeof(HelloMessage)) {
             throw ExceptionComm(InvalidMessageSize);
         }
 
-        Protocol accepted_protocol = static_cast<Protocol>(response.data()[0]);
+        auto server_hello_message = reinterpret_cast<const HelloMessage*>(response.data());
 
-        if (accepted_protocol == Protocol::None) {
+        if (server_hello_message->version == 0) {
+            throw ExceptionComm(ProtocolError, "Protocol version missmatch");
+        }
+
+        if (server_hello_message->protocol == Protocol::None) {
             throw ExceptionComm(ProtocolError, "Server rejected protocol");
         }
-        else if ((accepted_protocol & Protocol::TLS) == Protocol::TLS) {
+        else if ((server_hello_message->protocol & Protocol::TLS) == Protocol::TLS) {
             tcp_socket = tcp_connection->release_socket();
 
             auto tls_socket = TLSSocket::create(std::move(tcp_socket), _ssl_ctx);
@@ -114,12 +122,12 @@ std::shared_ptr<Connection> ConnClient::connect()
 
             _connection = std::unique_ptr<TLSConnection>(new TLSConnection(std::move(tls_socket)));
         }
-        else if ((accepted_protocol & Protocol::TCP) == Protocol::TCP) {
+        else if ((server_hello_message->protocol & Protocol::TCP) == Protocol::TCP) {
             // Nothing to do, already using TCP
             _connection = std::move(tcp_connection);
         }
         else {
-            throw ExceptionComm(ProtocolError);
+            throw ExceptionComm(ProtocolError, "Protocol negotiation failed");
         }
     }
 

@@ -38,6 +38,7 @@
 #include <netinet/tcp.h>
 
 #include "ExceptionComm.h"
+#include "HelloMessage.h"
 #include "TCPConnection.h"
 #include "TLS.h"
 #include "TLSConnection.h"
@@ -115,17 +116,30 @@ std::unique_ptr<Connection> ConnServer::accept()
 
     auto response = tcp_connection->recv_message();
 
-    if (response.length() != 1) {
+    if (response.length() != sizeof(HelloMessage)) {
         throw ExceptionComm(ProtocolError);
     }
 
-    Protocol requested_protocol = static_cast<Protocol>(response.data()[0]);
+    auto client_hello_message = reinterpret_cast<const HelloMessage*>(response.data());
 
-    Protocol accepted_protocol = requested_protocol & _config.allowed_protocols;
+    HelloMessage server_hello_message;
 
-    tcp_connection->send_message(reinterpret_cast<uint8_t*>(&accepted_protocol), sizeof(accepted_protocol));
+    if (client_hello_message->version != PROTOCOL_VERSION) {
+        server_hello_message.version = 0;
+        server_hello_message.protocol = Protocol::None;
+    }
+    else {
+        server_hello_message.version = PROTOCOL_VERSION;
+        server_hello_message.protocol = client_hello_message->protocol & _config.allowed_protocols;
+    }
 
-    if ((accepted_protocol & Protocol::TLS) == Protocol::TLS) {
+    tcp_connection->send_message(reinterpret_cast<uint8_t*>(&server_hello_message), sizeof(server_hello_message));
+
+    if (server_hello_message.version == 0) {
+        throw ExceptionComm(ProtocolError, "Protocol version missmatch");
+    }
+
+    if ((server_hello_message.protocol & Protocol::TLS) == Protocol::TLS) {
         auto tcp_socket = tcp_connection->release_socket();
 
         auto tls_socket = TLSSocket::create(std::move(tcp_socket), _ssl_ctx);
@@ -134,11 +148,11 @@ std::unique_ptr<Connection> ConnServer::accept()
 
         return std::unique_ptr<TLSConnection>(new TLSConnection(std::move(tls_socket)));
     }
-    else if ((accepted_protocol & Protocol::TCP) == Protocol::TCP) {
+    else if ((server_hello_message.protocol & Protocol::TCP) == Protocol::TCP) {
         // Nothing to do, already using TCP
         return tcp_connection;
     }
     else {
-        throw ExceptionComm(ProtocolError);
+        throw ExceptionComm(ProtocolError, "Protocol negotiation failed");
     }
 }

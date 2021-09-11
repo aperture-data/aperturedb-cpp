@@ -29,17 +29,13 @@
 
 #pragma once
 
+#include "Protocol.h"
+
 namespace comm {
 
-const unsigned PROTOCOL_VERSION      = 1;
+    struct HelloMessage {
+        uint32_t version{};
+        Protocol protocol{};
+    };
 
-const unsigned MAX_PORT_NUMBER       = 65535;
-
-const unsigned MAX_CONN_QUEUE        = 2048;
-const unsigned MAX_RECV_TIMEOUT_SECS = 600;             // 10 mins should be plenty
-
-const unsigned MIN_BUFFER_SIZE       = 1024*1;          //   1KB
-const unsigned MAX_BUFFER_SIZE       = 1024*1024*1024;  //   1GB
-const unsigned DEFAULT_BUFFER_SIZE   = 1024*1024*256;   // 256MB
-
-};
+}
