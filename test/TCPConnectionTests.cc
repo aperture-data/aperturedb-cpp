@@ -32,6 +32,7 @@
 
 #include "gtest/gtest.h"
 
+#include "Barrier.h"
 #include "ConnClient.h"
 #include "ConnServer.h"
 #include "ExceptionComm.h"
@@ -46,13 +47,17 @@ typedef std::basic_string<uint8_t> BytesBuffer;
 // Ping-pong messages between server and client
 TEST(TCPConnectionTests, SyncMessages)
 {
-    std::string client_to_server("testing this awesome comm library with " \
-                                 "come random data");
+    std::string client_to_server("testing this awesome comm library with some random data");
     std::string server_to_client("this awesome library seems to work :)");
 
-    std::thread server_thread([client_to_server, server_to_client]()
+    Barrier barrier(2);
+
+    std::thread server_thread([&]()
     {
         comm::ConnServer server(SERVER_PORT_INTERCHANGE);
+
+        barrier.wait();
+
         auto server_conn = server.accept();
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
@@ -67,9 +72,9 @@ TEST(TCPConnectionTests, SyncMessages)
         }
     });
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
     comm::ConnClient conn_client({"localhost", SERVER_PORT_INTERCHANGE});
+
+    barrier.wait();
 
     auto connection = conn_client.connect();
 
@@ -93,9 +98,14 @@ TEST(TCPConnectionTests, AsyncMessages)
     std::string client_to_server("client sends some random data");
     std::string server_to_client("this library seems to work :)");
 
-    std::thread server_thread([client_to_server, server_to_client]()
+    Barrier barrier(2);
+
+    std::thread server_thread([&]()
     {
         comm::ConnServer server(SERVER_PORT_MULTIPLE);
+
+        barrier.wait();
+
         auto server_conn = server.accept();
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
@@ -112,9 +122,9 @@ TEST(TCPConnectionTests, AsyncMessages)
         }
     });
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
     comm::ConnClient conn_client({"localhost", SERVER_PORT_MULTIPLE});
+
+    barrier.wait();
 
     auto connection = conn_client.connect();
 
@@ -137,15 +147,20 @@ TEST(TCPConnectionTests, AsyncMessages)
 // Server accepts connection and then goes down, client tries to recv.
 TEST(TCPConnectionTests, ServerShutdownRecv)
 {
-    std::thread server_thread([]()
+    Barrier barrier(2);
+
+    std::thread server_thread([&]()
     {
         comm::ConnServer server(SERVER_PORT_INTERCHANGE);
+
+        barrier.wait();
+
         server.accept();
     });
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
     comm::ConnClient conn_client({"localhost", SERVER_PORT_INTERCHANGE});
+
+    barrier.wait();
 
     auto connection = conn_client.connect();
 
@@ -160,17 +175,23 @@ TEST(TCPConnectionTests, ServerShutdownRecv)
 TEST(TCPConnectionTests, SendArrayInts)
 {
     int arr[10] = {22, 568, 254, 784, 452, 458, 235, 124, 1425, 1542};
-    std::thread server_thread([arr]()
+
+    Barrier barrier(2);
+
+    std::thread server_thread([&]()
     {
         comm::ConnServer server(SERVER_PORT_INTERCHANGE);
+
+        barrier.wait();
+
         auto server_conn = server.accept();
 
         server_conn->send_message(reinterpret_cast<const uint8_t*>(arr), sizeof(arr));
     });
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
     comm::ConnClient conn_client({"localhost", SERVER_PORT_INTERCHANGE});
+
+    barrier.wait();
 
     auto connection = conn_client.connect();
 

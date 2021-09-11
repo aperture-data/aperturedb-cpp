@@ -84,6 +84,7 @@ comm_test_env = Environment(CPPPATH  = ['include/aperturedb', 'src'],
 comm_test_env.ParseConfig('pkg-config --cflags --libs protobuf')
 
 comm_test_source_files = [
+                          'test/Barrier.cc',
                           'test/TCPConnectionTests.cc',
                           'test/TLSConnectionTests.cc',
                           'test/VDMSServer.cc',
