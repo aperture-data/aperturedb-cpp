@@ -30,58 +30,41 @@
 
 #include "VDMSClient.h"
 
-#include "gcc_util.h" // DISABLE_WARNING
-DISABLE_WARNING(effc++)
-DISABLE_WARNING(useless-cast)
-DISABLE_WARNING(suggest-override)
-#include "queryMessage.pb.h"
-ENABLE_WARNING(suggest-override)
-ENABLE_WARNING(useless-cast)
-ENABLE_WARNING(effc++)
-
-#include "ConnClient.h"
-#include "Connection.h"
-
 using namespace VDMS;
 
-VDMSClient::VDMSClient(std::string addr, int port,
+VDMSClient::VDMSClient(std::string addr,
+                       int port,
                        comm::Protocol protocols,
                        std::string ca_certfificate) :
-    _client(new comm::ConnClient({addr, port}, {protocols, ca_certfificate}))
+    TokenBasedVDMSClient(addr, port, protocols, ca_certfificate)
 {
-    _connection = _client->connect();
+}
+
+VDMSClient::VDMSClient(std::string /*username*/,
+                       std::string /*password*/,
+                       std::string addr,
+                       int port,
+                       comm::Protocol protocols,
+                       std::string ca_certfificate) :
+    VDMSClient(addr, port, protocols, ca_certfificate)
+{
+    // TODO: use the username and password to get a token
+}
+
+VDMSClient::VDMSClient(std::string /*api_key*/,
+                       std::string addr,
+                       int port,
+                       comm::Protocol protocols,
+                       std::string ca_certfificate) :
+    VDMSClient(addr, port, protocols, ca_certfificate)
+{
+    // TODO: use the api key to get a token
 }
 
 VDMSClient::~VDMSClient() = default;
 
-VDMS::Response VDMSClient::query(const std::string &json,
-                                 const std::vector<std::string *> blobs)
+VDMS::Response VDMSClient::query(const std::string& json,
+                                 const std::vector<std::string*> blobs)
 {
-    protobufs::queryMessage cmd;
-    cmd.set_json(json);
-
-    for (auto& it : blobs) {
-        std::string *blob = cmd.add_blobs();
-        *blob = *it;
-    }
-
-    std::basic_string<uint8_t> msg(cmd.ByteSizeLong(), 0);
-    cmd.SerializeToArray(const_cast<uint8_t*>(msg.data()), msg.length());
-
-    _connection->send_message(msg.data(), msg.length());
-
-    // Wait for response (blocking call)
-    msg = _connection->recv_message();
-
-    protobufs::queryMessage protobuf_response;
-    protobuf_response.ParseFromArray(msg.data(), msg.length());
-
-    VDMS::Response response;
-    response.json = protobuf_response.json();
-
-    for (auto& it : protobuf_response.blobs()) {
-        response.blobs.push_back(it);
-    }
-
-    return response;
+    return TokenBasedVDMSClient::query(json, blobs, token);
 }

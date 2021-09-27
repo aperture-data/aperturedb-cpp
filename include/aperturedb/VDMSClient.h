@@ -44,14 +44,14 @@ namespace comm {
 
 namespace VDMS {
 
+    static const int VDMS_PORT = 55555;
+
     struct Response {
         std::string json{};
         std::vector<std::string> blobs{};
     };
 
-    class VDMSClient {
-        static const int VDMS_PORT = 55555;
-
+    class TokenBasedVDMSClient {
         // The constructor of the ConnClient class already connects to the
         // server if instantiated with the right address and port and it gets
         // disconnected when the class goes out of scope. For now, we
@@ -61,13 +61,41 @@ namespace VDMS {
         std::shared_ptr<comm::Connection> _connection;
 
     public:
-        VDMSClient(std::string addr = "localhost", int port = VDMS_PORT,
+        TokenBasedVDMSClient(std::string addr = "localhost", int port = VDMS_PORT,
+                   comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
+                   std::string ca_certfificate = "");
+        ~TokenBasedVDMSClient();
+
+        // Blocking call
+        VDMS::Response query(const std::string& json_query,
+                             const std::vector<std::string*> blobs = {},
+                             const std::string& token = "");
+    };
+
+    class VDMSClient : protected TokenBasedVDMSClient {
+    public:
+        VDMSClient(std::string addr = "localhost",
+                   int port = VDMS_PORT,
+                   comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
+                   std::string ca_certfificate = "");
+        VDMSClient(std::string username,
+                   std::string password,
+                   std::string addr = "localhost",
+                   int port = VDMS_PORT,
+                   comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
+                   std::string ca_certfificate = "");
+        VDMSClient(std::string api_key,
+                   std::string addr = "localhost",
+                   int port = VDMS_PORT,
                    comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
                    std::string ca_certfificate = "");
         ~VDMSClient();
 
         // Blocking call
-        VDMS::Response query(const std::string &json_query,
+        VDMS::Response query(const std::string& json_query,
                              const std::vector<std::string*> blobs = {});
+
+    private:
+        std::string token;
     };
 };

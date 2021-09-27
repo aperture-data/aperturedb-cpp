@@ -65,6 +65,7 @@ comm_cc = [
            'src/TLS.cc',
            'src/TLSConnection.cc',
            'src/TLSSocket.cc',
+           'src/TokenBasedVDMSClient.cc',
            'src/VDMSClient.cc'
           ]
 
