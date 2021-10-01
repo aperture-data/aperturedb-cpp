@@ -61,6 +61,7 @@ VDMS::Response TokenBasedVDMSClient::query(const std::string& json,
 {
     protobufs::queryMessage cmd;
     cmd.set_json(json);
+    cmd.set_token(token);
 
     for (auto& it : blobs) {
         std::string *blob = cmd.add_blobs();
@@ -84,8 +85,6 @@ VDMS::Response TokenBasedVDMSClient::query(const std::string& json,
     for (auto& it : protobuf_response.blobs()) {
         response.blobs.push_back(it);
     }
-
-    protobuf_response.set_token(token);
 
     return response;
 }

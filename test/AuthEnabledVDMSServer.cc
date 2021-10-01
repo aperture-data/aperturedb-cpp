@@ -28,7 +28,9 @@
  *
  */
 
-#include "VDMSServer.h"
+#include "AuthEnabledVDMSServer.h"
+
+#include <nlohmann/json.hpp>
 
 #include "gcc_util.h" // DISABLE_WARNING
 DISABLE_WARNING(effc++)
@@ -45,7 +47,10 @@ ENABLE_WARNING(effc++)
 
 using namespace VDMS;
 
-VDMSServer::VDMSServer(int port, comm::ConnServerConfig config) :
+static const char* session_token = "NfRwCLF4yscC68bft5LTAJ7hcDcyznRG8tSgpG5J2hkycX";
+static const char* refresh_token = "d4AtsKJf6zhZUae2bVyf26r2FxP97gx4Gh5qEKwtpaYsWB";
+
+AuthEnabledVDMSServer::AuthEnabledVDMSServer(int port, comm::ConnServerConfig config) :
     _server(new comm::ConnServer(port, config))
 {
     auto thread_function = [&]()
@@ -66,7 +71,34 @@ VDMSServer::VDMSServer(int port, comm::ConnServerConfig config) :
             }
 
             protobufs::queryMessage protobuf_response;
-            protobuf_response.set_json(protobuf_request.json());
+
+            if (isAuthenticateRequest(protobuf_request)) {
+                auto responseJson = nlohmann::json::array({{
+                    {"Authenticate", {
+                        {"session_token", session_token},
+                        {"session_token_expires_in", 60 * 60},
+                        {"refresh_token", refresh_token},
+                        {"refresh_token_expires_in", 24 * 60 * 60},
+                        {"status", 0}
+                    }}
+                }});
+
+                protobuf_response.set_json(responseJson.dump());
+            }
+            else {
+                if (protobuf_request.token() == session_token) {
+                    protobuf_response.set_json(protobuf_request.json());
+                }
+                else {
+                    auto responseJson = nlohmann::json::array({{
+                        {"Something", {
+                            {"status", -1}
+                        }}
+                    }});
+
+                    protobuf_response.set_json(responseJson.dump());
+                }
+            }
 
             send_message(server_conn, protobuf_response);
         }
@@ -75,7 +107,7 @@ VDMSServer::VDMSServer(int port, comm::ConnServerConfig config) :
     _work_thread = std::unique_ptr<std::thread>(new std::thread(thread_function));
 }
 
-VDMSServer::~VDMSServer()
+AuthEnabledVDMSServer::~AuthEnabledVDMSServer()
 {
     _stop_signal = true;
 
@@ -84,7 +116,26 @@ VDMSServer::~VDMSServer()
     }
 }
 
-protobufs::queryMessage VDMSServer::receive_message(const std::shared_ptr<comm::Connection>& connection)
+bool AuthEnabledVDMSServer::isAuthenticateRequest(const protobufs::queryMessage& protobuf_request)
+{
+    auto requestJson = nlohmann::json::parse(protobuf_request.json());
+
+    if (requestJson.is_array() && requestJson.size() == 1) {
+        auto requestElement = requestJson.at(0);
+
+        if (requestElement.is_object() && requestElement.contains("Authenticate")) {
+            auto authenticateElement = requestElement["Authenticate"];
+
+            if (authenticateElement.is_object() && authenticateElement.contains("username") && (authenticateElement.contains("password") || authenticateElement.contains("token"))) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+protobufs::queryMessage AuthEnabledVDMSServer::receive_message(const std::shared_ptr<comm::Connection>& connection)
 {
     std::basic_string<uint8_t> message_received = connection->recv_message();
 
@@ -94,7 +145,7 @@ protobufs::queryMessage VDMSServer::receive_message(const std::shared_ptr<comm::
     return protobuf_request;
 }
 
-void VDMSServer::send_message(const std::shared_ptr<comm::Connection>& connection, const protobufs::queryMessage& protobuf_response)
+void AuthEnabledVDMSServer::send_message(const std::shared_ptr<comm::Connection>& connection, const protobufs::queryMessage& protobuf_response)
 {
     std::basic_string<uint8_t> message(protobuf_response.ByteSizeLong(), 0);
     protobuf_response.SerializeToArray(const_cast<uint8_t*>(message.data()), message.length());

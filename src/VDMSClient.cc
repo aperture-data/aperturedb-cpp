@@ -30,35 +30,39 @@
 
 #include "VDMSClient.h"
 
+#include <chrono>
+#include <nlohmann/json.hpp>
+
+#include "ExceptionComm.h"
+#include "VDMSClientImpl.h"
+
 using namespace VDMS;
 
 VDMSClient::VDMSClient(std::string addr,
                        int port,
                        comm::Protocol protocols,
                        std::string ca_certfificate) :
-    TokenBasedVDMSClient(addr, port, protocols, ca_certfificate)
+    _impl(new VDMSClientImpl(std::move(addr), port, protocols, std::move(ca_certfificate)))
 {
 }
 
-VDMSClient::VDMSClient(std::string /*username*/,
-                       std::string /*password*/,
+VDMSClient::VDMSClient(std::string username,
+                       std::string password,
                        std::string addr,
                        int port,
                        comm::Protocol protocols,
                        std::string ca_certfificate) :
-    VDMSClient(addr, port, protocols, ca_certfificate)
+    _impl(new VDMSClientImpl(std::move(username), std::move(password), std::move(addr), port, protocols, std::move(ca_certfificate)))
 {
-    // TODO: use the username and password to get a token
 }
 
-VDMSClient::VDMSClient(std::string /*api_key*/,
+VDMSClient::VDMSClient(std::string api_key,
                        std::string addr,
                        int port,
                        comm::Protocol protocols,
                        std::string ca_certfificate) :
-    VDMSClient(addr, port, protocols, ca_certfificate)
+    _impl(new VDMSClientImpl(std::move(api_key), std::move(addr), port, protocols, std::move(ca_certfificate)))
 {
-    // TODO: use the api key to get a token
 }
 
 VDMSClient::~VDMSClient() = default;
@@ -66,5 +70,5 @@ VDMSClient::~VDMSClient() = default;
 VDMS::Response VDMSClient::query(const std::string& json,
                                  const std::vector<std::string*> blobs)
 {
-    return TokenBasedVDMSClient::query(json, blobs, token);
+    return _impl->query(json, blobs);
 }

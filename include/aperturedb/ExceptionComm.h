@@ -50,6 +50,8 @@ namespace comm {
         ProtocolError,
         TLSError,
 
+        AuthenticationError,
+
         InvalidMessageSize,
         Undefined = 100,// Any undefined error
     };

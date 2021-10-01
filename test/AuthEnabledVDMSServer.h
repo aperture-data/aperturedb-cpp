@@ -45,15 +45,16 @@ namespace VDMS {
 
     }
 
-    class VDMSServer {
+    class AuthEnabledVDMSServer {
         std::unique_ptr<comm::ConnServer> _server;
 
     public:
-        VDMSServer(int port, comm::ConnServerConfig config = {});
-        ~VDMSServer();
+        AuthEnabledVDMSServer(int port, comm::ConnServerConfig config = {});
+        ~AuthEnabledVDMSServer();
 
     private:
 
+        bool isAuthenticateRequest(const protobufs::queryMessage& protobuf_request);
         protobufs::queryMessage receive_message(const std::shared_ptr<comm::Connection>& connection);
         void send_message(const std::shared_ptr<comm::Connection>& connection, const protobufs::queryMessage& protobuf_response);
 

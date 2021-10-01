@@ -27,6 +27,15 @@ RUN wget --no-check-certificate -q https://github.com/protocolbuffers/protobuf/a
     make install && ldconfig && \
     rm -rf /protobuf-3.9.0
 
+# JSON for Modern C++
+
+RUN wget --no-check-certificate -q https://github.com/nlohmann/json/archive/refs/tags/v3.10.2.zip && \
+    unzip v3.10.2.zip -d /usr/local/src && \
+    rm v3.10.2.zip && \
+    cmake -S /usr/local/src/json-3.10.2 -B /usr/local/build/nlohmann-json -DCMAKE_BUILD_TYPE=Release -DJSON_BuildTests=OFF && \
+    cmake --build /usr/local/build/nlohmann-json --target install && \
+    rm -rf /usr/local/build/nlohmann-json /usr/local/src/json-3.10.2
+
 # Install and compile client library
 
 COPY aperturedb-client /aperturedb-client

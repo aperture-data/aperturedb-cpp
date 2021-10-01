@@ -66,7 +66,8 @@ comm_cc = [
            'src/TLSConnection.cc',
            'src/TLSSocket.cc',
            'src/TokenBasedVDMSClient.cc',
-           'src/VDMSClient.cc'
+           'src/VDMSClient.cc',
+           'src/VDMSClientImpl.cc'
           ]
 
 client_env.ParseConfig('pkg-config --cflags --libs protobuf')
@@ -85,6 +86,7 @@ comm_test_env = Environment(CPPPATH  = ['include/aperturedb', 'src'],
 comm_test_env.ParseConfig('pkg-config --cflags --libs protobuf')
 
 comm_test_source_files = [
+                          'test/AuthEnabledVDMSServer.cc',
                           'test/Barrier.cc',
                           'test/TCPConnectionTests.cc',
                           'test/TLSConnectionTests.cc',

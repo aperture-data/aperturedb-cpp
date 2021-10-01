@@ -44,6 +44,8 @@ namespace comm {
 
 namespace VDMS {
 
+    class VDMSClientImpl;
+
     static const int VDMS_PORT = 55555;
 
     struct Response {
@@ -61,9 +63,10 @@ namespace VDMS {
         std::shared_ptr<comm::Connection> _connection;
 
     public:
-        TokenBasedVDMSClient(std::string addr = "localhost", int port = VDMS_PORT,
-                   comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
-                   std::string ca_certfificate = "");
+        TokenBasedVDMSClient(std::string addr = "localhost",
+                             int port = VDMS_PORT,
+                             comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
+                             std::string ca_certfificate = "");
         ~TokenBasedVDMSClient();
 
         // Blocking call
@@ -72,7 +75,7 @@ namespace VDMS {
                              const std::string& token = "");
     };
 
-    class VDMSClient : protected TokenBasedVDMSClient {
+    class VDMSClient {
     public:
         VDMSClient(std::string addr = "localhost",
                    int port = VDMS_PORT,
@@ -96,6 +99,6 @@ namespace VDMS {
                              const std::vector<std::string*> blobs = {});
 
     private:
-        std::string token;
+        std::unique_ptr<VDMSClientImpl> _impl;
     };
 };

@@ -4,7 +4,6 @@
 #include <thread>
 #include <iostream>
 
-#include "Certificates.h"
 #include "ConnClient.h"
 #include "ConnServer.h"
 #include "ExceptionComm.h"
@@ -19,10 +18,7 @@ int start_server();
 
 // Server is set to accept any connection (TLS or just TCP)
 static const comm::ConnServerConfig connServerConfig {
-            comm::Protocol::TLS | comm::Protocol::TCP,
-            ca_certificate,
-            server_certificate,
-            server_private_key
+            comm::Protocol::TLS | comm::Protocol::TCP
         };
 
 int start_server()
