@@ -47,11 +47,30 @@ ENABLE_WARNING(effc++)
 
 using namespace VDMS;
 
-static const char* session_token = "NfRwCLF4yscC68bft5LTAJ7hcDcyznRG8tSgpG5J2hkycX";
-static const char* refresh_token = "d4AtsKJf6zhZUae2bVyf26r2FxP97gx4Gh5qEKwtpaYsWB";
+std::string random_string(size_t length);
 
-AuthEnabledVDMSServer::AuthEnabledVDMSServer(int port, comm::ConnServerConfig config) :
-    _server(new comm::ConnServer(port, config))
+std::string random_string(size_t length)
+{
+    auto randchar = []() -> char
+    {
+        const char charset[] =
+            "0123456789"
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            "abcdefghijklmnopqrstuvwxyz";
+
+        const size_t max_index = sizeof(charset) - 1;
+
+        return charset[rand() % max_index];
+    };
+
+    std::string str(length, 0);
+    std::generate_n(str.begin(), length, randchar);
+
+    return str;
+}
+
+AuthEnabledVDMSServer::AuthEnabledVDMSServer(int port, AuthEnabledVDMSServerConfig config) :
+    _server(new comm::ConnServer(port, config.connServerConfig))
 {
     auto thread_function = [&]()
     {
@@ -72,13 +91,20 @@ AuthEnabledVDMSServer::AuthEnabledVDMSServer(int port, comm::ConnServerConfig co
 
             protobufs::queryMessage protobuf_response;
 
-            if (isAuthenticateRequest(protobuf_request)) {
+            auto is_authenticate_request_ = is_authenticate_request(protobuf_request);
+            auto is_refresh_token_request_ = is_refresh_token_request(protobuf_request);
+
+            if (is_authenticate_request_ || is_refresh_token_request_) {
+                regenerate_tokens();
+
+                auto command_name = is_authenticate_request_ ? "Authenticate" : "RefreshToken";
+
                 auto responseJson = nlohmann::json::array({{
-                    {"Authenticate", {
+                    {command_name, {
                         {"session_token", session_token},
-                        {"session_token_expires_in", 60 * 60},
+                        {"session_token_expires_in", config.session_token_expires_in},
                         {"refresh_token", refresh_token},
-                        {"refresh_token_expires_in", 24 * 60 * 60},
+                        {"refresh_token_expires_in", config.refresh_token_expires_in},
                         {"status", 0}
                     }}
                 }});
@@ -116,7 +142,7 @@ AuthEnabledVDMSServer::~AuthEnabledVDMSServer()
     }
 }
 
-bool AuthEnabledVDMSServer::isAuthenticateRequest(const protobufs::queryMessage& protobuf_request)
+bool AuthEnabledVDMSServer::is_authenticate_request(const protobufs::queryMessage& protobuf_request)
 {
     auto requestJson = nlohmann::json::parse(protobuf_request.json());
 
@@ -135,6 +161,25 @@ bool AuthEnabledVDMSServer::isAuthenticateRequest(const protobufs::queryMessage&
     return false;
 }
 
+bool AuthEnabledVDMSServer::is_refresh_token_request(const protobufs::queryMessage& protobuf_request)
+{
+    auto requestJson = nlohmann::json::parse(protobuf_request.json());
+
+    if (requestJson.is_array() && requestJson.size() == 1) {
+        auto requestElement = requestJson.at(0);
+
+        if (requestElement.is_object() && requestElement.contains("RefreshToken")) {
+            auto authenticateElement = requestElement["RefreshToken"];
+
+            if (authenticateElement.is_object() && authenticateElement.contains("refresh_token")) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 protobufs::queryMessage AuthEnabledVDMSServer::receive_message(const std::shared_ptr<comm::Connection>& connection)
 {
     std::basic_string<uint8_t> message_received = connection->recv_message();
@@ -143,6 +188,12 @@ protobufs::queryMessage AuthEnabledVDMSServer::receive_message(const std::shared
     protobuf_request.ParseFromArray(message_received.data(), message_received.length());
 
     return protobuf_request;
+}
+
+void AuthEnabledVDMSServer::regenerate_tokens()
+{
+    refresh_token = random_string(46);
+    session_token = random_string(46);
 }
 
 void AuthEnabledVDMSServer::send_message(const std::shared_ptr<comm::Connection>& connection, const protobufs::queryMessage& protobuf_response)
