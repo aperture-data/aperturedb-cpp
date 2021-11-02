@@ -42,6 +42,8 @@
 #include "TCPConnection.h"
 #include "TLS.h"
 #include "TLSConnection.h"
+#include "Connection.h"
+#include "TCPSocket.h"
 
 using namespace comm;
 
@@ -136,7 +138,7 @@ std::unique_ptr<Connection> ConnServer::accept()
     tcp_connection->send_message(reinterpret_cast<uint8_t*>(&server_hello_message), sizeof(server_hello_message));
 
     if (server_hello_message.version == 0) {
-        throw ExceptionComm(ProtocolError, "Protocol version missmatch");
+        throw ExceptionComm(ProtocolError, "Protocol version mismatch");
     }
 
     if ((server_hello_message.protocol & Protocol::TLS) == Protocol::TLS) {

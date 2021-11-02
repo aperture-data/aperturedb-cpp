@@ -54,6 +54,10 @@ namespace comm {
             _max_buffer_size = std::min(MAX_BUFFER_SIZE, _max_buffer_size);
         }
 
+        bool check_message_size(uint32_t size) {
+            return size <= _max_buffer_size;
+        }
+
     protected:
 
         virtual size_t read(uint8_t* buffer, size_t length) = 0;

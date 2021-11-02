@@ -49,7 +49,9 @@ TLSSocket::TLSSocket(std::unique_ptr<TCPSocket> tcp_socket, SSL* ssl) :
 TLSSocket::~TLSSocket()
 {
     if (_ssl) {
-        SSL_shutdown(_ssl);
+        if( !(SSL_get_shutdown(_ssl) & SSL_SENT_SHUTDOWN)) {
+            SSL_shutdown(_ssl);
+        }
         SSL_free(_ssl);
     }
 }

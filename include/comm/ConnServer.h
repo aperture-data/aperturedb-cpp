@@ -51,7 +51,11 @@ namespace comm {
 
         ConnServerConfig() = default;
 
-        ConnServerConfig(Protocol allowed_protocols_, bool auto_generate_certificate_ = true, std::string ca_certificate_ = "", std::string tls_certificate_ = "", std::string tls_private_key_ = "") :
+        ConnServerConfig(Protocol allowed_protocols_,
+                         bool auto_generate_certificate_ = true,
+                         std::string ca_certificate_ = "",
+                         std::string tls_certificate_ = "",
+                         std::string tls_private_key_ = "") :
             allowed_protocols(allowed_protocols_),
             auto_generate_certificate(auto_generate_certificate_),
             ca_certificate(std::move(ca_certificate_)),

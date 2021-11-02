@@ -1,4 +1,3 @@
-
 #include <chrono>
 #include <string>
 #include <thread>
@@ -18,7 +17,7 @@ int start_server();
 
 // Server is set to accept any connection (TLS or just TCP)
 static const comm::ConnServerConfig connServerConfig {
-            comm::Protocol::TLS | comm::Protocol::TCP
+            comm::Protocol::TLS | comm::Protocol::TCP, true
         };
 
 int start_server()
