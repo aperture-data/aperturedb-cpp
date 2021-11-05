@@ -190,6 +190,40 @@ TEST_F(TLSConnectionTests, ServerShutdownRecv)
     );
 }
 
+#include <chrono>
+
+TEST_F(TLSConnectionTests, ClientDisconnects)
+{
+    Barrier barrier(2);
+
+    std::thread server_thread([&]()
+    {
+        comm::ConnServer server(SERVER_PORT_INTERCHANGE, connServerConfig);
+
+        barrier.wait();
+
+        while(true) {
+            auto conn = server.accept();
+
+            std::cout << "Connection accepted." << std::endl;
+
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+    });
+
+    {
+        barrier.wait();
+        // while (true) {
+            comm::ConnClient conn_client({"localhost", SERVER_PORT_INTERCHANGE}, connClientConfig);
+            auto connection = conn_client.connect();
+            comm::ConnClient conn_client2({"localhost", SERVER_PORT_INTERCHANGE}, connClientConfig);
+        // }
+    }
+
+    server_thread.join(); // Here the server will close the port.
+
+}
+
 TEST_F(TLSConnectionTests, SendArrayInts)
 {
     int arr[10] = {22, 568, 254, 784, 452, 458, 235, 124, 1425, 1542};
