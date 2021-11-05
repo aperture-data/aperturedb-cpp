@@ -36,6 +36,7 @@
 #include <unistd.h>
 
 #include "ExceptionComm.h"
+#include "OpenSSLBio.h"
 #include "Variables.h"
 
 using namespace comm;
@@ -49,7 +50,7 @@ TLSSocket::TLSSocket(std::unique_ptr<TCPSocket> tcp_socket, SSL* ssl) :
 TLSSocket::~TLSSocket()
 {
     if (_ssl) {
-        if( !(SSL_get_shutdown(_ssl) & SSL_SENT_SHUTDOWN)) {
+        if (!(SSL_get_shutdown(_ssl) & SSL_SENT_SHUTDOWN)) {
             SSL_shutdown(_ssl);
         }
         SSL_free(_ssl);
@@ -80,7 +81,11 @@ std::unique_ptr<TLSSocket> TLSSocket::create(std::unique_ptr<TCPSocket> tcp_sock
                                              SSL_CTX* ssl_ctx)
 {
     auto ssl = SSL_new(ssl_ctx);
-    SSL_set_fd(ssl, tcp_socket->_socket_fd);
+
+    auto bio = BIO_new(comm_openssl_bio());
+
+    BIO_set_fd(bio, tcp_socket->_socket_fd, BIO_NOCLOSE);
+    SSL_set_bio(ssl, bio, bio);
 
     return std::unique_ptr<TLSSocket>(new TLSSocket(std::move(tcp_socket), ssl));
 }

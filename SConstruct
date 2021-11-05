@@ -56,6 +56,7 @@ comm_cc = [
            'comm/Connection.cc',
            'comm/ConnServer.cc',
            'comm/Exception.cc',
+           'comm/OpenSSLBio.cc',
            'comm/TCPConnection.cc',
            'comm/TCPSocket.cc',
            'comm/TLS.cc',
