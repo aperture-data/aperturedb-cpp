@@ -53,6 +53,29 @@ std::string Connection::msg_size_to_str_KB(uint32_t size)
     return std::to_string(size / 1024);
 }
 
+void Connection::send_message(const uint8_t* data, uint32_t size)
+{
+    if (size > _max_buffer_size) {
+        std::string error_msg = "Cannot send messages larger than " +
+                                msg_size_to_str_KB(_max_buffer_size) + "KB." +
+                                " Message size is " +
+                                msg_size_to_str_KB(size) + "KB.";
+        throw ExceptionComm(InvalidMessageSize, error_msg);
+    }
+
+    auto ret0 = write(reinterpret_cast<const uint8_t*>(&size), sizeof(size));
+
+    if (ret0 != sizeof(size)) {
+        throw ExceptionComm(WriteFail);
+    }
+
+    size_t bytes_sent = 0;
+
+    while (bytes_sent < size) {
+        bytes_sent += write(data + bytes_sent, size - bytes_sent);
+    }
+}
+
 const std::basic_string<uint8_t>& Connection::recv_message()
 {
     uint32_t recv_message_size;
@@ -95,29 +118,6 @@ const std::basic_string<uint8_t>& Connection::recv_message()
     }
 
     return _buffer_str;
-}
-
-void Connection::send_message(const uint8_t* data, uint32_t size)
-{
-    if (size > _max_buffer_size) {
-        std::string error_msg = "Cannot send messages larger than " +
-                                msg_size_to_str_KB(_max_buffer_size) + "KB." +
-                                " Message size is " +
-                                msg_size_to_str_KB(size) + "KB.";
-        throw ExceptionComm(InvalidMessageSize, error_msg);
-    }
-
-    auto ret0 = write(reinterpret_cast<const uint8_t*>(&size), sizeof(size));
-
-    if (ret0 != sizeof(size)) {
-        throw ExceptionComm(WriteFail);
-    }
-
-    size_t bytes_sent = 0;
-
-    while (bytes_sent < size) {
-        bytes_sent += write(data + bytes_sent, size - bytes_sent);
-    }
 }
 
 void Connection::set_max_buffer_size(uint32_t max_buffer_size)
