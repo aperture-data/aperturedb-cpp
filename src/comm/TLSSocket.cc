@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "ExceptionComm.h"
+#include "comm/ExceptionComm.h"
 #include "OpenSSLBio.h"
 #include "Variables.h"
 

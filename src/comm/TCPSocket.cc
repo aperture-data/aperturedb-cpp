@@ -10,8 +10,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "ExceptionComm.h"
-#include "Variables.h"
+#include "comm/ExceptionComm.h"
+#include "comm/Variables.h"
 
 using namespace comm;
 

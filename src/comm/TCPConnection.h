@@ -28,16 +28,40 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
+#pragma once
 
-#include "ExceptionComm.h"
+#include <memory>
+#include <string>
 
-void print_exception(const comm::Exception &e, FILE *f)
-{
-    fprintf(f, "[Exception] %s at %s:%d\n", e.name, e.file, e.line);
-    if (e.errno_val != 0)
-        fprintf(f, "%s: %s\n", e.msg.c_str(), strerror(e.errno_val));
-    else if (!e.msg.empty())
-        fprintf(f, "%s\n", e.msg.c_str());
-}
+#include "comm/Connection.h"
+#include "comm/TCPSocket.h"
+
+namespace comm {
+
+    class TCPConnection : public Connection
+    {
+
+        friend class TLSConnClient;
+
+    public:
+
+        TCPConnection();
+        explicit TCPConnection(std::unique_ptr<TCPSocket> tcp_socket);
+        TCPConnection(TCPConnection&&) = default;
+        TCPConnection(const TCPConnection&) = delete;
+
+        TCPConnection& operator=(TCPConnection&&) = default;
+        TCPConnection& operator=(const TCPConnection&) = delete;
+
+        std::unique_ptr<TCPSocket> release_socket();
+        void shutdown();
+
+    protected:
+
+        size_t read(uint8_t* buffer, size_t length) override;
+        size_t write(const uint8_t* buffer, size_t length) override;
+
+        std::unique_ptr<TCPSocket> _tcp_socket;
+    };
+
+};

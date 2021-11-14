@@ -28,42 +28,16 @@
  *
  */
 
-#pragma once
+#include <stdio.h>
+#include <string.h>
 
-#include <memory>
-#include <string>
+#include "comm/ExceptionComm.h"
 
-#include "Address.h"
-
-namespace comm {
-
-    class TCPSocket
-    {
-        friend class TCPConnection;
-        friend class TLSSocket;
-
-    public:
-
-        TCPSocket(const TCPSocket&) = delete;
-        ~TCPSocket();
-
-        TCPSocket& operator=(const TCPSocket&) = delete;
-
-        static std::unique_ptr<TCPSocket> create();
-        static std::unique_ptr<TCPSocket> accept(const std::unique_ptr<TCPSocket>& listening_socket);
-
-        bool bind(int port);
-        bool connect(const Address& address);
-        bool listen();
-        bool set_boolean_option(int level, int option_name, bool value);
-        bool set_timeval_option(int level, int option_name, timeval value);
-        void shutdown();
-
-    private:
-
-        explicit TCPSocket(int socket_fd);
-
-        int _socket_fd{-1};
-    };
-
-};
+void print_exception(const comm::Exception &e, FILE *f)
+{
+    fprintf(f, "[Exception] %s at %s:%d\n", e.name, e.file, e.line);
+    if (e.errno_val != 0)
+        fprintf(f, "%s: %s\n", e.msg.c_str(), strerror(e.errno_val));
+    else if (!e.msg.empty())
+        fprintf(f, "%s\n", e.msg.c_str());
+}

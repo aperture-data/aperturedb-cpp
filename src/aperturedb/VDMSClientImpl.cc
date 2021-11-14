@@ -33,7 +33,7 @@
 #include <chrono>
 #include <nlohmann/json.hpp>
 
-#include "ExceptionComm.h"
+#include "comm/ExceptionComm.h"
 
 using namespace VDMS;
 

@@ -35,8 +35,8 @@
 #include <string>
 #include <vector>
 
-#include "Protocol.h"
-#include "VDMSClient.h"
+#include "aperturedb/VDMSClient.h"
+#include "comm/Protocol.h"
 
 namespace VDMS {
 

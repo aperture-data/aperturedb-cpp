@@ -28,13 +28,13 @@
  *
  */
 
-#include "VDMSClient.h"
+#include "aperturedb/VDMSClient.h"
 
 #include <chrono>
 #include <nlohmann/json.hpp>
 
-#include "ExceptionComm.h"
-#include "VDMSClientImpl.h"
+#include "aperturedb/VDMSClientImpl.h"
+#include "comm/ExceptionComm.h"
 
 using namespace VDMS;
 

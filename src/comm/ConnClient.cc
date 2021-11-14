@@ -28,7 +28,7 @@
  *
  */
 
-#include "ConnClient.h"
+#include "comm/ConnClient.h"
 
 #include <string>
 #include <cstring>
@@ -38,12 +38,12 @@
 #include <netdb.h>
 #include <netinet/tcp.h>
 
-#include "ExceptionComm.h"
-#include "HelloMessage.h"
-#include "TCPConnection.h"
-#include "TLS.h"
-#include "TLSConnection.h"
-#include "Variables.h"
+#include "comm/ExceptionComm.h"
+#include "comm/HelloMessage.h"
+#include "comm/TCPConnection.h"
+#include "comm/TLS.h"
+#include "comm/TLSConnection.h"
+#include "comm/Variables.h"
 
 using namespace comm;
 

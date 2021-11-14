@@ -32,8 +32,6 @@
 
 #include <string>
 
-#include "Variables.h"
-
 namespace comm {
 
     class Connection
@@ -41,23 +39,15 @@ namespace comm {
 
     public:
 
-        virtual ~Connection() = default;
+        Connection();
+        virtual ~Connection();
 
         void send_message(const uint8_t* data, uint32_t size);
         const std::basic_string<uint8_t>& recv_message();
 
-        std::string msg_size_to_str_KB(uint32_t size) {
-            return std::to_string(size / 1024);
-        }
-
-        void set_max_buffer_size(uint32_t max_buffer_size) {
-            _max_buffer_size = std::max(MIN_BUFFER_SIZE, max_buffer_size);
-            _max_buffer_size = std::min(MAX_BUFFER_SIZE, _max_buffer_size);
-        }
-
-        bool check_message_size(uint32_t size) {
-            return size <= _max_buffer_size;
-        }
+        std::string msg_size_to_str_KB(uint32_t size);
+        void set_max_buffer_size(uint32_t max_buffer_size);
+        bool check_message_size(uint32_t size);
 
     protected:
 
@@ -65,7 +55,7 @@ namespace comm {
         virtual size_t write(const uint8_t* buffer, size_t length) = 0;
 
         std::basic_string<uint8_t> _buffer_str{};
-        uint32_t _max_buffer_size{DEFAULT_BUFFER_SIZE};
+        uint32_t _max_buffer_size{};
     };
 
 };

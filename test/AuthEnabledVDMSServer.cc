@@ -6,18 +6,18 @@
 
 #include <nlohmann/json.hpp>
 
-#include "gcc_util.h" // DISABLE_WARNING
+#include "aperturedb/gcc_util.h" // DISABLE_WARNING
 DISABLE_WARNING(effc++)
 DISABLE_WARNING(useless-cast)
 DISABLE_WARNING(suggest-override)
-#include "queryMessage.pb.h"
+#include "aperturedb/queryMessage.pb.h"
 ENABLE_WARNING(suggest-override)
 ENABLE_WARNING(useless-cast)
 ENABLE_WARNING(effc++)
 
-#include "Connection.h"
-#include "ConnServer.h"
-#include "ExceptionComm.h"
+#include "comm/Connection.h"
+#include "comm/ConnServer.h"
+#include "comm/ExceptionComm.h"
 
 using namespace VDMS;
 

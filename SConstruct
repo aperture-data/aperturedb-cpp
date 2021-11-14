@@ -14,11 +14,11 @@ def compileProtoFiles(client_env):
     #Compile .proto file to generate protobuf files (.h and .cc).
 
     protoQuery = client_env.Command (
-             ['client/queryMessage.pb.h',
-              'client/queryMessage.pb.cc',
+             ['src/aperturedb/queryMessage.pb.h',
+              'src/aperturedb/queryMessage.pb.cc',
              ], # TARGET
-              'client/queryMessage.proto', # $SOURCE
-              'protoc -I=client/ --cpp_out=client/ $SOURCE'
+              'src/aperturedb/queryMessage.proto', # $SOURCE
+              'protoc -I=src/aperturedb/ --cpp_out=src/aperturedb/ $SOURCE'
               )
 
 # Optimization and language options.
@@ -39,7 +39,7 @@ env = Environment(CXXFLAGS="-std=c++11 " + FFLAGS + OPTFLAGS + WFLAGS)
 
 comm_env = env.Clone()
 comm_env.Replace(
-        CPPPATH = ['include/comm', 'comm'],
+        CPPPATH = ['include', 'src'],
         LIBS    = [],
         LIBPATH = []
              )
@@ -52,16 +52,16 @@ comm_env.Replace(CXXFLAGS = re.sub("-Wuseless-cast",            "-Wno-useless-ca
 comm_env.Replace(CXXFLAGS = re.sub("-Wsuggest-override",        "-Wno-suggest-override",        comm_env['CXXFLAGS']))
 
 comm_cc = [
-           'comm/ConnClient.cc',
-           'comm/Connection.cc',
-           'comm/ConnServer.cc',
-           'comm/Exception.cc',
-           'comm/OpenSSLBio.cc',
-           'comm/TCPConnection.cc',
-           'comm/TCPSocket.cc',
-           'comm/TLS.cc',
-           'comm/TLSConnection.cc',
-           'comm/TLSSocket.cc',
+           'src/comm/ConnClient.cc',
+           'src/comm/Connection.cc',
+           'src/comm/ConnServer.cc',
+           'src/comm/Exception.cc',
+           'src/comm/OpenSSLBio.cc',
+           'src/comm/TCPConnection.cc',
+           'src/comm/TCPSocket.cc',
+           'src/comm/TLS.cc',
+           'src/comm/TLSConnection.cc',
+           'src/comm/TLSSocket.cc',
           ]
 
 comm_env.ParseConfig('pkg-config --cflags --libs openssl')
@@ -69,7 +69,7 @@ ulib = comm_env.SharedLibrary('lib/comm', comm_cc)
 
 client_env = comm_env.Clone()
 client_env.Replace(
-        CPPPATH = ['include/aperturedb', 'include/comm', 'client'],
+        CPPPATH = ['include', 'src'],
         LIBS    = ['comm'],
         LIBPATH = ['lib/']
              )
@@ -77,10 +77,10 @@ client_env.Replace(
 compileProtoFiles(client_env)
 
 client_cc = [
-           'client/queryMessage.pb.cc',
-           'client/TokenBasedVDMSClient.cc',
-           'client/VDMSClient.cc',
-           'client/VDMSClientImpl.cc'
+           'src/aperturedb/queryMessage.pb.cc',
+           'src/aperturedb/TokenBasedVDMSClient.cc',
+           'src/aperturedb/VDMSClient.cc',
+           'src/aperturedb/VDMSClientImpl.cc'
           ]
 
 client_env.ParseConfig('pkg-config --cflags --libs protobuf')
@@ -89,7 +89,7 @@ ulib = client_env.SharedLibrary('lib/aperturedb-client', client_cc)
 CXXFLAGS = env['CXXFLAGS']
 
 # Comm Testing
-comm_test_env = Environment(CPPPATH  = ['include/aperturedb', 'include/comm','client', 'comm'],
+comm_test_env = Environment(CPPPATH  = ['include', 'src'],
                             CXXFLAGS = CXXFLAGS,
                             LIBS     = ['aperturedb-client', 'comm', 'pthread', 'gtest', 'glog'],
                             LIBPATH  = ['lib/']
@@ -129,7 +129,7 @@ env.Alias('install',
         )
 
 # Mock-up Server
-server_env = Environment(CPPPATH  = ['include/comm', 'comm', 'test'],
+server_env = Environment(CPPPATH  = ['include', 'src', 'test'],
                             CXXFLAGS = CXXFLAGS,
                             LIBS     = ['comm', 'pthread', 'gtest', 'glog'],
                             LIBPATH  = ['lib/']
