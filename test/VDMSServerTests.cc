@@ -43,7 +43,7 @@ TEST_F(VDMSServerTests, SyncMessages)
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    VDMS::VDMSClient client("localhost", SERVER_PORT_INTERCHANGE, comm::Protocol::TLS, "");
+    VDMS::VDMSClient client("localhost", SERVER_PORT_INTERCHANGE, VDMS::Protocol::TLS, "");
 
     for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
         // Send a query
@@ -64,7 +64,7 @@ TEST_F(VDMSServerTests, SyncMessagesAuthenticated)
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    auto client = std::unique_ptr<VDMS::VDMSClient>(new VDMS::VDMSClient("username", "password", "localhost", SERVER_PORT_INTERCHANGE, comm::Protocol::TLS, ""));
+    auto client = std::unique_ptr<VDMS::VDMSClient>(new VDMS::VDMSClient("username", "password", "localhost", SERVER_PORT_INTERCHANGE, VDMS::Protocol::TLS, ""));
 
     for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
         // Send a query
@@ -85,7 +85,7 @@ TEST_F(VDMSServerTests, SyncMessagesRefreshToken)
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    auto client = std::unique_ptr<VDMS::VDMSClient>(new VDMS::VDMSClient("username", "password", "localhost", SERVER_PORT_INTERCHANGE, comm::Protocol::TLS, ""));
+    auto client = std::unique_ptr<VDMS::VDMSClient>(new VDMS::VDMSClient("username", "password", "localhost", SERVER_PORT_INTERCHANGE, VDMS::Protocol::TLS, ""));
 
     // Make sure the session token expires
     std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -107,7 +107,7 @@ TEST_F(VDMSServerTests, SyncMessagesReAuthenticate)
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    auto client = std::unique_ptr<VDMS::VDMSClient>(new VDMS::VDMSClient("username", "password", "localhost", SERVER_PORT_INTERCHANGE, comm::Protocol::TLS, ""));
+    auto client = std::unique_ptr<VDMS::VDMSClient>(new VDMS::VDMSClient("username", "password", "localhost", SERVER_PORT_INTERCHANGE, VDMS::Protocol::TLS, ""));
 
     // Make sure the refresh token expires
     std::this_thread::sleep_for(std::chrono::seconds(3));
