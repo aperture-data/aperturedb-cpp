@@ -46,9 +46,9 @@ using namespace VDMS;
 
 TokenBasedVDMSClient::TokenBasedVDMSClient(std::string addr,
                                            int port,
-                                           comm::Protocol protocols,
+                                           Protocol protocols,
                                            std::string ca_certfificate) :
-    _client(new comm::ConnClient({addr, port}, {protocols, ca_certfificate}))
+    _client(new comm::ConnClient({addr, port}, {static_cast<comm::Protocol>(protocols), ca_certfificate}))
 {
     _connection = _client->connect();
 }

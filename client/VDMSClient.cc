@@ -40,9 +40,9 @@ using namespace VDMS;
 
 VDMSClient::VDMSClient(std::string addr,
                        int port,
-                       comm::Protocol protocols,
+                       Protocol protocols,
                        std::string ca_certfificate) :
-    _impl(new VDMSClientImpl(std::move(addr), port, protocols, std::move(ca_certfificate)))
+    _impl(new VDMSClientImpl(std::move(addr), port, static_cast<comm::Protocol>(protocols), std::move(ca_certfificate)))
 {
 }
 
@@ -50,18 +50,18 @@ VDMSClient::VDMSClient(std::string username,
                        std::string password,
                        std::string addr,
                        int port,
-                       comm::Protocol protocols,
+                       Protocol protocols,
                        std::string ca_certfificate) :
-    _impl(new VDMSClientImpl(std::move(username), std::move(password), std::move(addr), port, protocols, std::move(ca_certfificate)))
+    _impl(new VDMSClientImpl(std::move(username), std::move(password), std::move(addr), port, static_cast<comm::Protocol>(protocols), std::move(ca_certfificate)))
 {
 }
 
 VDMSClient::VDMSClient(std::string api_key,
                        std::string addr,
                        int port,
-                       comm::Protocol protocols,
+                       Protocol protocols,
                        std::string ca_certfificate) :
-    _impl(new VDMSClientImpl(std::move(api_key), std::move(addr), port, protocols, std::move(ca_certfificate)))
+    _impl(new VDMSClientImpl(std::move(api_key), std::move(addr), port, static_cast<comm::Protocol>(protocols), std::move(ca_certfificate)))
 {
 }
 

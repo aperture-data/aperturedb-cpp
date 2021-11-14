@@ -34,8 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "Protocol.h"
-
 namespace comm {
 
     class ConnClient;
@@ -48,6 +46,13 @@ namespace VDMS {
     class VDMSClientImpl;
 
     static const int VDMS_PORT = 55555;
+
+    enum class Protocol : uint8_t
+    {
+        TCP = 1,
+        TLS = 2,
+        Any = 3
+    };
 
     struct Response {
         std::string json{};
@@ -66,7 +71,7 @@ namespace VDMS {
     public:
         TokenBasedVDMSClient(std::string addr = "localhost",
                              int port = VDMS_PORT,
-                             comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
+                             Protocol protocols = Protocol::Any,
                              std::string ca_certfificate = "");
         ~TokenBasedVDMSClient();
 
@@ -80,18 +85,18 @@ namespace VDMS {
     public:
         VDMSClient(std::string addr = "localhost",
                    int port = VDMS_PORT,
-                   comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
+                   Protocol protocols = Protocol::Any,
                    std::string ca_certfificate = "");
         VDMSClient(std::string username,
                    std::string password,
                    std::string addr = "localhost",
                    int port = VDMS_PORT,
-                   comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
+                   Protocol protocols = Protocol::Any,
                    std::string ca_certfificate = "");
         VDMSClient(std::string api_key,
                    std::string addr = "localhost",
                    int port = VDMS_PORT,
-                   comm::Protocol protocols = comm::Protocol::TCP | comm::Protocol::TLS,
+                   Protocol protocols = Protocol::Any,
                    std::string ca_certfificate = "");
         ~VDMSClient();
 
