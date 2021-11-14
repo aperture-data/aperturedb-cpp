@@ -10,7 +10,7 @@
 #include <thread>
 #include <vector>
 
-#include "ConnServer.h"
+#include "comm/ConnServer.h"
 
 namespace VDMS {
 

@@ -37,8 +37,8 @@
 
 #include <netdb.h>
 
-#include "ExceptionComm.h"
-#include "gcc_util.h"
+#include "comm/ExceptionComm.h"
+#include "comm/gcc_util.h"
 
 using namespace comm;
 

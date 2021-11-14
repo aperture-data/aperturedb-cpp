@@ -6,8 +6,8 @@
 
 #include <openssl/err.h>
 
-#include "ExceptionComm.h"
-#include "TLS.h"
+#include "comm/ExceptionComm.h"
+#include "comm/TLS.h"
 
 std::string bio_to_string(const std::unique_ptr<BIO, decltype(&BIO_free)>& bio);
 std::unique_ptr<BIO, decltype(&BIO_free)> string_to_bio(const std::string& string);

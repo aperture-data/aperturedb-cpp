@@ -28,33 +28,29 @@
  *
  */
 
-#include "Connection.h"
+#include "comm/Connection.h"
 
-#include "ExceptionComm.h"
+#include "comm/ExceptionComm.h"
+#include "comm/Variables.h"
 
 using namespace comm;
 
-void Connection::send_message(const uint8_t* data, uint32_t size)
+Connection::Connection() :
+    _max_buffer_size(DEFAULT_BUFFER_SIZE)
 {
-    if (size > _max_buffer_size) {
-        std::string error_msg = "Cannot send messages larger than " +
-                                msg_size_to_str_KB(_max_buffer_size) + "KB." +
-                                " Message size is " +
-                                msg_size_to_str_KB(size) + "KB.";
-        throw ExceptionComm(InvalidMessageSize, error_msg);
-    }
 
-    auto ret0 = write(reinterpret_cast<const uint8_t*>(&size), sizeof(size));
+}
 
-    if (ret0 != sizeof(size)) {
-        throw ExceptionComm(WriteFail);
-    }
+Connection::~Connection() = default;
 
-    size_t bytes_sent = 0;
+bool Connection::check_message_size(uint32_t size)
+{
+    return size <= _max_buffer_size;
+}
 
-    while (bytes_sent < size) {
-        bytes_sent += write(data + bytes_sent, size - bytes_sent);
-    }
+std::string Connection::msg_size_to_str_KB(uint32_t size)
+{
+    return std::to_string(size / 1024);
 }
 
 const std::basic_string<uint8_t>& Connection::recv_message()
@@ -99,4 +95,33 @@ const std::basic_string<uint8_t>& Connection::recv_message()
     }
 
     return _buffer_str;
+}
+
+void Connection::send_message(const uint8_t* data, uint32_t size)
+{
+    if (size > _max_buffer_size) {
+        std::string error_msg = "Cannot send messages larger than " +
+                                msg_size_to_str_KB(_max_buffer_size) + "KB." +
+                                " Message size is " +
+                                msg_size_to_str_KB(size) + "KB.";
+        throw ExceptionComm(InvalidMessageSize, error_msg);
+    }
+
+    auto ret0 = write(reinterpret_cast<const uint8_t*>(&size), sizeof(size));
+
+    if (ret0 != sizeof(size)) {
+        throw ExceptionComm(WriteFail);
+    }
+
+    size_t bytes_sent = 0;
+
+    while (bytes_sent < size) {
+        bytes_sent += write(data + bytes_sent, size - bytes_sent);
+    }
+}
+
+void Connection::set_max_buffer_size(uint32_t max_buffer_size)
+{
+    _max_buffer_size = std::max(MIN_BUFFER_SIZE, max_buffer_size);
+    _max_buffer_size = std::min(MAX_BUFFER_SIZE, _max_buffer_size);
 }

@@ -8,11 +8,11 @@
 
 #include "gtest/gtest.h"
 
+#include "aperturedb/VDMSClient.h"
 #include "AuthEnabledVDMSServer.h"
-#include "ConnServer.h"
-#include "ExceptionComm.h"
-#include "TLS.h"
-#include "VDMSClient.h"
+#include "comm/ConnServer.h"
+#include "comm/ExceptionComm.h"
+#include "comm/TLS.h"
 #include "VDMSServer.h"
 
 #define SERVER_PORT_INTERCHANGE 43444

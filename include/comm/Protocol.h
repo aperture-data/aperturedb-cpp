@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Enum.h"
+#include "comm/Enum.h"
 
 namespace comm {
 

@@ -28,19 +28,19 @@
  *
  */
 
-#include "VDMSClient.h"
+#include "aperturedb/VDMSClient.h"
 
-#include "gcc_util.h" // DISABLE_WARNING
+#include "aperturedb/gcc_util.h" // DISABLE_WARNING
 DISABLE_WARNING(effc++)
 DISABLE_WARNING(useless-cast)
 DISABLE_WARNING(suggest-override)
-#include "queryMessage.pb.h"
+#include "aperturedb/queryMessage.pb.h"
 ENABLE_WARNING(suggest-override)
 ENABLE_WARNING(useless-cast)
 ENABLE_WARNING(effc++)
 
-#include "ConnClient.h"
-#include "Connection.h"
+#include "comm/ConnClient.h"
+#include "comm/Connection.h"
 
 using namespace VDMS;
 

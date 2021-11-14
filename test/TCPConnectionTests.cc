@@ -8,10 +8,10 @@
 #include "gtest/gtest.h"
 
 #include "Barrier.h"
-#include "ConnClient.h"
-#include "ConnServer.h"
-#include "ExceptionComm.h"
-#include "TCPConnection.h"
+#include "comm/ConnClient.h"
+#include "comm/ConnServer.h"
+#include "comm/ExceptionComm.h"
+#include "comm/TCPConnection.h"
 
 #define SERVER_PORT_INTERCHANGE 43444
 #define SERVER_PORT_MULTIPLE    43444

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Protocol.h"
+#include "comm/Protocol.h"
 
 namespace comm {
 

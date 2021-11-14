@@ -34,9 +34,9 @@
 
 #include <openssl/ssl.h>
 
-#include "Connection.h"
-#include "Protocol.h"
-#include "TCPSocket.h"
+#include "comm/Connection.h"
+#include "comm/Protocol.h"
+#include "comm/TCPSocket.h"
 
 class OpenSSLInitializer;
 

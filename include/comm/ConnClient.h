@@ -35,9 +35,9 @@
 
 #include <openssl/ssl.h>
 
-#include "Address.h"
-#include "Connection.h"
-#include "Protocol.h"
+#include "comm/Address.h"
+#include "comm/Connection.h"
+#include "comm/Protocol.h"
 
 namespace comm {
 

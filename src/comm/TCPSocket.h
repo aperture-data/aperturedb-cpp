@@ -33,35 +33,37 @@
 #include <memory>
 #include <string>
 
-#include "Connection.h"
-#include "TCPSocket.h"
+#include "comm/Address.h"
 
 namespace comm {
 
-    class TCPConnection : public Connection
+    class TCPSocket
     {
-
-        friend class TLSConnClient;
+        friend class TCPConnection;
+        friend class TLSSocket;
 
     public:
 
-        TCPConnection();
-        explicit TCPConnection(std::unique_ptr<TCPSocket> tcp_socket);
-        TCPConnection(TCPConnection&&) = default;
-        TCPConnection(const TCPConnection&) = delete;
+        TCPSocket(const TCPSocket&) = delete;
+        ~TCPSocket();
 
-        TCPConnection& operator=(TCPConnection&&) = default;
-        TCPConnection& operator=(const TCPConnection&) = delete;
+        TCPSocket& operator=(const TCPSocket&) = delete;
 
-        std::unique_ptr<TCPSocket> release_socket();
+        static std::unique_ptr<TCPSocket> create();
+        static std::unique_ptr<TCPSocket> accept(const std::unique_ptr<TCPSocket>& listening_socket);
+
+        bool bind(int port);
+        bool connect(const Address& address);
+        bool listen();
+        bool set_boolean_option(int level, int option_name, bool value);
+        bool set_timeval_option(int level, int option_name, timeval value);
         void shutdown();
 
-    protected:
+    private:
 
-        size_t read(uint8_t* buffer, size_t length) override;
-        size_t write(const uint8_t* buffer, size_t length) override;
+        explicit TCPSocket(int socket_fd);
 
-        std::unique_ptr<TCPSocket> _tcp_socket;
+        int _socket_fd{-1};
     };
 
 };

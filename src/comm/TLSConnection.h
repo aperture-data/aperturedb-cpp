@@ -7,8 +7,8 @@
 #include <memory>
 #include <string>
 
-#include "Connection.h"
-#include "TLSSocket.h"
+#include "comm/Connection.h"
+#include "comm/TLSSocket.h"
 
 namespace comm {
 
