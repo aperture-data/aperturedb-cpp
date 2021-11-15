@@ -39,8 +39,10 @@ ENABLE_WARNING(suggest-override)
 ENABLE_WARNING(useless-cast)
 ENABLE_WARNING(effc++)
 
+#include "aperturedb/Exception.h"
 #include "comm/ConnClient.h"
 #include "comm/Connection.h"
+#include "comm/Exception.h"
 
 using namespace VDMS;
 
@@ -59,32 +61,37 @@ VDMS::Response TokenBasedVDMSClient::query(const std::string& json,
                                            const std::vector<std::string*> blobs,
                                            const std::string& token)
 {
-    protobufs::queryMessage cmd;
-    cmd.set_json(json);
-    cmd.set_token(token);
+    try {
+        protobufs::queryMessage cmd;
+        cmd.set_json(json);
+        cmd.set_token(token);
 
-    for (auto& it : blobs) {
-        std::string *blob = cmd.add_blobs();
-        *blob = *it;
+        for (auto& it : blobs) {
+            std::string *blob = cmd.add_blobs();
+            *blob = *it;
+        }
+
+        std::basic_string<uint8_t> msg(cmd.ByteSizeLong(), 0);
+        cmd.SerializeToArray(const_cast<uint8_t*>(msg.data()), msg.length());
+
+        _connection->send_message(msg.data(), msg.length());
+
+        // Wait for response (blocking call)
+        msg = _connection->recv_message();
+
+        protobufs::queryMessage protobuf_response;
+        protobuf_response.ParseFromArray(msg.data(), msg.length());
+
+        VDMS::Response response;
+        response.json = protobuf_response.json();
+
+        for (auto& it : protobuf_response.blobs()) {
+            response.blobs.push_back(it);
+        }
+
+        return response;
     }
-
-    std::basic_string<uint8_t> msg(cmd.ByteSizeLong(), 0);
-    cmd.SerializeToArray(const_cast<uint8_t*>(msg.data()), msg.length());
-
-    _connection->send_message(msg.data(), msg.length());
-
-    // Wait for response (blocking call)
-    msg = _connection->recv_message();
-
-    protobufs::queryMessage protobuf_response;
-    protobuf_response.ParseFromArray(msg.data(), msg.length());
-
-    VDMS::Response response;
-    response.json = protobuf_response.json();
-
-    for (auto& it : protobuf_response.blobs()) {
-        response.blobs.push_back(it);
+    catch (const comm::Exception& e) {
+        throw VDMS::Exception(e.num, e.name, e.errno_val, e.msg, e.file, e.line);
     }
-
-    return response;
 }

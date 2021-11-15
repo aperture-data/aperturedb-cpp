@@ -17,7 +17,7 @@ ENABLE_WARNING(effc++)
 
 #include "comm/Connection.h"
 #include "comm/ConnServer.h"
-#include "comm/ExceptionComm.h"
+#include "comm/Exception.h"
 
 using namespace VDMS;
 

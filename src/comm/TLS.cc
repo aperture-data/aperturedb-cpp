@@ -6,7 +6,7 @@
 
 #include <openssl/err.h>
 
-#include "comm/ExceptionComm.h"
+#include "comm/Exception.h"
 #include "comm/TLS.h"
 
 std::string bio_to_string(const std::unique_ptr<BIO, decltype(&BIO_free)>& bio);
@@ -92,7 +92,7 @@ std::tuple<std::string, std::string> generate_certificate()
     int res = RSA_generate_key_ex(rsa.get(), rsa_key_length, bn.get(), nullptr);
 
     if (res != 1) {
-        throw ExceptionComm(TLSError, "Unable to create the private key");
+        THROW_EXCEPTION(TLSError, "Unable to create the private key");
     }
 
     std::unique_ptr<X509, decltype(&X509_free)> cert { X509_new(), X509_free };
@@ -125,13 +125,13 @@ std::tuple<std::string, std::string> generate_certificate()
     res  = PEM_write_bio_PrivateKey(private_key_bio.get(), pkey.get(), nullptr, nullptr, 0, nullptr, nullptr);
 
     if (res != 1) {
-        throw ExceptionComm(TLSError, "Unable to write the private key");
+        THROW_EXCEPTION(TLSError, "Unable to write the private key");
     }
 
     res = PEM_write_bio_X509(cert_bio.get(), cert.get());
 
     if (res != 1) {
-        throw ExceptionComm(TLSError, "Unable to write the certificate");
+        THROW_EXCEPTION(TLSError, "Unable to write the certificate");
     }
 
     return {bio_to_string(private_key_bio), bio_to_string(cert_bio)};
@@ -142,14 +142,14 @@ void set_ca_certificate(SSL_CTX* ssl_ctx, const std::string& ca_certificate)
     auto bio = string_to_bio(ca_certificate);
 
     if (!bio) {
-        throw ExceptionComm(TLSError, "Unable to allocate memory for the certificate");
+        THROW_EXCEPTION(TLSError, "Unable to allocate memory for the certificate");
     }
 
     // TODO: add support for setting a passphrase
     std::unique_ptr<X509, decltype(&X509_free)> x509 { PEM_read_bio_X509(bio.get(), nullptr, nullptr, nullptr), X509_free };
 
     if (!x509) {
-        throw ExceptionComm(TLSError, "Unable to read the certificate");
+        THROW_EXCEPTION(TLSError, "Unable to read the certificate");
     }
 
     auto store = ::SSL_CTX_get_cert_store(ssl_ctx);
@@ -157,7 +157,7 @@ void set_ca_certificate(SSL_CTX* ssl_ctx, const std::string& ca_certificate)
     auto res = ::X509_STORE_add_cert(store, x509.get());
 
     if (res != 1) {
-        throw ExceptionComm(TLSError, "Unable to load the certificate");
+        THROW_EXCEPTION(TLSError, "Unable to load the certificate");
     }
 }
 
@@ -171,26 +171,26 @@ void set_tls_certificate(SSL_CTX* ssl_ctx, const std::string& tls_certificate)
     auto bio = string_to_bio(tls_certificate);
 
     if (!bio) {
-        throw ExceptionComm(TLSError, "Unable to allocate memory for the certificate");
+        THROW_EXCEPTION(TLSError, "Unable to allocate memory for the certificate");
     }
 
     // TODO: add support for setting a passphrase
     std::unique_ptr<X509, decltype(&X509_free)> x509 { PEM_read_bio_X509_AUX(bio.get(), nullptr, nullptr, nullptr), X509_free };
 
     if (!x509) {
-        throw ExceptionComm(TLSError, "Unable to read the certificate");
+        THROW_EXCEPTION(TLSError, "Unable to read the certificate");
     }
 
     auto res = SSL_CTX_use_certificate(ssl_ctx, x509.get());
 
     if (res != 1) {
-        throw ExceptionComm(TLSError, "Unable to load the certificate");
+        THROW_EXCEPTION(TLSError, "Unable to load the certificate");
     }
 
     res = SSL_CTX_clear_chain_certs(ssl_ctx);
 
     if (res == 0) {
-        throw ExceptionComm(TLSError, "Unable to load the certificate");
+        THROW_EXCEPTION(TLSError, "Unable to load the certificate");
     }
 
     // TODO: add support for setting a passphrase
@@ -200,7 +200,7 @@ void set_tls_certificate(SSL_CTX* ssl_ctx, const std::string& tls_certificate)
         res = SSL_CTX_add0_chain_cert(ssl_ctx, x509_ca.get());
 
         if (!res) {
-            throw ExceptionComm(TLSError, "Unable to load the certificate");
+            THROW_EXCEPTION(TLSError, "Unable to load the certificate");
         }
 
         // TODO: add support for setting a passphrase
@@ -213,14 +213,14 @@ void set_tls_private_key(SSL_CTX* ssl_ctx, const std::string& tls_private_key)
     auto bio = string_to_bio(tls_private_key);
 
     if (!bio) {
-        throw ExceptionComm(TLSError, "Unable to allocate memory for the certificate");
+        THROW_EXCEPTION(TLSError, "Unable to allocate memory for the certificate");
     }
 
     // TODO: add support for setting a passphrase
     auto rsa = PEM_read_bio_RSAPrivateKey(bio.get(), nullptr, nullptr, nullptr);
 
     if (!rsa) {
-        throw ExceptionComm(TLSError, "Unable to read the certificate");
+        THROW_EXCEPTION(TLSError, "Unable to read the certificate");
     }
 
     auto res = SSL_CTX_use_RSAPrivateKey(ssl_ctx, rsa);
@@ -228,6 +228,6 @@ void set_tls_private_key(SSL_CTX* ssl_ctx, const std::string& tls_private_key)
     if (res != 1) {
         RSA_free(rsa);
 
-        throw ExceptionComm(TLSError, "Unable to load the certificate");
+        THROW_EXCEPTION(TLSError, "Unable to load the certificate");
     }
 }

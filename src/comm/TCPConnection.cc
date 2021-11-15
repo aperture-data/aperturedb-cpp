@@ -28,16 +28,15 @@
  *
  */
 
-#include "TCPConnection.h"
+#include "comm/TCPConnection.h"
 
+#include <assert.h>
+#include <cstdlib>
+#include <netdb.h>
 #include <string>
 #include <unistd.h>
-#include <cstdlib>
-#include <assert.h>
 
-#include <netdb.h>
-
-#include "comm/ExceptionComm.h"
+#include "comm/Exception.h"
 #include "comm/gcc_util.h"
 
 using namespace comm;
@@ -52,7 +51,7 @@ TCPConnection::TCPConnection(std::unique_ptr<TCPSocket> tcp_socket) :
 size_t TCPConnection::read(uint8_t* buffer, size_t length)
 {
     if (!_tcp_socket) {
-        throw ExceptionComm(SocketFail);
+        THROW_EXCEPTION(SocketFail);
     }
 
     auto count = ::recv(_tcp_socket->_socket_fd, buffer, length, MSG_WAITALL);
@@ -60,17 +59,17 @@ size_t TCPConnection::read(uint8_t* buffer, size_t length)
     if (count < 0) {
         DISABLE_WARNING(logical-op)
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            throw ExceptionComm(ConnectionShutDown, "Connection being cleaned cause of timeout");
+            THROW_EXCEPTION(ConnectionShutDown, "Connection being cleaned cause of timeout");
         }
         else {
-            throw ExceptionComm(ReadFail);
+            THROW_EXCEPTION(ReadFail);
         }
         ENABLE_WARNING(logical-op)
     }
     // When a stream socket peer has performed an orderly shutdown, the
     // return value will be 0 (the traditional "end-of-file" return).
     else if (count == 0) {
-        throw ExceptionComm(ConnectionShutDown, "Closing Connection.");
+        THROW_EXCEPTION(ConnectionShutDown, "Closing Connection.");
     }
 
     return static_cast<size_t>(count);
@@ -91,14 +90,14 @@ void TCPConnection::shutdown()
 size_t TCPConnection::write(const uint8_t* buffer, size_t length)
 {
     if (!_tcp_socket) {
-        throw ExceptionComm(SocketFail);
+        THROW_EXCEPTION(SocketFail);
     }
 
     // We need MSG_NOSIGNAL so we don't get SIGPIPE, and we can throw.
     auto count = ::send(_tcp_socket->_socket_fd, buffer, length, MSG_NOSIGNAL);
 
     if (count < 0) {
-        throw ExceptionComm(WriteFail, "Error sending message.");
+        THROW_EXCEPTION(WriteFail, "Error sending message.");
     }
 
     return static_cast<size_t>(count);

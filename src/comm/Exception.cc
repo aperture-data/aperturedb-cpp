@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "comm/ExceptionComm.h"
+#include "comm/Exception.h"
 
 void print_exception(const comm::Exception &e, FILE *f)
 {

@@ -96,8 +96,9 @@ namespace comm {
         Exception& operator=(const Exception&) = delete;
     };
 
-#define ExceptionComm(name, ...) \
-    comm::Exception(comm::name, #name, ##__VA_ARGS__, __FILE__, __LINE__)
 };
+
+#define THROW_EXCEPTION(name, ...) \
+    throw comm::Exception(comm::name, #name, ##__VA_ARGS__, __FILE__, __LINE__)
 
 extern void print_exception(const comm::Exception &e, FILE *f = stdout);

@@ -2,7 +2,7 @@
  * @copyright Copyright (c) 2021 ApertureData Inc.
  */
 
-#include "TCPSocket.h"
+#include "comm/TCPSocket.h"
 
 #include <cstring>
 #include <netdb.h>
@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "comm/ExceptionComm.h"
+#include "comm/Exception.h"
 #include "comm/Variables.h"
 
 using namespace comm;
@@ -38,7 +38,7 @@ std::unique_ptr<TCPSocket> TCPSocket::accept(const std::unique_ptr<TCPSocket>& l
     int connected_socket = ::accept(listening_socket->_socket_fd, reinterpret_cast<sockaddr*>(&clnt_addr), &len);
 
     if (connected_socket < 0) {
-        throw ExceptionComm(ConnectionError);
+        THROW_EXCEPTION(ConnectionError);
     }
 
     return std::unique_ptr<TCPSocket>(new TCPSocket(connected_socket));
@@ -61,7 +61,7 @@ bool TCPSocket::connect(const Address& address)
     struct hostent* server = gethostbyname(address.addr.c_str());
 
     if (server == NULL) {
-        throw ExceptionComm(ServerAddError);
+        THROW_EXCEPTION(ServerAddError);
     }
 
     struct sockaddr_in svr_addr;
@@ -79,7 +79,7 @@ std::unique_ptr<TCPSocket> TCPSocket::create()
     int tcp_socket = ::socket(AF_INET, SOCK_STREAM, 0);
 
     if (tcp_socket < 0) {
-        throw ExceptionComm(SocketFail);
+        THROW_EXCEPTION(SocketFail);
     }
 
     return std::unique_ptr<TCPSocket>(new TCPSocket(tcp_socket));

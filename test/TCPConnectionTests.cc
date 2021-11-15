@@ -10,7 +10,7 @@
 #include "Barrier.h"
 #include "comm/ConnClient.h"
 #include "comm/ConnServer.h"
-#include "comm/ExceptionComm.h"
+#include "comm/Exception.h"
 #include "comm/TCPConnection.h"
 
 #define SERVER_PORT_INTERCHANGE 43444
