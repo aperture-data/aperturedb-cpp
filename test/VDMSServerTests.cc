@@ -11,7 +11,7 @@
 #include "aperturedb/VDMSClient.h"
 #include "AuthEnabledVDMSServer.h"
 #include "comm/ConnServer.h"
-#include "comm/ExceptionComm.h"
+#include "comm/Exception.h"
 #include "comm/TLS.h"
 #include "VDMSServer.h"
 

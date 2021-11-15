@@ -39,7 +39,7 @@
 #include <netinet/tcp.h>
 
 #include "comm/Connection.h"
-#include "comm/ExceptionComm.h"
+#include "comm/Exception.h"
 #include "comm/HelloMessage.h"
 #include "comm/TCPConnection.h"
 #include "comm/TCPSocket.h"
@@ -79,36 +79,36 @@ ConnServer::ConnServer(int port, ConnServerConfig config) :
     }
 
     if (_port <= 0 || static_cast<unsigned>(_port) > MAX_PORT_NUMBER) {
-        throw ExceptionComm(PortError);
+        THROW_EXCEPTION(PortError);
     }
 
     // Create a TCP/IP socket
     _listening_socket = TCPSocket::create();
 
     if (!_listening_socket->set_boolean_option(SOL_SOCKET, SO_REUSEADDR, true)) {
-        throw ExceptionComm(SocketFail, "Unable to create reusable socket");
+        THROW_EXCEPTION(SocketFail, "Unable to create reusable socket");
     }
 
     /*if (!_listening_socket->set_boolean_option(IPPROTO_TCP, TCP_NODELAY, true)) {
-        throw ExceptionComm(SocketFail, "Unable to turn Nagle's off");
+        THROW_EXCEPTION(SocketFail, "Unable to turn Nagle's off");
     }
 
     if (!_listening_socket->set_boolean_option(IPPROTO_TCP, TCP_QUICKACK, true)) {
-        throw ExceptionComm(SocketFail, "Unable to turn quick ack on");
+        THROW_EXCEPTION(SocketFail, "Unable to turn quick ack on");
     }
 
     struct timeval tv = { MAX_RECV_TIMEOUT_SECS, 0 };
     if (!_listening_socket->set_timeval_option(SOL_SOCKET, SO_RCVTIMEO, tv)) {
-        throw ExceptionComm(SocketFail, "Unable to set receive timeout");
+        THROW_EXCEPTION(SocketFail, "Unable to set receive timeout");
     }*/
 
     if (!_listening_socket->bind(_port)) {
-        throw ExceptionComm(BindFail);
+        THROW_EXCEPTION(BindFail);
     }
 
     // Mark socket as pasive
     if (!_listening_socket->listen()) {
-        throw ExceptionComm(ListentFail);
+        THROW_EXCEPTION(ListentFail);
     }
 }
 
@@ -126,7 +126,7 @@ std::unique_ptr<Connection> ConnServer::accept()
     auto response = tcp_connection->recv_message();
 
     if (response.length() != sizeof(HelloMessage)) {
-        throw ExceptionComm(ProtocolError);
+        THROW_EXCEPTION(ProtocolError);
     }
 
     auto client_hello_message = reinterpret_cast<const HelloMessage*>(response.data());
@@ -145,7 +145,7 @@ std::unique_ptr<Connection> ConnServer::accept()
     tcp_connection->send_message(reinterpret_cast<uint8_t*>(&server_hello_message), sizeof(server_hello_message));
 
     if (server_hello_message.version == 0) {
-        throw ExceptionComm(ProtocolError, "Protocol version mismatch");
+        THROW_EXCEPTION(ProtocolError, "Protocol version mismatch");
     }
 
     if ((server_hello_message.protocol & Protocol::TLS) == Protocol::TLS) {
@@ -162,6 +162,6 @@ std::unique_ptr<Connection> ConnServer::accept()
         return tcp_connection;
     }
     else {
-        throw ExceptionComm(ProtocolError, "Protocol negotiation failed");
+        THROW_EXCEPTION(ProtocolError, "Protocol negotiation failed");
     }
 }

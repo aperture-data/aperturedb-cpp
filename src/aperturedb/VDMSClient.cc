@@ -33,8 +33,9 @@
 #include <chrono>
 #include <nlohmann/json.hpp>
 
+#include "aperturedb/Exception.h"
 #include "aperturedb/VDMSClientImpl.h"
-#include "comm/ExceptionComm.h"
+#include "comm/Exception.h"
 
 using namespace VDMS;
 
@@ -70,5 +71,13 @@ VDMSClient::~VDMSClient() = default;
 VDMS::Response VDMSClient::query(const std::string& json,
                                  const std::vector<std::string*> blobs)
 {
-    return _impl->query(json, blobs);
+    try {
+        return _impl->query(json, blobs);
+    }
+    // Addin this try-catch just for consistency
+    // In the current implementation this catch should never be hit
+    // as the comm::Exception is rethown by TokenBasedVDMSClient::query
+    catch (const comm::Exception& e) {
+        throw VDMS::Exception(e.num, e.name, e.errno_val, e.msg, e.file, e.line);
+    }
 }

@@ -33,7 +33,7 @@
 #include <chrono>
 #include <nlohmann/json.hpp>
 
-#include "comm/ExceptionComm.h"
+#include "comm/Exception.h"
 
 using namespace VDMS;
 
@@ -124,7 +124,7 @@ std::unique_ptr<AuthToken> VDMSClientImpl::process_authentication_response(std::
     }
 
     if (auth_token->session_token.empty()) {
-        throw ExceptionComm(AuthenticationError);
+        THROW_EXCEPTION(AuthenticationError);
     }
 
     return auth_token;
@@ -166,7 +166,7 @@ std::unique_ptr<AuthToken> VDMSClientImpl::process_refresh_token_response(std::s
     }
 
     if (auth_token->session_token.empty()) {
-        throw ExceptionComm(AuthenticationError);
+        THROW_EXCEPTION(AuthenticationError);
     }
 
     return auth_token;

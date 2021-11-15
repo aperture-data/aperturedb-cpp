@@ -30,7 +30,7 @@
 
 #include "comm/Connection.h"
 
-#include "comm/ExceptionComm.h"
+#include "comm/Exception.h"
 #include "comm/Variables.h"
 
 using namespace comm;
@@ -60,13 +60,13 @@ void Connection::send_message(const uint8_t* data, uint32_t size)
                                 msg_size_to_str_KB(_max_buffer_size) + "KB." +
                                 " Message size is " +
                                 msg_size_to_str_KB(size) + "KB.";
-        throw ExceptionComm(InvalidMessageSize, error_msg);
+        THROW_EXCEPTION(InvalidMessageSize, error_msg);
     }
 
     auto ret0 = write(reinterpret_cast<const uint8_t*>(&size), sizeof(size));
 
     if (ret0 != sizeof(size)) {
-        throw ExceptionComm(WriteFail);
+        THROW_EXCEPTION(WriteFail);
     }
 
     size_t bytes_sent = 0;
@@ -95,14 +95,14 @@ const std::basic_string<uint8_t>& Connection::recv_message()
                                        sizeof(uint32_t));
 
     if (bytes_recv != sizeof(recv_message_size)) {
-        throw ExceptionComm(ReadFail);
+        THROW_EXCEPTION(ReadFail);
     }
 
     if (recv_message_size > _max_buffer_size) {
         std::string error_msg = "Cannot recieve messages larger than " +
                                 msg_size_to_str_KB(_max_buffer_size) + "KB." +
                                 "Received size: " + std::to_string(recv_message_size);
-        throw ExceptionComm(InvalidMessageSize, error_msg);
+        THROW_EXCEPTION(InvalidMessageSize, error_msg);
     }
 
     _buffer_str.resize(recv_message_size);
@@ -110,11 +110,11 @@ const std::basic_string<uint8_t>& Connection::recv_message()
     bytes_recv = recv_and_check(const_cast<uint8_t*>(_buffer_str.data()), recv_message_size);
 
     if (recv_message_size != bytes_recv) {
-        throw ExceptionComm(ReadFail);
+        THROW_EXCEPTION(ReadFail);
     }
 
     if (recv_message_size != _buffer_str.size()) {
-        throw ExceptionComm(ReadFail);
+        THROW_EXCEPTION(ReadFail);
     }
 
     return _buffer_str;

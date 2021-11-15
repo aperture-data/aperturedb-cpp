@@ -5,7 +5,7 @@
 
 #include "comm/ConnClient.h"
 #include "comm/ConnServer.h"
-#include "comm/ExceptionComm.h"
+#include "comm/Exception.h"
 
 #define SERVER_PORT_INTERCHANGE 43444
 // #define SERVER_PORT_MULTIPLE    43444
@@ -17,8 +17,8 @@ int start_server();
 
 // Server is set to accept any connection (TLS or just TCP)
 static const comm::ConnServerConfig connServerConfig {
-            comm::Protocol::TLS | comm::Protocol::TCP, true
-        };
+    comm::Protocol::TLS | comm::Protocol::TCP, true
+};
 
 int start_server()
 {
@@ -53,7 +53,7 @@ int start_server()
             std::cout << "Message sent correctly" << std::endl;
         }
     }
-    catch (const comm::Exception& e){
+    catch (const comm::Exception& e) {
         std::cout << "Exception: " << e.msg << std::endl;
         print_exception(e);
     }

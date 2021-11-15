@@ -38,7 +38,7 @@
 #include <netdb.h>
 #include <netinet/tcp.h>
 
-#include "comm/ExceptionComm.h"
+#include "comm/Exception.h"
 #include "comm/HelloMessage.h"
 #include "comm/TCPConnection.h"
 #include "comm/TLS.h"
@@ -73,26 +73,26 @@ std::shared_ptr<Connection> ConnClient::connect()
 {
     if (!_connection) {
         if (_server.port <= 0 || static_cast<unsigned>(_server.port) > MAX_PORT_NUMBER) {
-            throw ExceptionComm(PortError);
+            THROW_EXCEPTION(PortError);
         }
 
         // Create a TCP/IP socket
         auto tcp_socket = TCPSocket::create();
 
         /*if (!tcp_socket->set_boolean_option(SOL_SOCKET, SO_REUSEADDR, true)) {
-            throw ExceptionComm(SocketFail, "Unable to bind client socket");
+            THROW_EXCEPTION(SocketFail, "Unable to bind client socket");
         }
 
         if (!tcp_socket->set_boolean_option(IPPROTO_TCP, TCP_NODELAY, true)) {
-            throw ExceptionComm(SocketFail, "Unable to turn Nagle's off");
+            THROW_EXCEPTION(SocketFail, "Unable to turn Nagle's off");
         }
 
         if (!tcp_socket->set_boolean_option(IPPROTO_TCP, TCP_QUICKACK, true)) {
-            throw ExceptionComm(SocketFail, "Unable to turn quick ack on");
+            THROW_EXCEPTION(SocketFail, "Unable to turn quick ack on");
         }*/
 
         if (!tcp_socket->connect(_server)) {
-            throw ExceptionComm(ConnectionError);
+            THROW_EXCEPTION(ConnectionError);
         }
 
         auto tcp_connection = std::unique_ptr<TCPConnection>(new TCPConnection(std::move(tcp_socket)));
@@ -107,17 +107,17 @@ std::shared_ptr<Connection> ConnClient::connect()
         auto response = tcp_connection->recv_message();
 
         if (response.length() != sizeof(HelloMessage)) {
-            throw ExceptionComm(InvalidMessageSize);
+            THROW_EXCEPTION(InvalidMessageSize);
         }
 
         auto server_hello_message = reinterpret_cast<const HelloMessage*>(response.data());
 
         if (server_hello_message->version == 0) {
-            throw ExceptionComm(ProtocolError, "Protocol version missmatch");
+            THROW_EXCEPTION(ProtocolError, "Protocol version missmatch");
         }
 
         if (server_hello_message->protocol == Protocol::None) {
-            throw ExceptionComm(ProtocolError, "Server rejected protocol");
+            THROW_EXCEPTION(ProtocolError, "Server rejected protocol");
         }
         else if ((server_hello_message->protocol & Protocol::TLS) == Protocol::TLS) {
             tcp_socket = tcp_connection->release_socket();
@@ -133,7 +133,7 @@ std::shared_ptr<Connection> ConnClient::connect()
             _connection = std::move(tcp_connection);
         }
         else {
-            throw ExceptionComm(ProtocolError, "Protocol negotiation failed");
+            THROW_EXCEPTION(ProtocolError, "Protocol negotiation failed");
         }
     }
 

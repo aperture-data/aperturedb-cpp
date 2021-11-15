@@ -2,7 +2,7 @@
  * @copyright Copyright (c) 2021 ApertureData Inc.
  */
 
-#include "TLSSocket.h"
+#include "comm/TLSSocket.h"
 
 #include <cstring>
 #include <netdb.h>
@@ -10,9 +10,9 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "comm/ExceptionComm.h"
-#include "OpenSSLBio.h"
-#include "Variables.h"
+#include "comm/Exception.h"
+#include "comm/OpenSSLBio.h"
+#include "comm/Variables.h"
 
 using namespace comm;
 
@@ -37,9 +37,9 @@ void TLSSocket::accept()
     auto result = ::SSL_accept(_ssl);
 
     if (result < 1) {
-        throw ExceptionComm(TLSError,
-                            "Error accepting connection. SSL Error: " +
-                            std::to_string(result));
+        THROW_EXCEPTION(TLSError,
+                        "Error accepting connection. SSL Error: " +
+                        std::to_string(result));
     }
 }
 
@@ -48,7 +48,7 @@ void TLSSocket::connect()
     auto result = ::SSL_connect(_ssl);
 
     if (result < 1) {
-        throw ExceptionComm(TLSError);
+        THROW_EXCEPTION(TLSError);
     }
 }
 
