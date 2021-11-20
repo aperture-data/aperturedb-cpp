@@ -58,13 +58,14 @@ namespace comm {
     };
 
     // Implementation of a client
-    class ConnClient
+    class ConnClient final
     {
 
     public:
 
         explicit ConnClient(const Address& server_address, ConnClientConfig config = {});
         ConnClient(const ConnClient&) = delete;
+        ~ConnClient();
 
         ConnClient& operator=(const ConnClient&) = delete;
 

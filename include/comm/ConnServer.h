@@ -67,14 +67,15 @@ namespace comm {
     };
 
     // Implementation of a server
-    class ConnServer
+    class ConnServer final
     {
 
     public:
 
         explicit ConnServer(int port, ConnServerConfig config = {});
         ConnServer(ConnServer&&) = default;
-        ConnServer (const ConnServer&) = delete;
+        ConnServer(const ConnServer&) = delete;
+        ~ConnServer();
 
         ConnServer& operator=(ConnServer&&) = default;
         ConnServer& operator=(const ConnServer&) = delete;

@@ -64,6 +64,11 @@ ConnClient::ConnClient(const Address& server_address, ConnClientConfig config) :
     }
 }
 
+ConnClient::~ConnClient()
+{
+    SSL_CTX_free(_ssl_ctx);
+}
+
 std::shared_ptr<Connection> ConnClient::connect()
 {
     if (!_connection) {

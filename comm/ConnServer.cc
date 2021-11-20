@@ -111,6 +111,11 @@ ConnServer::ConnServer(int port, ConnServerConfig config) :
     }
 }
 
+ConnServer::~ConnServer()
+{
+    SSL_CTX_free(_ssl_ctx);
+}
+
 std::unique_ptr<Connection> ConnServer::accept()
 {
     auto connected_socket = TCPSocket::accept(_listening_socket);
