@@ -113,7 +113,7 @@ std::shared_ptr<Connection> ConnClient::connect()
         auto server_hello_message = reinterpret_cast<const HelloMessage*>(response.data());
 
         if (server_hello_message->version == 0) {
-            THROW_EXCEPTION(ProtocolError, "Protocol version missmatch");
+            THROW_EXCEPTION(ProtocolError, "Protocol version mismatch");
         }
 
         if (server_hello_message->protocol == Protocol::None) {

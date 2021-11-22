@@ -72,7 +72,7 @@ namespace VDMS {
         TokenBasedVDMSClient(std::string addr = "localhost",
                              int port = VDMS_PORT,
                              Protocol protocols = Protocol::Any,
-                             std::string ca_certfificate = "");
+                             std::string ca_certificate = "");
         ~TokenBasedVDMSClient();
 
         // Blocking call
@@ -86,18 +86,18 @@ namespace VDMS {
         VDMSClient(std::string addr = "localhost",
                    int port = VDMS_PORT,
                    Protocol protocols = Protocol::Any,
-                   std::string ca_certfificate = "");
+                   std::string ca_certificate = "");
         VDMSClient(std::string username,
                    std::string password,
                    std::string addr = "localhost",
                    int port = VDMS_PORT,
                    Protocol protocols = Protocol::Any,
-                   std::string ca_certfificate = "");
+                   std::string ca_certificate = "");
         VDMSClient(std::string api_key,
                    std::string addr = "localhost",
                    int port = VDMS_PORT,
                    Protocol protocols = Protocol::Any,
-                   std::string ca_certfificate = "");
+                   std::string ca_certificate = "");
         ~VDMSClient();
 
         // Blocking call

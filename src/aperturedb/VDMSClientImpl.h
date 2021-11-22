@@ -53,18 +53,18 @@ namespace VDMS {
         VDMSClientImpl(std::string addr,
                    int port,
                    comm::Protocol protocols,
-                   std::string ca_certfificate);
+                   std::string ca_certificate);
         VDMSClientImpl(std::string username,
                    std::string password,
                    std::string addr,
                    int port,
                    comm::Protocol protocols,
-                   std::string ca_certfificate);
+                   std::string ca_certificate);
         VDMSClientImpl(std::string api_key,
                    std::string addr,
                    int port,
                    comm::Protocol protocols,
-                   std::string ca_certfificate);
+                   std::string ca_certificate);
         ~VDMSClientImpl();
 
         // Blocking call
