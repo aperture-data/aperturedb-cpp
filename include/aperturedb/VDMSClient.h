@@ -45,7 +45,7 @@ namespace VDMS {
 
     class VDMSClientImpl;
 
-    static const int VDMS_PORT = 55555;
+    constexpr int VDMS_PORT{ 55555 };
 
     enum class Protocol : uint8_t
     {
