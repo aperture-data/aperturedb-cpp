@@ -21,9 +21,7 @@ ENABLE_WARNING(effc++)
 
 using namespace VDMS;
 
-std::string random_string(size_t length);
-
-std::string random_string(size_t length)
+std::string AuthEnabledVDMSServer::random_string(size_t length)
 {
     auto randchar = []() -> char
     {

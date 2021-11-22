@@ -48,6 +48,8 @@ namespace VDMS {
         void regenerate_tokens();
         void send_message(const std::shared_ptr<comm::Connection>& connection, const protobufs::queryMessage& protobuf_response);
 
+        std::string random_string(size_t length);
+
         std::atomic<bool> _stop_signal{false};
         std::unique_ptr<std::thread> _work_thread{};
         std::string session_token{};
