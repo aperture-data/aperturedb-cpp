@@ -89,7 +89,7 @@ ConnServer::ConnServer(int port, ConnServerConfig config) :
         THROW_EXCEPTION(SocketFail, "Unable to create reusable socket");
     }
 
-    /*if (!_listening_socket->set_boolean_option(IPPROTO_TCP, TCP_NODELAY, true)) {
+    if (!_listening_socket->set_boolean_option(IPPROTO_TCP, TCP_NODELAY, true)) {
         THROW_EXCEPTION(SocketFail, "Unable to turn Nagle's off");
     }
 
@@ -100,7 +100,7 @@ ConnServer::ConnServer(int port, ConnServerConfig config) :
     struct timeval tv = { MAX_RECV_TIMEOUT_SECS, 0 };
     if (!_listening_socket->set_timeval_option(SOL_SOCKET, SO_RCVTIMEO, tv)) {
         THROW_EXCEPTION(SocketFail, "Unable to set receive timeout");
-    }*/
+    }
 
     if (!_listening_socket->bind(_port)) {
         THROW_EXCEPTION(BindFail);

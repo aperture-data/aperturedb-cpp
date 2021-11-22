@@ -79,7 +79,7 @@ std::shared_ptr<Connection> ConnClient::connect()
         // Create a TCP/IP socket
         auto tcp_socket = TCPSocket::create();
 
-        /*if (!tcp_socket->set_boolean_option(SOL_SOCKET, SO_REUSEADDR, true)) {
+        if (!tcp_socket->set_boolean_option(SOL_SOCKET, SO_REUSEADDR, true)) {
             THROW_EXCEPTION(SocketFail, "Unable to bind client socket");
         }
 
@@ -89,7 +89,7 @@ std::shared_ptr<Connection> ConnClient::connect()
 
         if (!tcp_socket->set_boolean_option(IPPROTO_TCP, TCP_QUICKACK, true)) {
             THROW_EXCEPTION(SocketFail, "Unable to turn quick ack on");
-        }*/
+        }
 
         if (!tcp_socket->connect(_server)) {
             THROW_EXCEPTION(ConnectionError);
