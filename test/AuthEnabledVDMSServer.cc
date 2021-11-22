@@ -119,10 +119,10 @@ bool AuthEnabledVDMSServer::is_authenticate_request(const protobufs::queryMessag
     auto requestJson = nlohmann::json::parse(protobuf_request.json());
 
     if (requestJson.is_array() && requestJson.size() == 1) {
-        auto requestElement = requestJson.at(0);
+        const auto& requestElement = requestJson.at(0);
 
         if (requestElement.is_object() && requestElement.contains("Authenticate")) {
-            auto authenticateElement = requestElement["Authenticate"];
+            const auto& authenticateElement = requestElement["Authenticate"];
 
             if (authenticateElement.is_object() && authenticateElement.contains("username") && (authenticateElement.contains("password") || authenticateElement.contains("token"))) {
                 return true;
@@ -138,10 +138,10 @@ bool AuthEnabledVDMSServer::is_refresh_token_request(const protobufs::queryMessa
     auto requestJson = nlohmann::json::parse(protobuf_request.json());
 
     if (requestJson.is_array() && requestJson.size() == 1) {
-        auto requestElement = requestJson.at(0);
+        const auto& requestElement = requestJson.at(0);
 
         if (requestElement.is_object() && requestElement.contains("RefreshToken")) {
-            auto authenticateElement = requestElement["RefreshToken"];
+            const auto& authenticateElement = requestElement["RefreshToken"];
 
             if (authenticateElement.is_object() && authenticateElement.contains("refresh_token")) {
                 return true;
@@ -157,7 +157,9 @@ protobufs::queryMessage AuthEnabledVDMSServer::receive_message(const std::shared
     std::basic_string<uint8_t> message_received = connection->recv_message();
 
     protobufs::queryMessage protobuf_request;
-    protobuf_request.ParseFromArray(message_received.data(), message_received.length());
+    if (!protobuf_request.ParseFromArray(message_received.data(), message_received.length())) {
+        THROW_EXCEPTION(ProtocolError, "Invalid message received");
+    }
 
     return protobuf_request;
 }
