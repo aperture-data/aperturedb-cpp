@@ -79,7 +79,7 @@ SSL_CTX* create_server_context()
     return ctx;
 }
 
-std::tuple<std::string, std::string> generate_certificate()
+Certificate generate_certificate()
 {
     constexpr int rsa_key_length = 2048;
     constexpr int expires_in = 24 * 3600; // seconds
@@ -134,7 +134,11 @@ std::tuple<std::string, std::string> generate_certificate()
         THROW_EXCEPTION(TLSError, "Unable to write the certificate");
     }
 
-    return {bio_to_string(private_key_bio), bio_to_string(cert_bio)};
+    Certificate c;
+    c.private_key = bio_to_string(private_key_bio);
+    c.cert        = bio_to_string(cert_bio);
+
+    return c;
 }
 
 void set_ca_certificate(SSL_CTX* ssl_ctx, const std::string& ca_certificate)

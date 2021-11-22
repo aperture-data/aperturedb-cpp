@@ -61,9 +61,9 @@ ConnServer::ConnServer(int port, ConnServerConfig config) :
     if (_config.auto_generate_certificate) {
         auto certificates = generate_certificate();
 
-        ::set_tls_private_key(_ssl_ctx, std::get<0>(certificates));
+        ::set_tls_private_key(_ssl_ctx, certificates.private_key);
 
-        ::set_tls_certificate(_ssl_ctx, std::get<1>(certificates));
+        ::set_tls_certificate(_ssl_ctx, certificates.cert);
     } else {
         if (!_config.ca_certificate.empty()) {
             ::set_ca_certificate(_ssl_ctx, _config.ca_certificate);
