@@ -127,14 +127,3 @@ env.Alias('install',
         env.Install(os.path.join(prefix, "include/comm/"),
                                  source=Glob("include/comm/" + "*.h")),
         )
-
-# Mock-up Server
-server_env = Environment(CPPPATH  = ['include', 'src', 'test'],
-                            CXXFLAGS = CXXFLAGS,
-                            LIBS     = ['comm', 'pthread', 'gtest', 'glog'],
-                            LIBPATH  = ['lib/']
-                            )
-
-server_cc = ['server/server.cc']
-
-server = server_env.Program('server/server', server_cc)
