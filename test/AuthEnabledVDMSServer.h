@@ -34,7 +34,7 @@ namespace VDMS {
     };
 
     class AuthEnabledVDMSServer {
-        std::unique_ptr<comm::ConnServer> _server;
+        comm::ConnServer _server;
 
     public:
         AuthEnabledVDMSServer(int port, AuthEnabledVDMSServerConfig config);

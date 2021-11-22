@@ -42,11 +42,11 @@ std::string AuthEnabledVDMSServer::random_string(size_t length)
 }
 
 AuthEnabledVDMSServer::AuthEnabledVDMSServer(int port, AuthEnabledVDMSServerConfig config) :
-    _server(new comm::ConnServer(port, config.connServerConfig))
+    _server(port, config.connServerConfig)
 {
     auto thread_function = [&]()
     {
-        std::shared_ptr<comm::Connection> server_conn = _server->accept();
+        std::shared_ptr<comm::Connection> server_conn = _server.accept();
 
         while (!_stop_signal) {
             protobufs::queryMessage protobuf_request;
