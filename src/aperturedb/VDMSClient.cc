@@ -31,7 +31,6 @@
 #include "aperturedb/VDMSClient.h"
 
 #include <chrono>
-#include <nlohmann/json.hpp>
 
 #include "aperturedb/Exception.h"
 #include "aperturedb/VDMSClientImpl.h"
@@ -42,8 +41,8 @@ using namespace VDMS;
 VDMSClient::VDMSClient(std::string addr,
                        int port,
                        Protocol protocols,
-                       std::string ca_certfificate) :
-    _impl(new VDMSClientImpl(std::move(addr), port, static_cast<comm::Protocol>(protocols), std::move(ca_certfificate)))
+                       std::string ca_certificate) :
+    _impl(new VDMSClientImpl(std::move(addr), port, static_cast<comm::Protocol>(protocols), std::move(ca_certificate)))
 {
 }
 
@@ -52,8 +51,8 @@ VDMSClient::VDMSClient(std::string username,
                        std::string addr,
                        int port,
                        Protocol protocols,
-                       std::string ca_certfificate) :
-    _impl(new VDMSClientImpl(std::move(username), std::move(password), std::move(addr), port, static_cast<comm::Protocol>(protocols), std::move(ca_certfificate)))
+                       std::string ca_certificate) :
+    _impl(new VDMSClientImpl(std::move(username), std::move(password), std::move(addr), port, static_cast<comm::Protocol>(protocols), std::move(ca_certificate)))
 {
 }
 
@@ -61,8 +60,8 @@ VDMSClient::VDMSClient(std::string api_key,
                        std::string addr,
                        int port,
                        Protocol protocols,
-                       std::string ca_certfificate) :
-    _impl(new VDMSClientImpl(std::move(api_key), std::move(addr), port, static_cast<comm::Protocol>(protocols), std::move(ca_certfificate)))
+                       std::string ca_certificate) :
+    _impl(new VDMSClientImpl(std::move(api_key), std::move(addr), port, static_cast<comm::Protocol>(protocols), std::move(ca_certificate)))
 {
 }
 
