@@ -7,6 +7,10 @@
 #include <condition_variable>
 #include <mutex>
 
+// This is a generic barrier to sync initialization
+// for client and server in test
+// This barrier will block until "count" number
+// of threads reach the barrier point.
 class Barrier
 {
 public:
