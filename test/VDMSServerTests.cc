@@ -24,8 +24,8 @@ protected:
     {
         auto certificates = generate_certificate();
 
-        std::string server_private_key = std::get<0>(certificates);
-        std::string server_certificate = std::get<1>(certificates);
+        std::string server_private_key = certificates.private_key;
+        std::string server_certificate = certificates.cert;
 
         connServerConfig = comm::ConnServerConfig{comm::Protocol::TLS, false, "", server_certificate, server_private_key};
     }
