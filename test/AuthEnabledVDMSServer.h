@@ -26,7 +26,7 @@ namespace VDMS {
         int32_t session_token_expires_in = 60 * 60;
 
         AuthEnabledVDMSServerConfig(comm::ConnServerConfig connServerConfig_ = {}, int32_t refresh_token_expires_in_ = 24 * 60 * 60, int32_t session_token_expires_in_ = 60 * 60) :
-            connServerConfig(connServerConfig_),
+            connServerConfig(std::move(connServerConfig_)),
             refresh_token_expires_in(refresh_token_expires_in_),
             session_token_expires_in(session_token_expires_in_)
         {
