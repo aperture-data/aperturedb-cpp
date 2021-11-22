@@ -37,7 +37,7 @@ protected:
 TEST_F(VDMSServerTests, SyncMessages)
 {
     std::string client_to_server("testing this awesome comm library with " \
-                                 "come random data");
+                                 "some random data");
 
     VDMS::VDMSServer server(SERVER_PORT_INTERCHANGE, connServerConfig);
 
