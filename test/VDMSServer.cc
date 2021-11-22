@@ -63,12 +63,17 @@ protobufs::queryMessage VDMSServer::receive_message(const std::shared_ptr<comm::
     std::basic_string<uint8_t> message_received = connection->recv_message();
 
     protobufs::queryMessage protobuf_request;
-    protobuf_request.ParseFromArray(message_received.data(), message_received.length());
+    bool ok = protobuf_request.ParseFromArray(message_received.data(), message_received.length());
+
+    if (!ok) {
+        throw std::runtime_error("Error parsing response using protobuf message\n");
+    }
 
     return protobuf_request;
 }
 
-void VDMSServer::send_message(const std::shared_ptr<comm::Connection>& connection, const protobufs::queryMessage& protobuf_response)
+void VDMSServer::send_message(const std::shared_ptr<comm::Connection>& connection,
+                              const protobufs::queryMessage& protobuf_response)
 {
     std::basic_string<uint8_t> message(protobuf_response.ByteSizeLong(), 0);
     protobuf_response.SerializeToArray(const_cast<uint8_t*>(message.data()), message.length());
