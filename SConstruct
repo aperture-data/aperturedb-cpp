@@ -14,12 +14,11 @@ def compileProtoFiles(client_env):
     #Compile .proto file to generate protobuf files (.h and .cc).
 
     protoQuery = client_env.Command (
-             ['src/queryMessage.pb.h',
-              'src/queryMessage.pb.cc',
-              'python/vdmsqueryMessage_pb2.py',
+             ['src/aperturedb/queryMessage.pb.h',
+              'src/aperturedb/queryMessage.pb.cc',
              ], # TARGET
-              'src/queryMessage.proto', # $SOURCE
-              'protoc -I=src/ --cpp_out=src/ $SOURCE'
+              'src/aperturedb/queryMessage.proto', # $SOURCE
+              'protoc -I=src/aperturedb/ --cpp_out=src/aperturedb/ $SOURCE'
               )
 
 # Optimization and language options.
@@ -38,46 +37,93 @@ OPTFLAGS = "-O3 "
 env = Environment(CXXFLAGS="-std=c++11 " + FFLAGS + OPTFLAGS + WFLAGS)
 # env.MergeFlags(GetOption('cflags'))
 
-client_env = env.Clone()
-client_env.Replace(
-        CPPPATH = ['include/aperturedb', 'src'],
+comm_env = env.Clone()
+comm_env.Replace(
+        CPPPATH = ['include', 'src'],
         LIBS    = [],
         LIBPATH = []
              )
 
-client_env.Replace(CXXFLAGS = client_env['CXXFLAGS'].replace("-Weffc++", ""))
-client_env.Replace(CXXFLAGS = re.sub("-Warray-bounds[^\s]+", "-Warray-bounds=1", client_env['CXXFLAGS']))
-client_env.Replace(CXXFLAGS = re.sub("-Wsuggest-attribute=const", "-Wno-suggest-attribute=const", client_env['CXXFLAGS']))
-client_env.Replace(CXXFLAGS = re.sub("-Wsuggest-final-types",     "-Wno-suggest-final-types",     client_env['CXXFLAGS']))
-client_env.Replace(CXXFLAGS = re.sub("-Wuseless-cast",            "-Wno-useless-cast",            client_env['CXXFLAGS']))
-client_env.Replace(CXXFLAGS = re.sub("-Wsuggest-override",        "-Wno-suggest-override",        client_env['CXXFLAGS']))
+comm_env.Replace(CXXFLAGS = comm_env['CXXFLAGS'].replace("-Weffc++", ""))
+comm_env.Replace(CXXFLAGS = re.sub("-Warray-bounds[^\s]+", "-Warray-bounds=1", comm_env['CXXFLAGS']))
+comm_env.Replace(CXXFLAGS = re.sub("-Wsuggest-attribute=const", "-Wno-suggest-attribute=const", comm_env['CXXFLAGS']))
+comm_env.Replace(CXXFLAGS = re.sub("-Wsuggest-final-types",     "-Wno-suggest-final-types",     comm_env['CXXFLAGS']))
+comm_env.Replace(CXXFLAGS = re.sub("-Wuseless-cast",            "-Wno-useless-cast",            comm_env['CXXFLAGS']))
+comm_env.Replace(CXXFLAGS = re.sub("-Wsuggest-override",        "-Wno-suggest-override",        comm_env['CXXFLAGS']))
+
+comm_cc = [
+           'src/comm/ConnClient.cc',
+           'src/comm/Connection.cc',
+           'src/comm/ConnServer.cc',
+           'src/comm/Exception.cc',
+           'src/comm/OpenSSLBio.cc',
+           'src/comm/TCPConnection.cc',
+           'src/comm/TCPSocket.cc',
+           'src/comm/TLS.cc',
+           'src/comm/TLSConnection.cc',
+           'src/comm/TLSSocket.cc',
+          ]
+
+comm_env.ParseConfig('pkg-config --cflags --libs openssl')
+ulib = comm_env.SharedLibrary('lib/comm', comm_cc)
+
+client_env = comm_env.Clone()
+client_env.Replace(
+        CPPPATH = ['include', 'src'],
+        LIBS    = ['comm'],
+        LIBPATH = ['lib/']
+             )
 
 compileProtoFiles(client_env)
 
-comm_cc = ['src/VDMSClient.cc',
-           'src/Connection.cc',
-           'src/ConnServer.cc',
-           'src/ConnClient.cc',
-           'src/Exception.cc',
-           'src/queryMessage.pb.cc',
+client_cc = [
+           'src/aperturedb/queryMessage.pb.cc',
+           'src/aperturedb/TokenBasedVDMSClient.cc',
+           'src/aperturedb/VDMSClient.cc',
+           'src/aperturedb/VDMSClientImpl.cc'
           ]
 
 client_env.ParseConfig('pkg-config --cflags --libs protobuf')
-ulib = client_env.SharedLibrary('lib/aperturedb-client', comm_cc)
+ulib = client_env.SharedLibrary('lib/aperturedb-client', client_cc)
 
 CXXFLAGS = env['CXXFLAGS']
 
 # Comm Testing
-comm_test_env = Environment(CPPPATH  = ['include/aperturedb'],
+comm_test_env = Environment(CPPPATH  = ['include', 'src'],
                             CXXFLAGS = CXXFLAGS,
-                            LIBS     = ["aperturedb-client", 'pthread', 'gtest', 'glog'],
+                            LIBS     = ['aperturedb-client', 'comm', 'pthread', 'gtest', 'glog'],
                             LIBPATH  = ['lib/']
                             )
 
-comm_test_source_files = "test/UnitTests.cc";
+comm_test_env.ParseConfig('pkg-config --cflags --libs protobuf')
+
+comm_test_source_files = [
+                          'test/AuthEnabledVDMSServer.cc',
+                          'test/Barrier.cc',
+                          'test/TCPConnectionTests.cc',
+                          'test/TLSConnectionTests.cc',
+                          'test/VDMSServer.cc',
+                          'test/VDMSServerTests.cc'
+                         ]
+
 comm_test = comm_test_env.Program('test/comm_test', comm_test_source_files)
 
 prefix = str(GetOption('prefix'))
 
 env.Alias('install',
-        env.Install(os.path.join(prefix, "lib"), source="lib/libaperturedb-client.so"))
+        env.Install(os.path.join(prefix, "lib"), source="lib/libcomm.so"),
+        )
+
+env.Alias('install',
+        env.Install(os.path.join(prefix, "lib"), source="lib/libaperturedb-client.so"),
+        )
+
+env.Alias('install',
+        env.Install(os.path.join(prefix, "include/aperturedb/"),
+                                 source=Glob("include/aperturedb/" + "*.h")),
+        )
+
+env.Alias('install',
+        env.Install(os.path.join(prefix, "include/comm/"),
+                                 source=Glob("include/comm/" + "*.h")),
+        )

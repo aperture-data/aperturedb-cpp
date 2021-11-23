@@ -1,0 +1,10 @@
+__pycache__
+/server/server
+/test/comm_test
+.sconsign.dblite
+
+*.o
+*.os
+*.pb.h
+*.pb.cc
+*.so

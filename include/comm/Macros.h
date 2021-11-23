@@ -4,6 +4,7 @@
  * The MIT License
  *
  * @copyright Copyright (c) 2017 Intel Corporation
+ * @copyright Copyright (c) 2021 ApertureData Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"),
@@ -27,16 +28,12 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
+#pragma once
 
-#include "ExceptionComm.h"
+#define MOVEABLE_BY_DEFAULT(Type)       \
+    Type(Type&&) = default;             \
+    Type& operator=(Type&&) = default;
 
-void print_exception(const comm::Exception &e, FILE *f)
-{
-    fprintf(f, "[Exception] %s at %s:%d\n", e.name, e.file, e.line);
-    if (e.errno_val != 0)
-        fprintf(f, "%s: %s\n", e.msg.c_str(), strerror(e.errno_val));
-    else if (!e.msg.empty())
-        fprintf(f, "%s\n", e.msg.c_str());
-}
+#define NOT_COPYABLE(Type)                  \
+    Type(const Type&) = delete;             \
+    Type& operator=(const Type&) = delete;

@@ -4,6 +4,7 @@
  * The MIT License
  *
  * @copyright Copyright (c) 2017 Intel Corporation
+ * @copyright Copyright (c) 2021 ApertureData Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"),
@@ -46,6 +47,11 @@ namespace comm {
         PortError,
         ConnectionError,
         ConnectionShutDown,
+
+        ProtocolError,
+        TLSError,
+
+        AuthenticationError,
 
         InvalidMessageSize,
         Undefined = 100,// Any undefined error
@@ -90,8 +96,9 @@ namespace comm {
         Exception& operator=(const Exception&) = delete;
     };
 
-#define ExceptionComm(name, ...) \
-    comm::Exception(comm::name, #name, ##__VA_ARGS__, __FILE__, __LINE__)
 };
+
+#define THROW_EXCEPTION(name, ...) \
+    throw comm::Exception(comm::name, #name, ##__VA_ARGS__, __FILE__, __LINE__)
 
 extern void print_exception(const comm::Exception &e, FILE *f = stdout);

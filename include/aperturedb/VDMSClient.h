@@ -4,6 +4,7 @@
  * The MIT License
  *
  * @copyright Copyright (c) 2017 Intel Corporation
+ * @copyright Copyright (c) 2021 ApertureData Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"),
@@ -29,33 +30,81 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
-#include "Connection.h"
+
+namespace comm {
+
+    class ConnClient;
+    class Connection;
+
+}
 
 namespace VDMS {
+
+    class VDMSClientImpl;
+
+    constexpr int VDMS_PORT{ 55555 };
+
+    enum class Protocol : uint8_t
+    {
+        TCP = 1,
+        TLS = 2,
+        Any = 3
+    };
 
     struct Response {
         std::string json{};
         std::vector<std::string> blobs{};
     };
 
-    class VDMSClient {
-        static const int VDMS_PORT = 55555;
-
+    class TokenBasedVDMSClient {
         // The constructor of the ConnClient class already connects to the
         // server if instantiated with the right address and port and it gets
         // disconnected when the class goes out of scope. For now, we
         // will leave the functioning like that. If the client has a need to
         // disconnect and connect specifically, then we can add explicit calls.
-        comm::ConnClient _conn;
+        std::unique_ptr<comm::ConnClient> _client;
+        std::shared_ptr<comm::Connection> _connection;
 
     public:
-        VDMSClient(std::string addr = "localhost", int port = VDMS_PORT);
+        TokenBasedVDMSClient(std::string addr = "localhost",
+                             int port = VDMS_PORT,
+                             Protocol protocols = Protocol::Any,
+                             std::string ca_certificate = "");
+        ~TokenBasedVDMSClient();
 
         // Blocking call
-        VDMS::Response query(const std::string &json_query,
-                             const std::vector<std::string *> blobs = {});
+        VDMS::Response query(const std::string& json_query,
+                             const std::vector<std::string*> blobs = {},
+                             const std::string& token = "");
+    };
 
+    class VDMSClient {
+    public:
+        VDMSClient(std::string addr = "localhost",
+                   int port = VDMS_PORT,
+                   Protocol protocols = Protocol::Any,
+                   std::string ca_certificate = "");
+        VDMSClient(std::string username,
+                   std::string password,
+                   std::string addr = "localhost",
+                   int port = VDMS_PORT,
+                   Protocol protocols = Protocol::Any,
+                   std::string ca_certificate = "");
+        VDMSClient(std::string api_key,
+                   std::string addr = "localhost",
+                   int port = VDMS_PORT,
+                   Protocol protocols = Protocol::Any,
+                   std::string ca_certificate = "");
+        ~VDMSClient();
+
+        // Blocking call
+        VDMS::Response query(const std::string& json_query,
+                             const std::vector<std::string*> blobs = {});
+
+    private:
+        std::unique_ptr<VDMSClientImpl> _impl;
     };
 };
