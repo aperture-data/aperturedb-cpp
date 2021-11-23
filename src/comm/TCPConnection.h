@@ -34,6 +34,7 @@
 #include <string>
 
 #include "comm/Connection.h"
+#include "comm/Macros.h"
 #include "comm/TCPSocket.h"
 
 namespace comm {
@@ -47,11 +48,9 @@ namespace comm {
 
         TCPConnection();
         explicit TCPConnection(std::unique_ptr<TCPSocket> tcp_socket);
-        TCPConnection(TCPConnection&&) = default;
-        TCPConnection(const TCPConnection&) = delete;
 
-        TCPConnection& operator=(TCPConnection&&) = default;
-        TCPConnection& operator=(const TCPConnection&) = delete;
+        MOVEABLE_BY_DEFAULT(TCPConnection);
+        NOT_COPYABLE(TCPConnection);
 
         std::unique_ptr<TCPSocket> release_socket();
         void shutdown();

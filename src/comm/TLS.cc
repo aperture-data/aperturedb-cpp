@@ -9,8 +9,14 @@
 #include "comm/Exception.h"
 #include "comm/TLS.h"
 
-std::string bio_to_string(const std::unique_ptr<BIO, decltype(&BIO_free)>& bio);
-std::unique_ptr<BIO, decltype(&BIO_free)> string_to_bio(const std::string& string);
+DEFINE_OPENSSL_DELETER(BIGNUM, BN_free);
+DEFINE_OPENSSL_DELETER(BIO, BIO_free);
+DEFINE_OPENSSL_DELETER(EVP_PKEY, EVP_PKEY_free);
+DEFINE_OPENSSL_DELETER(RSA, RSA_free);
+DEFINE_OPENSSL_DELETER(X509, X509_free);
+
+std::string bio_to_string(const OpenSSLPointer<BIO>& bio);
+OpenSSLPointer<BIO> string_to_bio(const std::string& string);
 
 OpenSSLInitializer::OpenSSLInitializer()
 {
@@ -27,7 +33,7 @@ OpenSSLInitializer& OpenSSLInitializer::instance()
     return initializer;
 }
 
-std::string bio_to_string(const std::unique_ptr<BIO, decltype(&BIO_free)>& bio)
+std::string bio_to_string(const OpenSSLPointer<BIO>& bio)
 {
     std::string result;
 
@@ -39,14 +45,14 @@ std::string bio_to_string(const std::unique_ptr<BIO, decltype(&BIO_free)>& bio)
     return result;
 }
 
-std::unique_ptr<BIO, decltype(&BIO_free)> string_to_bio(const std::string& string)
+OpenSSLPointer<BIO> string_to_bio(const std::string& string)
 {
     auto bio = BIO_new_mem_buf(static_cast<const void*>(string.c_str()), static_cast<int>(string.length()));
 
-    return std::unique_ptr<BIO, decltype(&BIO_free)>{ bio, BIO_free };
+    return OpenSSLPointer<BIO>{ bio };
 }
 
-SSL_CTX* create_client_context()
+OpenSSLPointer<SSL_CTX> create_client_context()
 {
     const SSL_METHOD* method;
     SSL_CTX* ctx;
@@ -61,10 +67,10 @@ SSL_CTX* create_client_context()
         exit(EXIT_FAILURE);
     }
 
-    return ctx;
+    return OpenSSLPointer<SSL_CTX>{ ctx };
 }
 
-SSL_CTX* create_server_context()
+OpenSSLPointer<SSL_CTX> create_server_context()
 {
     auto method = TLS_server_method();
 
@@ -76,7 +82,7 @@ SSL_CTX* create_server_context()
         exit(EXIT_FAILURE);
     }
 
-    return ctx;
+    return OpenSSLPointer<SSL_CTX>{ ctx };
 }
 
 Certificate generate_certificate()
@@ -84,8 +90,8 @@ Certificate generate_certificate()
     constexpr int rsa_key_length = 2048;
     constexpr int expires_in = 24 * 3600; // seconds
 
-    std::unique_ptr<RSA, decltype(&RSA_free)> rsa { RSA_new(), RSA_free };
-    std::unique_ptr<BIGNUM, decltype(&BN_free)> bn { BN_new(), BN_free };
+    OpenSSLPointer<RSA> rsa { RSA_new() };
+    OpenSSLPointer<BIGNUM> bn { BN_new() };
 
     BN_set_word(bn.get(), RSA_F4);
 
@@ -95,8 +101,8 @@ Certificate generate_certificate()
         THROW_EXCEPTION(TLSError, "Unable to create the private key");
     }
 
-    std::unique_ptr<X509, decltype(&X509_free)> cert { X509_new(), X509_free };
-    std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pkey { EVP_PKEY_new(), EVP_PKEY_free};
+    OpenSSLPointer<X509> cert { X509_new() };
+    OpenSSLPointer<EVP_PKEY> pkey { EVP_PKEY_new() };
 
     EVP_PKEY_assign(pkey.get(), EVP_PKEY_RSA, reinterpret_cast<char*>(rsa.release()));
     ASN1_INTEGER_set(X509_get_serialNumber(cert.get()), 1);
@@ -119,8 +125,8 @@ Certificate generate_certificate()
     X509_set_issuer_name(cert.get(), name);
     X509_sign(cert.get(), pkey.get(), EVP_sha256());
 
-    std::unique_ptr<BIO, decltype(&BIO_free)> private_key_bio { BIO_new(BIO_s_mem()), BIO_free };
-    std::unique_ptr<BIO, decltype(&BIO_free)> cert_bio { BIO_new(BIO_s_mem()), BIO_free };
+    OpenSSLPointer<BIO> private_key_bio { BIO_new(BIO_s_mem()) };
+    OpenSSLPointer<BIO> cert_bio { BIO_new(BIO_s_mem()) };
 
     res  = PEM_write_bio_PrivateKey(private_key_bio.get(), pkey.get(), nullptr, nullptr, 0, nullptr, nullptr);
 
@@ -150,7 +156,7 @@ void set_ca_certificate(SSL_CTX* ssl_ctx, const std::string& ca_certificate)
     }
 
     // TODO: add support for setting a passphrase
-    std::unique_ptr<X509, decltype(&X509_free)> x509 { PEM_read_bio_X509(bio.get(), nullptr, nullptr, nullptr), X509_free };
+    OpenSSLPointer<X509> x509 { PEM_read_bio_X509(bio.get(), nullptr, nullptr, nullptr) };
 
     if (!x509) {
         THROW_EXCEPTION(TLSError, "Unable to read the certificate");
@@ -179,7 +185,7 @@ void set_tls_certificate(SSL_CTX* ssl_ctx, const std::string& tls_certificate)
     }
 
     // TODO: add support for setting a passphrase
-    std::unique_ptr<X509, decltype(&X509_free)> x509 { PEM_read_bio_X509_AUX(bio.get(), nullptr, nullptr, nullptr), X509_free };
+    OpenSSLPointer<X509> x509 { PEM_read_bio_X509_AUX(bio.get(), nullptr, nullptr, nullptr) };
 
     if (!x509) {
         THROW_EXCEPTION(TLSError, "Unable to read the certificate");
@@ -198,7 +204,7 @@ void set_tls_certificate(SSL_CTX* ssl_ctx, const std::string& tls_certificate)
     }
 
     // TODO: add support for setting a passphrase
-    std::unique_ptr<X509, decltype(&X509_free)> x509_ca { PEM_read_bio_X509(bio.get(), nullptr, nullptr, nullptr), X509_free };
+    OpenSSLPointer<X509> x509_ca { PEM_read_bio_X509(bio.get(), nullptr, nullptr, nullptr) };
 
     while (x509_ca) {
         res = SSL_CTX_add0_chain_cert(ssl_ctx, x509_ca.get());
@@ -208,7 +214,7 @@ void set_tls_certificate(SSL_CTX* ssl_ctx, const std::string& tls_certificate)
         }
 
         // TODO: add support for setting a passphrase
-        x509_ca = { PEM_read_bio_X509(bio.get(), nullptr, nullptr, nullptr), X509_free };
+        x509_ca.reset(PEM_read_bio_X509(bio.get(), nullptr, nullptr, nullptr));
     }
 }
 

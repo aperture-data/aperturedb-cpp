@@ -35,6 +35,7 @@
 #include <openssl/ssl.h>
 
 #include "comm/Connection.h"
+#include "comm/Macros.h"
 #include "comm/Protocol.h"
 #include "comm/TCPSocket.h"
 
@@ -73,12 +74,10 @@ namespace comm {
     public:
 
         explicit ConnServer(int port, ConnServerConfig config = {});
-        ConnServer(ConnServer&&) = default;
-        ConnServer(const ConnServer&) = delete;
         ~ConnServer();
 
-        ConnServer& operator=(ConnServer&&) = default;
-        ConnServer& operator=(const ConnServer&) = delete;
+        MOVEABLE_BY_DEFAULT(ConnServer);
+        NOT_COPYABLE(ConnServer);
 
         std::unique_ptr<Connection> accept();
 
@@ -88,7 +87,7 @@ namespace comm {
         std::unique_ptr<TCPSocket> _listening_socket;
         OpenSSLInitializer& _open_ssl_initializer;
         int _port; // Server port
-        SSL_CTX* _ssl_ctx{nullptr};
+        std::shared_ptr<SSL_CTX> _ssl_ctx;
     };
 
 };

@@ -30,54 +30,10 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
+#define MOVEABLE_BY_DEFAULT(Type)       \
+    Type(Type&&) = default;             \
+    Type& operator=(Type&&) = default;
 
-#include <openssl/ssl.h>
-
-#include "comm/Address.h"
-#include "comm/Connection.h"
-#include "comm/Macros.h"
-#include "comm/Protocol.h"
-
-namespace comm {
-
-    struct ConnClientConfig
-    {
-        Protocol allowed_protocols{Protocol::TCP};
-        std::string ca_certificate{};
-        bool verify_certificate{false};
-
-        ConnClientConfig() = default;
-
-        ConnClientConfig(Protocol allowed_protocols_, std::string ca_certificate_ = "", bool verify_certificate_ = false) :
-            allowed_protocols(allowed_protocols_),
-            ca_certificate(std::move(ca_certificate_)),
-            verify_certificate(verify_certificate_)
-        {
-        }
-    };
-
-    // Implementation of a client
-    class ConnClient final
-    {
-
-    public:
-
-        explicit ConnClient(const Address& server_address, ConnClientConfig config = {});
-        ~ConnClient();
-
-        MOVEABLE_BY_DEFAULT(ConnClient);
-        NOT_COPYABLE(ConnClient);
-
-        std::shared_ptr<Connection> connect();
-
-    private:
-
-        ConnClientConfig _config;
-        std::shared_ptr<Connection> _connection;
-        Address _server;
-        std::shared_ptr<SSL_CTX> _ssl_ctx;
-    };
-
-}
+#define NOT_COPYABLE(Type)                  \
+    Type(const Type&) = delete;             \
+    Type& operator=(const Type&) = delete;

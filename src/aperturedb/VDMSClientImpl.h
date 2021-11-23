@@ -75,8 +75,6 @@ namespace VDMS {
     private:
         bool needs_re_authentication();
         bool needs_token_refresh();
-        std::unique_ptr<AuthToken> process_authentication_response(std::string response);
-        std::unique_ptr<AuthToken> process_refresh_token_response(std::string response);
         void re_authenticate();
         void refresh_token();
 

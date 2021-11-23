@@ -53,21 +53,18 @@ ConnClient::ConnClient(const Address& server_address, ConnClientConfig config) :
 {
     _ssl_ctx = create_client_context();
 
-    set_default_verify_paths(_ssl_ctx);
+    set_default_verify_paths(_ssl_ctx.get());
 
     if (config.verify_certificate) {
-        SSL_CTX_set_verify(_ssl_ctx, SSL_VERIFY_PEER, ::SSL_CTX_get_verify_callback(_ssl_ctx));
+        SSL_CTX_set_verify(_ssl_ctx.get(), SSL_VERIFY_PEER, ::SSL_CTX_get_verify_callback(_ssl_ctx.get()));
     }
 
     if (!_config.ca_certificate.empty()) {
-        ::set_ca_certificate(_ssl_ctx, _config.ca_certificate);
+        ::set_ca_certificate(_ssl_ctx.get(), _config.ca_certificate);
     }
 }
 
-ConnClient::~ConnClient()
-{
-    SSL_CTX_free(_ssl_ctx);
-}
+ConnClient::~ConnClient() = default;
 
 std::shared_ptr<Connection> ConnClient::connect()
 {

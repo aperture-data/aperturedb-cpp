@@ -53,9 +53,9 @@ void TLSSocket::connect()
 }
 
 std::unique_ptr<TLSSocket> TLSSocket::create(std::unique_ptr<TCPSocket> tcp_socket,
-                                             SSL_CTX* ssl_ctx)
+                                             const std::shared_ptr<SSL_CTX>& ssl_ctx)
 {
-    auto ssl = SSL_new(ssl_ctx);
+    auto ssl = SSL_new(ssl_ctx.get());
 
     auto bio = BIO_new(comm_openssl_bio());
 

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#define ENUM(T1, T2) \
+#define ENUM_FLAGS(T1, T2) \
 enum class T1 : T2; \
 inline T1  operator~  (T1  a      ) { return static_cast<T1>(~static_cast<T2>(a)); } \
 inline T1  operator|  (T1  a, T1 b) { return static_cast<T1>((static_cast<T2>(a) | static_cast<T2>(b))); } \

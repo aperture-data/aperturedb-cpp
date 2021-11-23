@@ -8,7 +8,7 @@
 
 namespace comm {
 
-    ENUM(Protocol, uint8_t)
+    ENUM_FLAGS(Protocol, uint8_t)
     {
         None = 0,
         TCP = 1 << 0,

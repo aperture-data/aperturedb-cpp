@@ -56,25 +56,25 @@ ConnServer::ConnServer(int port, ConnServerConfig config) :
 {
     _ssl_ctx = create_server_context();
 
-    set_default_verify_paths(_ssl_ctx);
+    set_default_verify_paths(_ssl_ctx.get());
 
     if (_config.auto_generate_certificate) {
         auto certificates = generate_certificate();
 
-        ::set_tls_private_key(_ssl_ctx, certificates.private_key);
+        ::set_tls_private_key(_ssl_ctx.get(), certificates.private_key);
 
-        ::set_tls_certificate(_ssl_ctx, certificates.cert);
+        ::set_tls_certificate(_ssl_ctx.get(), certificates.cert);
     } else {
         if (!_config.ca_certificate.empty()) {
-            ::set_ca_certificate(_ssl_ctx, _config.ca_certificate);
+            ::set_ca_certificate(_ssl_ctx.get(), _config.ca_certificate);
         }
 
         if (!_config.tls_certificate.empty()) {
-            ::set_tls_certificate(_ssl_ctx, _config.tls_certificate);
+            ::set_tls_certificate(_ssl_ctx.get(), _config.tls_certificate);
         }
 
         if (!_config.tls_private_key.empty()) {
-            ::set_tls_private_key(_ssl_ctx, _config.tls_private_key);
+            ::set_tls_private_key(_ssl_ctx.get(), _config.tls_private_key);
         }
     }
 
@@ -112,10 +112,7 @@ ConnServer::ConnServer(int port, ConnServerConfig config) :
     }
 }
 
-ConnServer::~ConnServer()
-{
-    SSL_CTX_free(_ssl_ctx);
-}
+ConnServer::~ConnServer() = default;
 
 std::unique_ptr<Connection> ConnServer::accept()
 {
