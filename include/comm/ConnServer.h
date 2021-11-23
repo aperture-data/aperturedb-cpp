@@ -37,11 +37,12 @@
 #include "comm/Connection.h"
 #include "comm/Macros.h"
 #include "comm/Protocol.h"
-#include "comm/TCPSocket.h"
 
 class OpenSSLInitializer;
 
 namespace comm {
+
+    class TCPSocket;
 
     struct ConnServerConfig
     {
