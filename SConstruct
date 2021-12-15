@@ -39,10 +39,13 @@ env = Environment(CXXFLAGS="-std=c++11 " + FFLAGS + OPTFLAGS + WFLAGS)
 
 comm_env = env.Clone()
 comm_env.Replace(
-        CPPPATH = ['include', 'src'],
+        CPPPATH = ['include', 'src',
+                   os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include')],
         LIBS    = [],
         LIBPATH = []
              )
+comm_env.Append
+
 
 comm_env.Replace(CXXFLAGS = comm_env['CXXFLAGS'].replace("-Weffc++", ""))
 comm_env.Replace(CXXFLAGS = re.sub("-Warray-bounds[^\s]+", "-Warray-bounds=1", comm_env['CXXFLAGS']))
@@ -69,7 +72,8 @@ ulib = comm_env.SharedLibrary('lib/comm', comm_cc)
 
 client_env = comm_env.Clone()
 client_env.Replace(
-        CPPPATH = ['include', 'src'],
+        CPPPATH = ['include', 'src',
+                    os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include')],
         LIBS    = ['comm'],
         LIBPATH = ['lib/']
              )
@@ -89,11 +93,16 @@ ulib = client_env.SharedLibrary('lib/aperturedb-client', client_cc)
 CXXFLAGS = env['CXXFLAGS']
 
 # Comm Testing
-comm_test_env = Environment(CPPPATH  = ['include', 'src'],
-                            CXXFLAGS = CXXFLAGS,
-                            LIBS     = ['aperturedb-client', 'comm', 'pthread', 'gtest', 'glog'],
-                            LIBPATH  = ['lib/']
-                            )
+comm_test_env = Environment(
+        CPPPATH  = ['include', 'src',
+                    os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include')
+                   ],
+        CXXFLAGS = CXXFLAGS,
+        LIBS     = ['aperturedb-client', 'comm', 'pthread', 'gtest', 'glog'],
+        LIBPATH  = ['lib'],
+        RPATH    = ['../lib']
+        )
+
 
 comm_test_env.ParseConfig('pkg-config --cflags --libs protobuf')
 
