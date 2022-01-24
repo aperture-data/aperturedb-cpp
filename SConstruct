@@ -44,8 +44,6 @@ comm_env.Replace(
         LIBS    = [],
         LIBPATH = []
              )
-comm_env.Append
-
 
 comm_env.Replace(CXXFLAGS = comm_env['CXXFLAGS'].replace("-Weffc++", ""))
 comm_env.Replace(CXXFLAGS = re.sub("-Warray-bounds[^\s]+", "-Warray-bounds=1", comm_env['CXXFLAGS']))
