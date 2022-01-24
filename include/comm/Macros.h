@@ -30,10 +30,14 @@
 
 #pragma once
 
+#ifndef MOVEABLE_BY_DEFAULT
 #define MOVEABLE_BY_DEFAULT(Type)       \
     Type(Type&&) = default;             \
     Type& operator=(Type&&) = default;
+#endif
 
+#ifndef NOT_COPYABLE
 #define NOT_COPYABLE(Type)                  \
     Type(const Type&) = delete;             \
     Type& operator=(const Type&) = delete;
+#endif
