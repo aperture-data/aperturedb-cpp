@@ -11,9 +11,6 @@
 
 #include "PromServer.h"
 
-#include <jsoncpp/json/reader.h>
-#include <jsoncpp/json/writer.h>
-
 std::atomic<bool> PromServer::shutdown{false};
 
 PromServer::PromServer(const PromConfig& config)
