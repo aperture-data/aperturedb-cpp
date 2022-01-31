@@ -27,7 +27,7 @@ prom_amb_env.Replace(
               ],
 )
 
-src = [ 
+src = [
   'src/ClientCollector.cc',
   'src/PromConfig.cc',
   'src/PromServer.cc',
@@ -43,7 +43,7 @@ test_env.Replace(
 
 test_src = [ 'test/ClientCollectorTests.cc', 'test/main.cc' ]
 
-test_obj = [ 
+test_obj = [
   '../../test/Barrier.o',
   'src/ClientCollector.o',
   'src/PromConfig.o',
