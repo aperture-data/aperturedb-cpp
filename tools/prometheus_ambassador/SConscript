@@ -1,0 +1,37 @@
+#
+# @copyright Copyright (c) 2020 ApertureData Inc.
+#
+
+import os
+Import('env')
+
+prom_amb_env = env.Clone()
+prom_amb_env.Replace(
+    CPPPATH = [ 'src',
+                os.getenv('JSONCPP_INCLUDE', default=''),
+                os.getenv('AD_COMM_INCLUDE',   default=''),
+                os.getenv('PROMETHEUS_CPP_CORE_INCLUDE', default=''),
+                os.getenv('PROMETHEUS_CPP_PULL_INCLUDE', default=''),
+              ],
+    LIBS =    [ 'glog',
+                'comm',
+                'aperturedb-client',
+                'libjsoncpp',
+                'prometheus-cpp-core',
+                'prometheus-cpp-pull',
+              ],
+    LIBPATH = [ '/usr/local/lib/',
+                os.getenv('AD_COMM_LIB',         default=''),
+                os.getenv('JSONCPP_LIB',         default=''),
+                os.getenv('PROMETHEUS_CPP_LIB',  default=''),
+              ],
+)
+
+files = [ 'prometheus_ambassador.cc',
+          'src/ClientCollector.cc',
+          'src/PromConfig.cc',
+          'src/PromServer.cc',
+        ]
+
+prom_amb_env.Program('prometheus_ambassador', files)
+

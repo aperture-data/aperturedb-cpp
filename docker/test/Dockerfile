@@ -14,7 +14,6 @@ RUN apt-get -qq update && apt-get -qq upgrade -y && \
     apt-get -qq remove -y libprotobuf-dev protobuf-compiler && \
     rm -rf /var/lib/apt/lists/* /root/.cache
 
-
 # Google Test
 RUN cd /usr/src/gtest && cmake . && make && mv ./lib/libgtest* /usr/local/lib/
 
@@ -28,13 +27,22 @@ RUN wget --no-check-certificate -q https://github.com/protocolbuffers/protobuf/a
     rm -rf /protobuf-3.9.0
 
 # JSON for Modern C++
-
 RUN wget --no-check-certificate -q https://github.com/nlohmann/json/archive/refs/tags/v3.10.2.zip && \
     unzip v3.10.2.zip -d /usr/local/src && \
     rm v3.10.2.zip && \
     cmake -S /usr/local/src/json-3.10.2 -B /usr/local/build/nlohmann-json -DCMAKE_BUILD_TYPE=Release -DJSON_BuildTests=OFF && \
     cmake --build /usr/local/build/nlohmann-json --target install && \
     rm -rf /usr/local/build/nlohmann-json /usr/local/src/json-3.10.2
+
+#Install prometheus-cpp
+RUN wget --no-check-certificate -q https://github.com/jupp0r/prometheus-cpp/releases/download/v1.0.0/prometheus-cpp-with-submodules.tar.gz && \
+    tar xf prometheus-cpp-with-submodules.tar.gz && \
+    rm prometheus-cpp-with-submodules.tar.gz && \
+    cd prometheus-cpp-with-submodules && mkdir _build && cd _build && \
+    cmake .. -DBUILD_SHARED_LIBS=ON -DENABLE_PUSH=OFF -DENABLE_COMPRESSION=OFF && \
+    cmake --build . --parallel 16 && ctest -V && \
+    cmake --install . && cmake --install ./pull && \
+    rm -rf /prometheus-cpp-with-submodules
 
 # Install and compile client library
 
