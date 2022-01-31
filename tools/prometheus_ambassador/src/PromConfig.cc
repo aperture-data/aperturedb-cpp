@@ -5,26 +5,12 @@
  */
 
 #include "PromConfig.h"
+#include "defines.h"
 
 #include <fstream>
 #include <iostream>
 #include <aperturedb/VDMSClient.h>
 #include "comm/Exception.h"
-
-constexpr const char*    PromConfig::PROMETHEUS_ADDRESS_KEY;
-constexpr const char*    PromConfig::PROMETHEUS_ADDRESS_DEFAULT;
-constexpr const char*    PromConfig::PROMETHEUS_PORT_KEY;
-constexpr int            PromConfig::PROMETHEUS_PORT_DEFAULT;
-constexpr const char*    PromConfig::VDMS_ADDRESS_KEY;
-constexpr const char*    PromConfig::VDMS_ADDRESS_DEFAULT;
-constexpr const char*    PromConfig::VDMS_PORT_KEY;
-constexpr int            PromConfig::VDMS_PORT_DEFAULT;
-constexpr const char*    PromConfig::USERNAME_KEY;
-constexpr const char*    PromConfig::PASSWORD_KEY;
-constexpr const char*    PromConfig::API_TOKEN_KEY;
-constexpr const char*    PromConfig::PROTOCOLS_KEY;
-constexpr const char*    PromConfig::PROTOCOLS_DEFAULT;
-constexpr const char*    PromConfig::CA_CERT_KEY;
 
 PromConfig PromConfig::load(const std::string& config_file) {
     std::ifstream in_file(config_file);
@@ -42,13 +28,13 @@ namespace
 }
 
 PromConfig::PromConfig(const nlohmann::json& config_json)
-: prometheus_address(config_json.value(PROMETHEUS_ADDRESS_KEY, PROMETHEUS_ADDRESS_DEFAULT))
-, prometheus_port(config_json.value(PROMETHEUS_PORT_KEY, PROMETHEUS_PORT_DEFAULT))
-, vdms_address(config_json.value(VDMS_ADDRESS_KEY, VDMS_ADDRESS_DEFAULT))
-, vdms_port(config_json.value(VDMS_PORT_KEY, VDMS_PORT_DEFAULT))
-, username(config_json.value(USERNAME_KEY, std::string()))
-, password(config_json.value(PASSWORD_KEY, std::string()))
-, api_token(config_json.value(API_TOKEN_KEY, std::string()))
-, protocols(parse_protocol(config_json.value(PROTOCOLS_KEY, PROTOCOLS_DEFAULT)))
-, ca_certificate(config_json.value(CA_CERT_KEY, std::string()))
+: prometheus_address(config_json.value(PA_CONFIG_PROMETHEUS_ADDRESS_KEY, PA_CONFIG_PROMETHEUS_ADDRESS_DEFAULT))
+, prometheus_port(config_json.value(PA_CONFIG_PROMETHEUS_PORT_KEY, PA_CONFIG_PROMETHEUS_PORT_DEFAULT))
+, vdms_address(config_json.value(PA_CONFIG_VDMS_ADDRESS_KEY, PA_CONFIG_VDMS_ADDRESS_DEFAULT))
+, vdms_port(config_json.value(PA_CONFIG_VDMS_PORT_KEY, PA_CONFIG_VDMS_PORT_DEFAULT))
+, username(config_json.value(PA_CONFIG_USERNAME_KEY, PA_CONFIG_USERNAME_DEFAULT))
+, password(config_json.value(PA_CONFIG_PASSWORD_KEY, PA_CONFIG_PASSWORD_DEFAULT))
+, api_token(config_json.value(PA_CONFIG_API_TOKEN_KEY, PA_CONFIG_API_TOKEN_DEFAULT))
+, protocols(parse_protocol(config_json.value(PA_CONFIG_PROTOCOLS_KEY, PA_CONFIG_PROTOCOLS_DEFAULT)))
+, ca_certificate(config_json.value(PA_CONFIG_CA_CERT_KEY, PA_CONFIG_CA_CERT_DEFAULT))
 {}

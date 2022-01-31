@@ -10,6 +10,7 @@
 #include <aperturedb/Exception.h>
 #include <comm/Exception.h>
 #include "ClientCollector.h"
+#include "defines.h"
 #include <prometheus/metric_family.h>
 #include <time.h>
 
@@ -133,7 +134,7 @@ namespace
         fam.metric.emplace_back();
         auto& metric = fam.metric.back();
 
-        auto mtc_labels = mtc.find("labels");
+        auto mtc_labels = mtc.find(AD_METRIC_SCHEMA_LABELS);
         if (mtc_labels != mtc.end()) {
             metric.label.reserve(mtc_labels->size());
             for (auto lbl : mtc_labels->items()) {
@@ -143,7 +144,7 @@ namespace
             }
         }
 
-        auto mtc_ts = mtc.find("timestamp_ms");
+        auto mtc_ts = mtc.find(AD_METRIC_SCHEMA_TIMESTAMP_MS);
         if (mtc_ts != mtc.end()) {
             assign_from(metric.timestamp_ms, mtc_ts.value());
         }
@@ -154,28 +155,28 @@ namespace
     void parse_counter_values(prometheus::MetricFamily& fam, const nlohmann::json& json) {
         for (const auto& mtc : json) {
             auto& counter = emplace_metric_metadata(fam, mtc).counter;
-            assign_from(counter.value, mtc["value"]);
+            assign_from(counter.value, mtc[AD_METRIC_SCHEMA_VALUE]);
         }
     }
 
     void parse_gauge_values(prometheus::MetricFamily& fam, const nlohmann::json& json) {
         for (const auto& mtc : json) {
             auto& gauge = emplace_metric_metadata(fam, mtc).gauge;
-            assign_from(gauge.value, mtc["value"]);
+            assign_from(gauge.value, mtc[AD_METRIC_SCHEMA_VALUE]);
         }
     }
 
     void parse_summary_values(prometheus::MetricFamily& fam, const nlohmann::json& json) {
         for (const auto& mtc : json) {
             auto& summary = emplace_metric_metadata(fam, mtc).summary;
-            assign_from(summary.sample_count, mtc["count"]);
-            assign_from(summary.sample_sum, mtc["sum"]);
-            const auto& mtc_qnt = mtc["quantiles"];
+            assign_from(summary.sample_count, mtc[AD_METRIC_SCHEMA_COUNT]);
+            assign_from(summary.sample_sum, mtc[AD_METRIC_SCHEMA_SUM]);
+            const auto& mtc_qnt = mtc[AD_METRIC_SCHEMA_QUANTILES];
             summary.quantile.reserve(mtc_qnt.size());
             for (const auto& qnt : mtc_qnt) {
                 summary.quantile.emplace_back();
-                assign_from(summary.quantile.back().quantile, qnt["quantile"]);
-                assign_from(summary.quantile.back().value, qnt["value"]);
+                assign_from(summary.quantile.back().quantile, qnt[AD_METRIC_SCHEMA_QUANTILE]);
+                assign_from(summary.quantile.back().value, qnt[AD_METRIC_SCHEMA_VALUE]);
             }
         }
     }
@@ -183,21 +184,21 @@ namespace
     void parse_untyped_values(prometheus::MetricFamily& fam, const nlohmann::json& json) {
         for (const auto& mtc : json) {
             auto& untyped = emplace_metric_metadata(fam, mtc).untyped;
-            assign_from(untyped.value, mtc["value"]);
+            assign_from(untyped.value, mtc[AD_METRIC_SCHEMA_VALUE]);
         }
     }
 
     void parse_histogram_values(prometheus::MetricFamily& fam, const nlohmann::json& json) {
         for (const auto& mtc : json) {
             auto& histogram = emplace_metric_metadata(fam, mtc).histogram;
-            assign_from(histogram.sample_count, mtc["count"]);
-            assign_from(histogram.sample_sum, mtc["sum"]);
-            const auto& mtc_buc = mtc["buckets"];
+            assign_from(histogram.sample_count, mtc[AD_METRIC_SCHEMA_COUNT]);
+            assign_from(histogram.sample_sum, mtc[AD_METRIC_SCHEMA_SUM]);
+            const auto& mtc_buc = mtc[AD_METRIC_SCHEMA_BUCKETS];
             histogram.bucket.reserve(mtc_buc.size());
             for (const auto& buc : mtc_buc) {
                 histogram.bucket.emplace_back();
-                assign_from(histogram.bucket.back().cumulative_count, buc["count"]);
-                assign_from(histogram.bucket.back().upper_bound, buc["max"]);
+                assign_from(histogram.bucket.back().cumulative_count, buc[AD_METRIC_SCHEMA_COUNT]);
+                assign_from(histogram.bucket.back().upper_bound, buc[AD_METRIC_SCHEMA_MAX]);
             }
         }
     }
@@ -214,12 +215,12 @@ namespace
 
     std::vector<prometheus::MetricFamily> parse_metrics(const nlohmann::json& json) {
         std::vector<prometheus::MetricFamily> result;
-        for (const auto& fam_json : json["values"]["families"]) {
+        for (const auto& fam_json : json[AD_METRIC_SCHEMA_VALUES][AD_METRIC_SCHEMA_FAMILIES]) {
             result.emplace_back();
-            assign_from(result.back().name, fam_json["name"]);
-            assign_from(result.back().help, fam_json["help"]);
-            assign_from(result.back().type, fam_json["type"]);
-            parse_family_values(result.back(), fam_json["metrics"]);
+            assign_from(result.back().name, fam_json[AD_METRIC_SCHEMA_NAME]);
+            assign_from(result.back().help, fam_json[AD_METRIC_SCHEMA_HELP]);
+            assign_from(result.back().type, fam_json[AD_METRIC_SCHEMA_TYPE]);
+            parse_family_values(result.back(), fam_json[AD_METRIC_SCHEMA_METRICS]);
         }
         return result;
     }
@@ -269,27 +270,31 @@ std::vector<prometheus::MetricFamily> ClientCollector::Collect() const {
 
 ClientCollector::Metrics::Metrics(const PromConfig& config, prometheus::Registry& registry)
 : _static_labels({
-    {"host", config.vdms_address},
-    {"port", std::to_string(config.vdms_port)}
+    {PA_METRIC_KEY_HOST, config.vdms_address},
+    {PA_METRIC_KEY_PORT, std::to_string(config.vdms_port)}
 })
 , _client_connections_total(prometheus::BuildCounter()
-    .Name("client_connections")
-    .Help("Times the prometheus adaptor attempted to connect to the ApertureDB API")
+    .Name(PA_METRIC_CLIENT_CONNECTIONS_NAME)
+    .Help(PA_METRIC_CLIENT_CONNECTIONS_HELP)
     .Labels(_static_labels)
     .Register(registry))
 , _client_queries_total(prometheus::BuildCounter()
-    .Name("client_queries")
-    .Help("Times the prometheus adaptor queried ApertureDB metrics")
+    .Name(PA_METRIC_CLIENT_QUERIES_NAME)
+    .Help(PA_METRIC_CLIENT_QUERIES_HELP)
     .Labels(_static_labels)
     .Register(registry))
 , _client_query_seconds(prometheus::BuildHistogram()
-    .Name("client_query_seconds")
-    .Help("Time taken by the prometheus adaptor to query metrics from ApertureDB, in seconds")
+    .Name(PA_METRIC_CLIENT_QUERY_SECONDS_NAME)
+    .Help(PA_METRIC_CLIENT_QUERY_SECONDS_HELP)
     .Labels(_static_labels)
     .Register(registry))
-, _client_query_buckets({0.001, 0.01, 0.1, 1.0, 10.0})
-, connections_total(_client_connections_total.Add({{"result", "success"}}))
-, queries_total(_client_queries_total.Add({{"result", "success"}}))
+, _client_query_buckets(PA_METRIC_CLIENT_QUERY_SECONDS_BUCKETS)
+, connections_total(_client_connections_total.Add({
+    {PA_METRIC_KEY_RESULT, PA_METRIC_VALUE_SUCCESS}
+}))
+, queries_total(_client_queries_total.Add({
+    {PA_METRIC_KEY_RESULT, PA_METRIC_VALUE_SUCCESS}
+}))
 , query_seconds(_client_query_seconds.Add({}, _client_query_buckets))
 {
 }
@@ -297,8 +302,8 @@ ClientCollector::Metrics::Metrics(const PromConfig& config, prometheus::Registry
 void ClientCollector::Metrics::increment_failure(bool has_connection, const std::string& msg) {
     auto& fam = (has_connection ? _client_queries_total : _client_connections_total );
     auto& counter = fam.Add({
-        {"result", "failure"},
-        {"details", msg}
+        {PA_METRIC_KEY_RESULT, PA_METRIC_VALUE_FAILURE},
+        {PA_METRIC_KEY_DETAILS, msg}
     });
     counter.Increment();
 }
