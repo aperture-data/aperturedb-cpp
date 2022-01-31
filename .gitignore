@@ -2,6 +2,7 @@ __pycache__
 /server/server
 /test/comm_test
 /tools/prometheus_ambassador/prometheus_ambassador
+/tools/prometheus_ambassador/prometheus_ambassador_test
 .sconsign.dblite
 .vscode
 

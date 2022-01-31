@@ -57,6 +57,8 @@ RUN ldconfig
 RUN echo '#!/bin/bash'      > /start.sh && \
     echo 'cd /aperturedb-client/test' >> /start.sh && \
     echo './comm_test'     >> /start.sh && \
+    echo 'cd /aperturedb-client/tools/prometheus_ambassador' >> /start.sh && \
+    echo './prometheus_ambassador_test'     >> /start.sh && \
     chmod 755 /start.sh
 
 CMD ["/start.sh"]

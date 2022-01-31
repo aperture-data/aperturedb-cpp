@@ -21,6 +21,5 @@ struct PromConfig {
     std::string ca_certificate;
 
     static PromConfig load(const std::string& config_file);
-private:
     PromConfig(const nlohmann::json& config_json);
 };
