@@ -13,6 +13,7 @@
 #include "defines.h"
 #include <prometheus/metric_family.h>
 #include <time.h>
+#include "metrics/Timer.h"
 
 #include <cxxabi.h>
 #include <sstream>
@@ -83,7 +84,6 @@ void ClientCollector::connect() const {
             config.protocols,
             config.ca_certificate));
     }
-    _metrics.connections_total.Increment();
     std::cout << "Prometheus ambassador connected to " << config.vdms_address << ":" << config.vdms_port << std::endl;
 }
 
@@ -234,29 +234,29 @@ std::vector<prometheus::MetricFamily> ClientCollector::Collect() const {
     )"_json;
 
     try {
-        timespec start;
-        clock_gettime(CLOCK_MONOTONIC, &start);
-
-        if (!_client)
+        metrics::Timer<std::chrono::microseconds> timer;
+        if (!_client) {
+            timer.reset(&_metrics.connect_timer);
             connect();
+        }
+
+        _metrics.client_connected.Set(1.);
+        timer.reset(&_metrics.query_timer);
 
         auto res = _client->query(query.dump());
+
+        timer.reset(&_metrics.parse_timer);
 
         auto response = nlohmann::json::parse(res.json);
         if (response.is_array()) {
             auto out = parse_metrics(response[0]["GetMetrics"]);
-
-            timespec end;
-            clock_gettime(CLOCK_MONOTONIC, &end);
-            _metrics.query_seconds.Observe(diff_in_seconds(start, end));
-            _metrics.queries_total.Increment();
             return out;
         }
         std::cout << "Unexpected response: " << response.dump() << std::endl;
     }
     catch (...) {
         auto msg = print_caught_exception();
-        _metrics.increment_failure(!!_client, msg);
+        _metrics.increment_failure(msg);
         std::cout << msg << std::endl;
     }
 
@@ -265,45 +265,46 @@ std::vector<prometheus::MetricFamily> ClientCollector::Collect() const {
         std::cout << "Client connection closed" << std::endl;
         _client.reset();
     }
+    _metrics.client_connected.Set(0.);
     return {};
 }
 
 ClientCollector::Metrics::Metrics(const PromConfig& config, prometheus::Registry& registry)
 : _static_labels({
-    {PA_METRIC_KEY_HOST, config.vdms_address},
-    {PA_METRIC_KEY_PORT, std::to_string(config.vdms_port)}
+    {PA_METRIC_KEY_ADDRESS, config.vdms_address + ":" + std::to_string(config.vdms_port)}
 })
-, _client_connections_total(prometheus::BuildCounter()
-    .Name(PA_METRIC_CLIENT_CONNECTIONS_NAME)
-    .Help(PA_METRIC_CLIENT_CONNECTIONS_HELP)
+, _client_connected(prometheus::BuildGauge()
+    .Name(PA_METRIC_CLIENT_CONNECTED_NAME)
+    .Help(PA_METRIC_CLIENT_CONNECTED_HELP)
     .Labels(_static_labels)
     .Register(registry))
-, _client_queries_total(prometheus::BuildCounter()
-    .Name(PA_METRIC_CLIENT_QUERIES_NAME)
-    .Help(PA_METRIC_CLIENT_QUERIES_HELP)
+, _failures_total(prometheus::BuildCounter()
+    .Name(PA_METRIC_CLIENT_FAILURES_NAME)
+    .Help(PA_METRIC_CLIENT_FAILURES_HELP)
     .Labels(_static_labels)
     .Register(registry))
-, _client_query_seconds(prometheus::BuildHistogram()
-    .Name(PA_METRIC_CLIENT_QUERY_SECONDS_NAME)
-    .Help(PA_METRIC_CLIENT_QUERY_SECONDS_HELP)
+, _client_query_us(prometheus::BuildHistogram()
+    .Name(PA_METRIC_CLIENT_QUERY_US_NAME)
+    .Help(PA_METRIC_CLIENT_QUERY_US_HELP)
     .Labels(_static_labels)
     .Register(registry))
-, _client_query_buckets(PA_METRIC_CLIENT_QUERY_SECONDS_BUCKETS)
-, connections_total(_client_connections_total.Add({
-    {PA_METRIC_KEY_RESULT, PA_METRIC_VALUE_SUCCESS}
-}))
-, queries_total(_client_queries_total.Add({
-    {PA_METRIC_KEY_RESULT, PA_METRIC_VALUE_SUCCESS}
-}))
-, query_seconds(_client_query_seconds.Add({}, _client_query_buckets))
+, _client_query_buckets(PA_METRIC_CLIENT_QUERY_US_BUCKETS)
+, client_connected(_client_connected.Add({}))
+, connect_timer(_client_query_us.Add({
+    {PA_METRIC_KEY_STAGE, PA_METRIC_VALUE_CONNECT}
+}, _client_query_buckets))
+, query_timer(_client_query_us.Add({
+    {PA_METRIC_KEY_STAGE, PA_METRIC_VALUE_QUERY}
+}, _client_query_buckets))
+, parse_timer(_client_query_us.Add({
+    {PA_METRIC_KEY_STAGE, PA_METRIC_VALUE_PARSE}
+}, _client_query_buckets))
 {
 }
 
-void ClientCollector::Metrics::increment_failure(bool has_connection, const std::string& msg) {
-    auto& fam = (has_connection ? _client_queries_total : _client_connections_total );
-    auto& counter = fam.Add({
-        {PA_METRIC_KEY_RESULT, PA_METRIC_VALUE_FAILURE},
-        {PA_METRIC_KEY_DETAILS, msg}
+void ClientCollector::Metrics::increment_failure(const std::string& msg) {
+    auto& counter = _failures_total.Add({
+        {PA_METRIC_KEY_MESSAGE, msg}
     });
     counter.Increment();
 }

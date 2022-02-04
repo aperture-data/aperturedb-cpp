@@ -149,8 +149,5 @@ TEST(ClientCollectorTest, UnableToConnect)
     auto self_metrics = reg.Collect();
 
     EXPECT_EQ(metrics.size(), 0);
-    ASSERT_GT(self_metrics.size(), 0);
-    ASSERT_EQ(self_metrics[0].metric.size(), 2);
-    ASSERT_EQ(self_metrics[0].metric[0].label.size(), 4);
-    EXPECT_STREQ(self_metrics[0].metric[0].label[3].value.c_str(), PA_METRIC_VALUE_FAILURE);
+    EXPECT_EQ(self_metrics.size(), 3);
 }

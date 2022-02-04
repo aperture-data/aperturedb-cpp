@@ -11,6 +11,7 @@
 #include <prometheus/registry.h>
 #include <prometheus/histogram.h>
 #include <prometheus/counter.h>
+#include <prometheus/gauge.h>
 #include "PromConfig.h"
 
 class ClientCollector : public prometheus::Collectable
@@ -21,17 +22,18 @@ class ClientCollector : public prometheus::Collectable
     class Metrics
     {
         prometheus::Labels _static_labels;
-        prometheus::Family< prometheus::Counter >& _client_connections_total;
-        prometheus::Family< prometheus::Counter >& _client_queries_total;
-        prometheus::Family< prometheus::Histogram >& _client_query_seconds;
+        prometheus::Family< prometheus::Gauge >& _client_connected;
+        prometheus::Family< prometheus::Counter >& _failures_total;
+        prometheus::Family< prometheus::Histogram >& _client_query_us;
         prometheus::Histogram::BucketBoundaries _client_query_buckets;
 
     public:
-        prometheus::Counter& connections_total;
-        prometheus::Counter& queries_total;
-        prometheus::Histogram& query_seconds;
+        prometheus::Gauge& client_connected;
+        prometheus::Histogram& connect_timer;
+        prometheus::Histogram& query_timer;
+        prometheus::Histogram& parse_timer;
 
-        void increment_failure(bool has_connection, const std::string& msg);
+        void increment_failure(const std::string& msg);
 
         Metrics(const PromConfig& config, prometheus::Registry& registry);
     };
