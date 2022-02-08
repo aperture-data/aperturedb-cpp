@@ -21,10 +21,83 @@ ENABLE_WARNING(suggest-override)
 ENABLE_WARNING(useless-cast)
 ENABLE_WARNING(effc++)
 
+#include "metrics/JsonWriter.h"
+
 #define SERVER_PORT_INTERCHANGE 43210
 
 TEST(ClientCollectorTest, CollectClientMetrics)
 {
+    auto response = R"([{
+        "GetMetrics": {
+            "status": 0,
+            "version": "0.9.2",
+            "values": {
+                "families": [{
+                    "name": "cpu_cycles_total",
+                    "help": "Elapsed CPU cycles",
+                    "type": "Counter",
+                    "metrics": [
+                        {"labels": {"type": "system"}, "value": "2828933849"},
+                        {"labels": {"type": "application"}, "value": "27"}
+                    ]
+                },{
+                    "name": "memory_bytes",
+                    "help": "Bytes of memory in use",
+                    "type": "Gauge",
+                    "metrics": [
+                        {"labels": {"type": "total"}, "value": "33675821056"},
+                        {"labels": {"type": "virtual"}, "value": "3303710560256"},
+                        {"labels": {"type": "physical"}, "value": "57339904"}
+                    ]
+                },
+                {
+                    "name": "wait_seconds_total",
+                    "help": "Amount of time spent waiting in the work queue, in seconds",
+                    "type": "Histogram",
+                    "metrics": [{
+                        "labels": {"query_type": "retry"},
+                        "count": 0,
+                        "sum": "0",
+                        "buckets": [
+                            {"count": 0, "max": "0.001"},
+                            {"count": 0, "max": "0.01"},
+                            {"count": 0, "max": "0.1"},
+                            {"count": 0, "max": "1"},
+                            {"count": 0, "max": "10"},
+                            {"count": 0, "max": "60"},
+                            {"count": 0, "max": "inf"}
+                        ]
+                    },{
+                        "labels": {"query_type": "read_write"},
+                        "count": 1,
+                        "sum": "1.7489e-05",
+                        "buckets": [
+                            {"count": 1, "max": "0.001"},
+                            {"count": 1, "max": "0.01"},
+                            {"count": 1, "max": "0.1"},
+                            {"count": 1, "max": "1"},
+                            {"count": 1, "max": "10"},
+                            {"count": 1, "max": "60"},
+                            {"count": 1, "max": "inf"}
+                        ]
+                    },{
+                        "labels": {"query_type": "read_only"},
+                        "count": 0,
+                        "sum": "0",
+                        "buckets": [
+                            {"count": 0, "max": "0.001"},
+                            {"count": 0, "max": "0.01"},
+                            {"count": 0, "max": "0.1"},
+                            {"count": 0, "max": "1"},
+                            {"count": 0, "max": "10"},
+                            {"count": 0, "max": "60"},
+                            {"count": 0, "max": "inf"}
+                        ]
+                    }]
+                }]
+            }
+        }
+    }])"_json;
 
     Barrier barrier(2);
 
@@ -33,77 +106,6 @@ TEST(ClientCollectorTest, CollectClientMetrics)
         std::string expected_query = R"(
 "[{"GetMetrics":{"format":"json"}}])";
 
-        auto response = R"([{
-            "GetMetrics": {
-                "status": 0,
-                "version": "0.9.2",
-                "values": {
-                    "families": [{
-                        "name": "cpu_cycles_total",
-                        "help": "Elapsed CPU cycles",
-                        "type": "Counter",
-                        "metrics": [
-                            {"labels": {"type": "system"}, "value": "2828933849"},
-                            {"labels": {"type": "application"}, "value": "27"}
-                        ]
-                    },{
-                        "name": "memory_bytes",
-                        "help": "Bytes of memory in use",
-                        "type": "Gauge",
-                        "metrics": [
-                            {"labels": {"type": "total"}, "value": "33675821056"},
-                            {"labels": {"type": "virtual"}, "value": "3303710560256"},
-                            {"labels": {"type": "physical"}, "value": "57339904"}
-                        ]
-                    },
-                    {
-                        "name": "wait_seconds_total",
-                        "help": "Amount of time spent waiting in the work queue, in seconds",
-                        "type": "Histogram",
-                        "metrics": [{
-                            "labels": {"query_type": "retry"},
-                            "count": 0,
-                            "sum": "0",
-                            "buckets": [
-                                {"count": 0, "max": "0.001"},
-                                {"count": 0, "max": "0.01"},
-                                {"count": 0, "max": "0.1"},
-                                {"count": 0, "max": "1"},
-                                {"count": 0, "max": "10"},
-                                {"count": 0, "max": "60"},
-                                {"count": 0, "max": "inf"}
-                            ]
-                        },{
-                            "labels": {"query_type": "read_write"},
-                            "count": 1,
-                            "sum": "1.7489e-05",
-                            "buckets": [
-                                {"count": 1, "max": "0.001"},
-                                {"count": 1, "max": "0.01"},
-                                {"count": 1, "max": "0.1"},
-                                {"count": 1, "max": "1"},
-                                {"count": 1, "max": "10"},
-                                {"count": 1, "max": "60"},
-                                {"count": 1, "max": "inf"}
-                            ]
-                        },{
-                            "labels": {"query_type": "read_only"},
-                            "count": 0,
-                            "sum": "0",
-                            "buckets": [
-                                {"count": 0, "max": "0.001"},
-                                {"count": 0, "max": "0.01"},
-                                {"count": 0, "max": "0.1"},
-                                {"count": 0, "max": "1"},
-                                {"count": 0, "max": "10"},
-                                {"count": 0, "max": "60"},
-                                {"count": 0, "max": "inf"}
-                            ]
-                        }]
-                    }]
-                }
-            }
-        }])"_json;
 
         comm::ConnServer server(SERVER_PORT_INTERCHANGE);
 
@@ -134,7 +136,10 @@ TEST(ClientCollectorTest, CollectClientMetrics)
 
     server_thread.join();
 
-    ASSERT_GT(metrics.size(), 0);
+    metrics::JsonWriterBase<nlohmann::json> writer;
+    auto round_trip_json = writer.to_json(metrics);
+
+    ASSERT_EQ(response[0]["GetMetrics"]["values"], round_trip_json);
 }
 
 TEST(ClientCollectorTest, UnableToConnect)
@@ -149,5 +154,5 @@ TEST(ClientCollectorTest, UnableToConnect)
     auto self_metrics = reg.Collect();
 
     EXPECT_EQ(metrics.size(), 0);
-    EXPECT_EQ(self_metrics.size(), 3);
+    EXPECT_EQ(self_metrics.size(), 4);
 }

@@ -148,7 +148,7 @@ private:
 public:
     std::vector<prometheus::MetricFamily> parse_metrics(const json_type& json) {
         std::vector<prometheus::MetricFamily> result;
-        for (const auto& fam_json : json[AD_METRIC_SCHEMA_VALUES][AD_METRIC_SCHEMA_FAMILIES]) {
+        for (const auto& fam_json : json[AD_METRIC_SCHEMA_FAMILIES]) {
             result.emplace_back();
             assign_from(result.back().name, fam_json[AD_METRIC_SCHEMA_NAME]);
             assign_from(result.back().help, fam_json[AD_METRIC_SCHEMA_HELP]);

@@ -59,7 +59,7 @@ std::vector<prometheus::MetricFamily> ClientCollector::Collect() const {
         auto response = nlohmann::json::parse(res.json);
         if (response.is_array()) {
             metrics::JsonReader reader;
-            return reader.parse_metrics(response[0]["GetMetrics"]);
+            return reader.parse_metrics(response[0]["GetMetrics"][AD_METRIC_SCHEMA_VALUES]);
         }
         _metrics.increment_failure(std::string("Unexpected response: ") + response.dump());
     }
