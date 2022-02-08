@@ -84,36 +84,13 @@ std::unique_ptr<AuthToken> process_token_response(const std::string& response, c
 
 }
 
-VDMSClientImpl::VDMSClientImpl(std::string addr,
-                               int port,
-                               comm::Protocol protocols,
-                               std::string ca_certificate) :
-    TokenBasedVDMSClient(std::move(addr), port, static_cast<Protocol>(protocols), std::move(ca_certificate))
+VDMSClientImpl::VDMSClientImpl(VDMSClientConfig config)
+: TokenBasedVDMSClient(config)
+, _config(std::move(config))
 {
-}
-
-VDMSClientImpl::VDMSClientImpl(std::string username,
-                               std::string password,
-                               std::string addr,
-                               int port,
-                               comm::Protocol protocols,
-                               std::string ca_certificate) :
-    TokenBasedVDMSClient(std::move(addr), port, static_cast<Protocol>(protocols), std::move(ca_certificate)),
-    _password(std::move(password)),
-    _username(std::move(username))
-{
-    re_authenticate();
-}
-
-VDMSClientImpl::VDMSClientImpl(std::string api_key,
-                               std::string addr,
-                               int port,
-                               comm::Protocol protocols,
-                               std::string ca_certificate) :
-    TokenBasedVDMSClient(std::move(addr), port, static_cast<Protocol>(protocols), std::move(ca_certificate)),
-    _api_key(std::move(api_key))
-{
-    re_authenticate();
+    if (!_config.password.empty() || !_config.api_key.empty()) {
+        re_authenticate();
+    }
 }
 
 VDMSClientImpl::~VDMSClientImpl() = default;
@@ -159,18 +136,18 @@ void VDMSClientImpl::re_authenticate()
 {
     nlohmann::json requestJson;
 
-    if (!_username.empty()) {
+    if (!_config.username.empty()) {
         requestJson = nlohmann::json::array({{
             {"Authenticate", {
-                {"username", _username},
-                {"password", _password}
+                {"username", _config.username},
+                {"password", _config.password}
             }}
         }});
     }
     else {
         requestJson = nlohmann::json::array({{
             {"Authenticate", {
-                {"token", _api_key}
+                {"token", _config.api_key}
             }}
         }});
     }

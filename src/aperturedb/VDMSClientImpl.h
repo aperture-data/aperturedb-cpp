@@ -50,21 +50,7 @@ namespace VDMS {
 
     class VDMSClientImpl : public TokenBasedVDMSClient {
     public:
-        VDMSClientImpl(std::string addr,
-                   int port,
-                   comm::Protocol protocols,
-                   std::string ca_certificate);
-        VDMSClientImpl(std::string username,
-                   std::string password,
-                   std::string addr,
-                   int port,
-                   comm::Protocol protocols,
-                   std::string ca_certificate);
-        VDMSClientImpl(std::string api_key,
-                   std::string addr,
-                   int port,
-                   comm::Protocol protocols,
-                   std::string ca_certificate);
+        VDMSClientImpl(VDMSClientConfig config);
         ~VDMSClientImpl();
 
         // Blocking call
@@ -78,9 +64,7 @@ namespace VDMS {
         void re_authenticate();
         void refresh_token();
 
-        std::string _api_key;
+        VDMSClientConfig _config;
         std::unique_ptr<AuthToken> _auth_token;
-        std::string _password;
-        std::string _username;
     };
 };

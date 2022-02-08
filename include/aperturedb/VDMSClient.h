@@ -34,11 +34,14 @@
 #include <string>
 #include <vector>
 
+#include "comm/Macros.h"
+#include "comm/Protocol.h"
+
 namespace comm {
 
     class ConnClient;
     class Connection;
-
+    class ConnMetrics;
 }
 
 namespace VDMS {
@@ -47,16 +50,46 @@ namespace VDMS {
 
     constexpr int VDMS_PORT{ 55555 };
 
-    enum class Protocol : uint8_t
-    {
-        TCP = 1,
-        TLS = 2,
-        Any = 3
-    };
+    using Protocol = comm::Protocol;
 
     struct Response {
         std::string json{};
         std::vector<std::string> blobs{};
+    };
+
+    struct VDMSClientConfig
+    {
+        std::string addr{"localhost"};
+        int port{VDMS_PORT};
+        Protocol protocols{Protocol::Any};
+        std::string ca_certificate{""};
+        std::string username{""};
+        std::string password{""};
+        std::string api_key{""};
+        comm::ConnMetrics* metrics{nullptr};
+
+        VDMSClientConfig(
+            std::string addr_ = "localhost",
+            int port_ = VDMS_PORT,
+            Protocol protocols_ = Protocol::Any,
+            std::string ca_certificate_ = "",
+            std::string username_ = "",
+            std::string password_ = "",
+            std::string api_key_ = "",
+            comm::ConnMetrics* metrics_ = nullptr
+        )
+        : addr(std::move(addr_))
+        , port(port_)
+        , protocols(protocols_)
+        , ca_certificate(std::move(ca_certificate_))
+        , username(std::move(username_))
+        , password(std::move(password_))
+        , api_key(std::move(api_key_))
+        , metrics(metrics_)
+        {}
+
+        COPYABLE_BY_DEFAULT(VDMSClientConfig);
+        MOVEABLE_BY_DEFAULT(VDMSClientConfig);
     };
 
     class TokenBasedVDMSClient {
@@ -69,10 +102,7 @@ namespace VDMS {
         std::shared_ptr<comm::Connection> _connection;
 
     public:
-        TokenBasedVDMSClient(std::string addr = "localhost",
-                             int port = VDMS_PORT,
-                             Protocol protocols = Protocol::Any,
-                             std::string ca_certificate = "");
+        explicit TokenBasedVDMSClient(VDMSClientConfig& config);
         ~TokenBasedVDMSClient();
 
         // Blocking call
@@ -83,6 +113,8 @@ namespace VDMS {
 
     class VDMSClient {
     public:
+        // Deprecated multi-parameter ctors.
+        // Prefer VDMSClientConfig ctor.
         VDMSClient(std::string addr = "localhost",
                    int port = VDMS_PORT,
                    Protocol protocols = Protocol::Any,
@@ -98,6 +130,8 @@ namespace VDMS {
                    int port = VDMS_PORT,
                    Protocol protocols = Protocol::Any,
                    std::string ca_certificate = "");
+
+        VDMSClient(VDMSClientConfig config);
         ~VDMSClient();
 
         // Blocking call

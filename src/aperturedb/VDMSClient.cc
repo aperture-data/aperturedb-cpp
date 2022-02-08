@@ -42,10 +42,14 @@ VDMSClient::VDMSClient(std::string addr,
                        int port,
                        Protocol protocols,
                        std::string ca_certificate) :
-    _impl(new VDMSClientImpl(std::move(addr),
-    port,
-    static_cast<comm::Protocol>(protocols),
-    std::move(ca_certificate)))
+    _impl(new VDMSClientImpl(VDMSClientConfig(std::move(addr),
+        port,
+        protocols,
+        std::move(ca_certificate),
+        "",
+        "",
+        "",
+        nullptr)))
 {
 }
 
@@ -55,12 +59,14 @@ VDMSClient::VDMSClient(std::string username,
                        int port,
                        Protocol protocols,
                        std::string ca_certificate) :
-    _impl(new VDMSClientImpl(std::move(username),
-    std::move(password),
-    std::move(addr),
-    port,
-    static_cast<comm::Protocol>(protocols),
-    std::move(ca_certificate)))
+    _impl(new VDMSClientImpl(VDMSClientConfig(std::move(addr),
+        port,
+        protocols,
+        std::move(ca_certificate),
+        std::move(username),
+        std::move(password),
+        "",
+        nullptr)))
 {
 }
 
@@ -69,11 +75,19 @@ VDMSClient::VDMSClient(std::string api_key,
                        int port,
                        Protocol protocols,
                        std::string ca_certificate) :
-    _impl(new VDMSClientImpl(std::move(api_key),
-    std::move(addr),
-    port,
-    static_cast<comm::Protocol>(protocols),
-    std::move(ca_certificate)))
+    _impl(new VDMSClientImpl(VDMSClientConfig(std::move(addr),
+        port,
+        protocols,
+        std::move(ca_certificate),
+        "",
+        "",
+        std::move(api_key),
+        nullptr)))
+{
+}
+
+VDMSClient::VDMSClient(VDMSClientConfig config)
+: _impl(new VDMSClientImpl(std::move(config)))
 {
 }
 
