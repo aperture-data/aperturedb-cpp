@@ -14,7 +14,7 @@
 
 PromConfig PromConfig::load(const std::string& config_file) {
     std::ifstream in_file(config_file);
-    return PromConfig(nlohmann::json::parse(in_file));
+    return PromConfig(nlohmann::json::parse(in_file, nullptr, true, true));
 }
 
 namespace
