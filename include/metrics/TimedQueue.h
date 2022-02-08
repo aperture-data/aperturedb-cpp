@@ -12,19 +12,26 @@
 namespace metrics
 {
 
-template< typename VALUE, typename TIME_UNIT = std::chrono::seconds >
+// This is a one-way queue container that automatically observes how much
+// time each element spends inside.
+template<
+    typename T, // queue value type
+    typename TIME_UNIT = std::chrono::seconds, // unit expected by the timer metric
+    typename METRIC_TYPE = prometheus::Histogram
+>
 class TimedQueue
 {
 public:
-    using value_type = VALUE;
+    using value_type = T;
     using timer_type = Timer<TIME_UNIT>;
+    using metric_type = METRIC_TYPE;
 private:
     std::list<std::pair<value_type, timer_type> > _queue;
-    prometheus::Histogram* _wait_timer;
+    metric_type* _wait_timer;
     prometheus::Counter* _push_counter;
 public:
 
-    explicit TimedQueue(prometheus::Histogram* timer = nullptr,
+    explicit TimedQueue(metric_type* timer = nullptr,
         prometheus::Counter* push_counter = nullptr)
     : _queue()
     , _wait_timer(timer)
@@ -32,8 +39,11 @@ public:
     {
     }
 
+    // copyable
     explicit TimedQueue(const TimedQueue&) = default;
     TimedQueue& operator=(const TimedQueue&) = default;
+
+    // moveable
     explicit TimedQueue(TimedQueue&&) = default;
     TimedQueue& operator=(TimedQueue&&) = default;
 

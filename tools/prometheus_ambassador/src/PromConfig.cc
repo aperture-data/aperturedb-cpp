@@ -5,7 +5,7 @@
  */
 
 #include "PromConfig.h"
-#include "defines.h"
+#include "prometheus_ambassador_defines.h"
 
 #include <fstream>
 #include <iostream>

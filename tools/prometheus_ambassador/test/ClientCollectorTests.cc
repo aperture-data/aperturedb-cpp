@@ -7,7 +7,7 @@
 #include "gtest/gtest.h"
 
 #include "ClientCollector.h"
-#include "defines.h"
+#include "prometheus_ambassador_defines.h"
 
 #include "Barrier.h"
 #include "comm/ConnServer.h"

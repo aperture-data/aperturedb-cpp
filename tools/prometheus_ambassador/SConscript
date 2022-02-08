@@ -31,6 +31,7 @@ src = [
   'src/ClientCollector.cc',
   'src/PromConfig.cc',
   'src/PromServer.cc',
+  'src/PrintCaughtException.cc',
 ]
 
 prom_amb_env.Program('prometheus_ambassador', ['prometheus_ambassador.cc'] + src)
@@ -48,6 +49,7 @@ test_obj = [
   'src/ClientCollector.o',
   'src/PromConfig.o',
   'src/PromServer.o',
+  'src/PrintCaughtException.o',
   test_src,
 ]
 
