@@ -37,7 +37,7 @@
 
 #include "comm/Address.h"
 #include "comm/Connection.h"
-#include "comm/Macros.h"
+#include "util/Macros.h"
 #include "comm/Protocol.h"
 
 namespace comm {

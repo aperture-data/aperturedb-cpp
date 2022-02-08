@@ -5,7 +5,7 @@
  */
 
 #include "PrintCaughtException.h"
-#include "TypeName.h"
+#include <util/TypeName.h>
 #include <aperturedb/Exception.h>
 #include <comm/Exception.h>
 #include <sstream>

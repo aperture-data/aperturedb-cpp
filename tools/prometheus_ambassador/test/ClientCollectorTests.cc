@@ -12,7 +12,7 @@
 #include "Barrier.h"
 #include "comm/ConnServer.h"
 
-#include "aperturedb/gcc_util.h" // DISABLE_WARNING
+#include "util/gcc_util.h" // DISABLE_WARNING
 DISABLE_WARNING(effc++)
 DISABLE_WARNING(useless-cast)
 DISABLE_WARNING(suggest-override)

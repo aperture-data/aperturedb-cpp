@@ -8,7 +8,7 @@
 #include <string>
 
 #include "comm/Connection.h"
-#include "comm/Macros.h"
+#include "util/Macros.h"
 #include "comm/TLSSocket.h"
 
 namespace comm {

@@ -12,7 +12,7 @@
 #include <unistd.h>
 
 #include "comm/Exception.h"
-#include "comm/gcc_util.h"
+#include "util/gcc_util.h"
 
 using namespace comm;
 

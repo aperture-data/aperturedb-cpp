@@ -31,7 +31,7 @@
 #pragma once
 
 #include <string>
-#include "comm/Macros.h"
+#include "util/Macros.h"
 
 namespace comm {
 

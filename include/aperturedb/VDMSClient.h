@@ -34,7 +34,7 @@
 #include <string>
 #include <vector>
 
-#include "comm/Macros.h"
+#include "util/Macros.h"
 #include "comm/Protocol.h"
 
 namespace comm {
