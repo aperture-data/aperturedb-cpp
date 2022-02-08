@@ -6,7 +6,6 @@
 
 #include "metrics/metric_schema_defines.h"
 #include <prometheus/metric_family.h>
-#include <nlohmann/json.hpp>
 
 namespace metrics
 {
@@ -51,7 +50,7 @@ struct ParseAs<prometheus::MetricType>
 };
 
 template< typename JSON >
-class JsonReaderBase {
+class JsonReader {
 public:
     using json_type = JSON;
 
@@ -158,6 +157,4 @@ public:
         return result;
     }
 };
-
-using JsonReader = JsonReaderBase<nlohmann::json>;
 } // namespace metrics

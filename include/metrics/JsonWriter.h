@@ -13,7 +13,7 @@ namespace metrics
 {
 
 template< typename JSON >
-class JsonWriterBase
+class JsonWriter
 {
     static constexpr int _prc{std::numeric_limits<double>::max_digits10 - 1};
 public:

@@ -136,7 +136,7 @@ TEST(ClientCollectorTest, CollectClientMetrics)
 
     server_thread.join();
 
-    metrics::JsonWriterBase<nlohmann::json> writer;
+    metrics::JsonWriter<nlohmann::json> writer;
     auto round_trip_json = writer.to_json(metrics);
 
     ASSERT_EQ(response[0]["GetMetrics"]["values"], round_trip_json);

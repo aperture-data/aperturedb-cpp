@@ -36,7 +36,7 @@ ClientCollector::ClientCollector(const PromConfig& cfg, prometheus::Registry& re
 }
 
 std::vector<prometheus::MetricFamily> ClientCollector::Collect() const {
-    auto query = R"(
+    const auto query = R"(
         [{"GetMetrics": {
             "format": "json"
         }}]
@@ -58,7 +58,7 @@ std::vector<prometheus::MetricFamily> ClientCollector::Collect() const {
 
         auto response = nlohmann::json::parse(res.json);
         if (response.is_array()) {
-            metrics::JsonReader reader;
+            metrics::JsonReader<nlohmann::json> reader;
             return reader.parse_metrics(response[0]["GetMetrics"][AD_METRIC_SCHEMA_VALUES]);
         }
         _metrics.increment_failure(std::string("Unexpected response: ") + response.dump());
