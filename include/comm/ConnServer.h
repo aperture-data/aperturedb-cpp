@@ -51,6 +51,7 @@ namespace comm {
         std::string ca_certificate{};
         std::string tls_certificate{};
         std::string tls_private_key{};
+        ConnMetrics* metrics{nullptr};
 
         ConnServerConfig() = default;
 
@@ -58,14 +59,19 @@ namespace comm {
                          bool auto_generate_certificate_ = true,
                          std::string ca_certificate_ = "",
                          std::string tls_certificate_ = "",
-                         std::string tls_private_key_ = "") :
+                         std::string tls_private_key_ = "",
+                         ConnMetrics* metrics_ = nullptr) :
             allowed_protocols(allowed_protocols_),
             auto_generate_certificate(auto_generate_certificate_),
             ca_certificate(std::move(ca_certificate_)),
             tls_certificate(std::move(tls_certificate_)),
-            tls_private_key(std::move(tls_private_key_))
+            tls_private_key(std::move(tls_private_key_)),
+            metrics(metrics_)
         {
         }
+
+        MOVEABLE_BY_DEFAULT(ConnServerConfig);
+        COPYABLE_BY_DEFAULT(ConnServerConfig);
     };
 
     // Implementation of a server

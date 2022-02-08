@@ -47,15 +47,23 @@ namespace comm {
         Protocol allowed_protocols{Protocol::TCP};
         std::string ca_certificate{};
         bool verify_certificate{false};
+        ConnMetrics* metrics{nullptr};
 
         ConnClientConfig() = default;
 
-        ConnClientConfig(Protocol allowed_protocols_, std::string ca_certificate_ = "", bool verify_certificate_ = false) :
+        ConnClientConfig(Protocol allowed_protocols_,
+                         std::string ca_certificate_ = "",
+                         bool verify_certificate_ = false,
+                         ConnMetrics* metrics_ = nullptr) :
             allowed_protocols(allowed_protocols_),
             ca_certificate(std::move(ca_certificate_)),
-            verify_certificate(verify_certificate_)
+            verify_certificate(verify_certificate_),
+            metrics(metrics_)
         {
         }
+
+        MOVEABLE_BY_DEFAULT(ConnClientConfig);
+        COPYABLE_BY_DEFAULT(ConnClientConfig);
     };
 
     // Implementation of a client

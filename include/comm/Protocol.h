@@ -12,7 +12,8 @@ namespace comm {
     {
         None = 0,
         TCP = 1 << 0,
-        TLS = 1 << 1
+        TLS = 1 << 1,
+        Any = TCP|TLS
     };
 
 }

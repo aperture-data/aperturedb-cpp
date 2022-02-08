@@ -35,8 +35,9 @@
 
 using namespace comm;
 
-Connection::Connection() :
-    _max_buffer_size(DEFAULT_BUFFER_SIZE)
+Connection::Connection(ConnMetrics* metrics)
+: _max_buffer_size(DEFAULT_BUFFER_SIZE)
+, _metrics(metrics)
 {
 
 }
@@ -73,6 +74,10 @@ void Connection::send_message(const uint8_t* data, uint32_t size)
 
     while (bytes_sent < size) {
         bytes_sent += write(data + bytes_sent, size - bytes_sent);
+    }
+
+    if (_metrics) {
+        _metrics->observe_bytes_sent(bytes_sent);
     }
 }
 
@@ -117,6 +122,10 @@ const std::basic_string<uint8_t>& Connection::recv_message()
         THROW_EXCEPTION(ReadFail);
     }
 
+    if (_metrics) {
+        _metrics->observe_bytes_recv(bytes_recv);
+    }
+
     return _buffer_str;
 }
 
@@ -125,3 +134,9 @@ void Connection::set_max_buffer_size(uint32_t max_buffer_size)
     _max_buffer_size = std::max(MIN_BUFFER_SIZE, max_buffer_size);
     _max_buffer_size = std::min(MAX_BUFFER_SIZE, _max_buffer_size);
 }
+
+ConnMetrics::~ConnMetrics() = default;
+
+void ConnMetrics::observe_bytes_sent(std::size_t /*bytes_sent*/) {}
+
+void ConnMetrics::observe_bytes_recv(std::size_t /*bytes_recv*/) {}

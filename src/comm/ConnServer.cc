@@ -118,7 +118,8 @@ std::unique_ptr<Connection> ConnServer::accept()
 {
     auto connected_socket = TCPSocket::accept(_listening_socket);
 
-    auto tcp_connection = std::unique_ptr<TCPConnection>(new TCPConnection(std::move(connected_socket)));
+    auto tcp_connection = std::unique_ptr<TCPConnection>(
+        new TCPConnection(std::move(connected_socket), _config.metrics));
 
     auto response = tcp_connection->recv_message();
 
@@ -152,7 +153,8 @@ std::unique_ptr<Connection> ConnServer::accept()
 
         tls_socket->accept();
 
-        return std::unique_ptr<TLSConnection>(new TLSConnection(std::move(tls_socket)));
+        return std::unique_ptr<TLSConnection>(
+            new TLSConnection(std::move(tls_socket), _config.metrics));
     }
     else if ((server_hello_message.protocol & Protocol::TCP) == Protocol::TCP) {
         // Nothing to do, already using TCP
