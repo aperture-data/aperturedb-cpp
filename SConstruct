@@ -134,6 +134,11 @@ env.Alias('install',
         )
 
 env.Alias('install',
+        env.Install(os.path.join(prefix, "bin"),
+                source="tools/prometheus_ambassador/prometheus_ambassador"),
+        )
+
+env.Alias('install',
         env.Install(os.path.join(prefix, "include/aperturedb/"),
                                  source=Glob("include/aperturedb/" + "*.h")),
         )
@@ -141,6 +146,16 @@ env.Alias('install',
 env.Alias('install',
         env.Install(os.path.join(prefix, "include/comm/"),
                                  source=Glob("include/comm/" + "*.h")),
+        )
+
+env.Alias('install',
+        env.Install(os.path.join(prefix, "include/metrics/"),
+                                 source=Glob("include/metrics/" + "*.h")),
+        )
+
+env.Alias('install',
+        env.Install(os.path.join(prefix, "include/util/"),
+                                 source=Glob("include/util/" + "*.h")),
         )
 
 SConscript(os.path.join('tools/prometheus_ambassador', 'SConscript'), exports=['env'])
