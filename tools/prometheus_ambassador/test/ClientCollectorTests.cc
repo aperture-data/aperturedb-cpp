@@ -24,6 +24,7 @@ ENABLE_WARNING(effc++)
 #include "metrics/JsonWriter.h"
 
 #define SERVER_PORT_INTERCHANGE 43210
+#define API_TOKEN "MySeCrEtToKeN"
 
 TEST(ClientCollectorTest, CollectClientMetrics)
 {
@@ -103,29 +104,42 @@ TEST(ClientCollectorTest, CollectClientMetrics)
 
     std::thread server_thread([&]()
     {
-        std::string expected_query = R"(
-"[{"GetMetrics":{"format":"json"}}])";
-
-
         comm::ConnServer server(SERVER_PORT_INTERCHANGE);
 
         barrier.wait();
 
         auto server_conn = server.accept();
 
-        auto message_received = server_conn->recv_message();
-        std::string recv_message(reinterpret_cast<const char*>(message_received.data()));
-        EXPECT_EQ(recv_message, expected_query);
+        auto handle_query = [&](const std::string& expected, const nlohmann::json& resp) {
+            auto recv = server_conn->recv_message();
 
-        VDMS::protobufs::queryMessage cmd;
-        cmd.set_json(response.dump());
-        std::basic_string<uint8_t> msg(cmd.ByteSizeLong(), 0);
-        cmd.SerializeToArray(const_cast<uint8_t*>(msg.data()), msg.length());
-        server_conn->send_message(msg.data(), msg.length());
+            VDMS::protobufs::queryMessage cmd;
+            cmd.ParseFromArray(recv.data(), recv.length());
+            EXPECT_EQ(cmd.json(), expected);
+
+            VDMS::protobufs::queryMessage res;
+            res.set_json(resp.dump());
+            std::basic_string<uint8_t> msg(res.ByteSizeLong(), 0);
+            res.SerializeToArray(const_cast<uint8_t*>(msg.data()), msg.length());
+            server_conn->send_message(msg.data(), msg.length());
+        };
+
+        handle_query("[{\"Authenticate\":{\"token\":\"" API_TOKEN "\"}}]", R"([{
+            "Authenticate": {
+                "status": 0,
+                "session_token": "123abc",
+                "session_token_expires_in": 30,
+                "refresh_token": "789xyz",
+                "refresh_token_expires_in": 60
+            }
+        }])"_json);
+
+        handle_query("[{\"GetMetrics\":{\"format\":\"json\"}}]", response);
     });
 
     nlohmann::json cfg_json;
     cfg_json[PA_CONFIG_VDMS_PORT_KEY] = SERVER_PORT_INTERCHANGE;
+    cfg_json[PA_CONFIG_API_TOKEN_KEY] = API_TOKEN;
     PromConfig cfg(cfg_json);
     prometheus::Registry reg;
     ClientCollector cc(cfg, reg);

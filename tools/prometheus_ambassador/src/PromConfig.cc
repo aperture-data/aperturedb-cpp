@@ -9,7 +9,6 @@
 
 #include <fstream>
 #include <iostream>
-#include <aperturedb/VDMSClient.h>
 #include "comm/Exception.h"
 
 PromConfig PromConfig::load(const std::string& config_file) {

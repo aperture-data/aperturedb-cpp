@@ -6,6 +6,7 @@
 
 #include <thread>
 #include <iostream>
+#include <fstream>
 #include "ClientCollector.h"
 #include "prometheus_ambassador_defines.h"
 #include "metrics/Timer.h"
@@ -13,16 +14,30 @@
 #include "PrintCaughtException.h"
 
 void ClientCollector::connect() const {
-    _client.reset(new VDMS::VDMSClient(VDMS::VDMSClientConfig(
-        config.vdms_address,
-        config.vdms_port,
-        config.protocols,
-        config.ca_certificate,
-        config.username,
-        config.password,
-        config.api_token,
-        &_metrics
-    )));
+    _client.reset(
+        config.username.empty()
+        ? new VDMS::VDMSClient(
+            config.api_token,
+            VDMS::VDMSClientConfig(
+                config.vdms_address,
+                config.vdms_port,
+                config.protocols,
+                config.ca_certificate,
+                &_metrics
+            )
+        )
+        : new VDMS::VDMSClient(
+            config.username,
+            config.password,
+            VDMS::VDMSClientConfig(
+                config.vdms_address,
+                config.vdms_port,
+                config.protocols,
+                config.ca_certificate,
+                &_metrics
+            )
+        )
+    );
     std::cout << "Prometheus ambassador connected to "
         << config.vdms_address << ":" << config.vdms_port << std::endl;
 }

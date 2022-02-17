@@ -46,7 +46,7 @@ ENABLE_WARNING(effc++)
 
 using namespace VDMS;
 
-TokenBasedVDMSClient::TokenBasedVDMSClient(VDMSClientConfig& config)
+TokenBasedVDMSClient::TokenBasedVDMSClient(const VDMSClientConfig& config)
 : _client(new comm::ConnClient(
     {config.addr, config.port},
     comm::ConnClientConfig(config.protocols,

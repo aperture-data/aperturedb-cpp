@@ -8,7 +8,6 @@ Import('env')
 prom_amb_env = env.Clone()
 prom_amb_env.Replace(
     CPPPATH = [ 'src',
-                os.getenv('JSONCPP_INCLUDE', default=''),
                 os.getenv('AD_COMM_INCLUDE',   default='../../include'),
                 os.getenv('AD_CLIENT_INCLUDE',   default='../../include'),
                 os.getenv('PROMETHEUS_CPP_CORE_INCLUDE', default=''),

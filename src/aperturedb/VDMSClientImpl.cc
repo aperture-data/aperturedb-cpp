@@ -84,13 +84,19 @@ std::unique_ptr<AuthToken> process_token_response(const std::string& response, c
 
 }
 
-VDMSClientImpl::VDMSClientImpl(VDMSClientConfig config)
+VDMSClientImpl::VDMSClientImpl(std::string username, std::string password, const VDMSClientConfig& config)
 : TokenBasedVDMSClient(config)
-, _config(std::move(config))
+, _username(std::move(username))
+, _password(std::move(password))
 {
-    if (!_config.password.empty() || !_config.api_key.empty()) {
-        re_authenticate();
-    }
+    re_authenticate();
+}
+
+VDMSClientImpl::VDMSClientImpl(std::string api_key, const VDMSClientConfig& config)
+: TokenBasedVDMSClient(config)
+, _api_key(std::move(api_key))
+{
+    re_authenticate();
 }
 
 VDMSClientImpl::~VDMSClientImpl() = default;
@@ -136,18 +142,18 @@ void VDMSClientImpl::re_authenticate()
 {
     nlohmann::json requestJson;
 
-    if (!_config.username.empty()) {
+    if (!_username.empty()) {
         requestJson = nlohmann::json::array({{
             {"Authenticate", {
-                {"username", _config.username},
-                {"password", _config.password}
+                {"username", _username},
+                {"password", _password}
             }}
         }});
     }
     else {
         requestJson = nlohmann::json::array({{
             {"Authenticate", {
-                {"token", _config.api_key}
+                {"token", _api_key}
             }}
         }});
     }
