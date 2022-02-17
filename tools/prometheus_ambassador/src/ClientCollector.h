@@ -18,7 +18,7 @@
 
 class ClientCollector : public prometheus::Collectable
 {
-    const PromConfig& config;
+    const PromConfig& _config;
     mutable std::unique_ptr<VDMS::VDMSClient> _client;
     prometheus::Registry& _registry;
 

@@ -15,38 +15,38 @@
 
 void ClientCollector::connect() const {
     _client.reset(
-        config.username.empty()
+        _config.username.empty()
         ? new VDMS::VDMSClient(
-            config.api_token,
+            _config.api_token,
             VDMS::VDMSClientConfig(
-                config.vdms_address,
-                config.vdms_port,
-                config.protocols,
-                config.ca_certificate,
+                _config.vdms_address,
+                _config.vdms_port,
+                _config.protocols,
+                _config.ca_certificate,
                 &_metrics
             )
         )
         : new VDMS::VDMSClient(
-            config.username,
-            config.password,
+            _config.username,
+            _config.password,
             VDMS::VDMSClientConfig(
-                config.vdms_address,
-                config.vdms_port,
-                config.protocols,
-                config.ca_certificate,
+                _config.vdms_address,
+                _config.vdms_port,
+                _config.protocols,
+                _config.ca_certificate,
                 &_metrics
             )
         )
     );
     std::cout << "Prometheus ambassador connected to "
-        << config.vdms_address << ":" << config.vdms_port << std::endl;
+        << _config.vdms_address << ":" << _config.vdms_port << std::endl;
 }
 
 ClientCollector::ClientCollector(const PromConfig& cfg, prometheus::Registry& registry)
-: config(cfg)
+: _config(cfg)
 , _client(nullptr)
 , _registry(registry)
-, _metrics(config, _registry)
+, _metrics(_config, _registry)
 {
 }
 

@@ -8,7 +8,7 @@ Import('env')
 prom_amb_env = env.Clone()
 prom_amb_env.Replace(
     CPPPATH = [ 'src',
-                os.getenv('AD_COMM_INCLUDE',   default='../../include'),
+                os.getenv('AD_COMM_INCLUDE',     default='../../include'),
                 os.getenv('AD_CLIENT_INCLUDE',   default='../../include'),
                 os.getenv('PROMETHEUS_CPP_CORE_INCLUDE', default=''),
                 os.getenv('PROMETHEUS_CPP_PULL_INCLUDE', default=''),
@@ -20,7 +20,7 @@ prom_amb_env.Replace(
               ],
     LIBPATH = [ '/usr/local/lib/',
                 os.getenv('AD_COMM_LIB',         default='../../lib'),
-                os.getenv('AD_CLIENT_LIB',   default='../../lib'),
+                os.getenv('AD_CLIENT_LIB',       default='../../lib'),
                 os.getenv('JSONCPP_LIB',         default=''),
                 os.getenv('PROMETHEUS_CPP_LIB',  default=''),
               ],
@@ -53,5 +53,3 @@ test_obj = [
 ]
 
 test_env.Program('prometheus_ambassador_test', test_obj)
-
-
