@@ -34,7 +34,7 @@
 #include <string>
 
 #include "comm/Connection.h"
-#include "comm/Macros.h"
+#include "util/Macros.h"
 #include "comm/TCPSocket.h"
 
 namespace comm {
@@ -46,8 +46,9 @@ namespace comm {
 
     public:
 
-        TCPConnection();
-        explicit TCPConnection(std::unique_ptr<TCPSocket> tcp_socket);
+        explicit TCPConnection(ConnMetrics* metrics = nullptr);
+        explicit TCPConnection(std::unique_ptr<TCPSocket> tcp_socket,
+            ConnMetrics* metrics = nullptr);
 
         MOVEABLE_BY_DEFAULT(TCPConnection);
         NOT_COPYABLE(TCPConnection);

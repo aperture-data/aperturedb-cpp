@@ -8,7 +8,7 @@
 #include <string>
 
 #include "comm/Connection.h"
-#include "comm/Macros.h"
+#include "util/Macros.h"
 #include "comm/TLSSocket.h"
 
 namespace comm {
@@ -17,8 +17,9 @@ namespace comm {
     {
     public:
 
-        TLSConnection();
-        explicit TLSConnection(std::unique_ptr<TLSSocket> tls_socket);
+        explicit TLSConnection(ConnMetrics* metrics = nullptr);
+        explicit TLSConnection(std::unique_ptr<TLSSocket> tls_socket,
+            ConnMetrics* metrics = nullptr);
 
         MOVEABLE_BY_DEFAULT(TLSConnection);
         NOT_COPYABLE(TLSConnection);

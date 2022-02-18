@@ -12,14 +12,21 @@
 #include <unistd.h>
 
 #include "comm/Exception.h"
-#include "comm/gcc_util.h"
+#include "util/gcc_util.h"
 
 using namespace comm;
 
-TLSConnection::TLSConnection() = default;
+TLSConnection::TLSConnection(ConnMetrics* metrics)
+: Connection(metrics)
+{
+}
 
-TLSConnection::TLSConnection(std::unique_ptr<TLSSocket> tls_socket) :
-    _tls_socket(std::move(tls_socket))
+TLSConnection::TLSConnection(
+    std::unique_ptr<TLSSocket> tls_socket,
+    ConnMetrics* metrics
+)
+: Connection(metrics)
+, _tls_socket(std::move(tls_socket))
 {
 }
 

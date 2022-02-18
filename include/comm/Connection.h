@@ -31,16 +31,26 @@
 #pragma once
 
 #include <string>
+#include "util/Macros.h"
 
 namespace comm {
 
+    class ConnMetrics {
+    public:
+        virtual ~ConnMetrics() = 0;
+        virtual void observe_bytes_sent(std::size_t bytes_sent);
+        virtual void observe_bytes_recv(std::size_t bytes_recv);
+    };
+
     class Connection
     {
-
     public:
 
-        Connection();
+        explicit Connection(ConnMetrics* metrics = nullptr);
         virtual ~Connection();
+
+        MOVEABLE_BY_DEFAULT(Connection);
+        NOT_COPYABLE(Connection);
 
         void send_message(const uint8_t* data, uint32_t size);
         const std::basic_string<uint8_t>& recv_message();
@@ -56,6 +66,8 @@ namespace comm {
 
         std::basic_string<uint8_t> _buffer_str{};
         uint32_t _max_buffer_size{};
+
+        ConnMetrics* _metrics{nullptr};
     };
 
 };

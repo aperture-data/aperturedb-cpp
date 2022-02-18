@@ -38,17 +38,6 @@
 
 using namespace VDMS;
 
-VDMSClient::VDMSClient(std::string addr,
-                       int port,
-                       Protocol protocols,
-                       std::string ca_certificate) :
-    _impl(new VDMSClientImpl(std::move(addr),
-    port,
-    static_cast<comm::Protocol>(protocols),
-    std::move(ca_certificate)))
-{
-}
-
 VDMSClient::VDMSClient(std::string username,
                        std::string password,
                        std::string addr,
@@ -56,11 +45,12 @@ VDMSClient::VDMSClient(std::string username,
                        Protocol protocols,
                        std::string ca_certificate) :
     _impl(new VDMSClientImpl(std::move(username),
-    std::move(password),
-    std::move(addr),
-    port,
-    static_cast<comm::Protocol>(protocols),
-    std::move(ca_certificate)))
+                             std::move(password),
+                             VDMSClientConfig(std::move(addr),
+                                              port,
+                                              protocols,
+                                              std::move(ca_certificate),
+                                              nullptr)))
 {
 }
 
@@ -70,10 +60,25 @@ VDMSClient::VDMSClient(std::string api_key,
                        Protocol protocols,
                        std::string ca_certificate) :
     _impl(new VDMSClientImpl(std::move(api_key),
-    std::move(addr),
-    port,
-    static_cast<comm::Protocol>(protocols),
-    std::move(ca_certificate)))
+                             VDMSClientConfig(std::move(addr),
+                                              port,
+                                              protocols,
+                                              std::move(ca_certificate),
+                                              nullptr)))
+{
+}
+
+VDMSClient::VDMSClient(std::string username,
+                       std::string password,
+                       const VDMSClientConfig& config)
+: _impl(new VDMSClientImpl(std::move(username),
+                           std::move(password),
+                           config))
+{
+}
+
+VDMSClient::VDMSClient(std::string api_key, const VDMSClientConfig& config)
+: _impl(new VDMSClientImpl(std::move(api_key), config))
 {
 }
 

@@ -37,14 +37,18 @@
 #include <unistd.h>
 
 #include "comm/Exception.h"
-#include "comm/gcc_util.h"
+#include "util/gcc_util.h"
 
 using namespace comm;
 
-TCPConnection::TCPConnection() = default;
+TCPConnection::TCPConnection(ConnMetrics* metrics)
+: Connection(metrics)
+{
+}
 
-TCPConnection::TCPConnection(std::unique_ptr<TCPSocket> tcp_socket) :
-    _tcp_socket(std::move(tcp_socket))
+TCPConnection::TCPConnection(std::unique_ptr<TCPSocket> tcp_socket, ConnMetrics* metrics)
+: Connection(metrics)
+, _tcp_socket(std::move(tcp_socket))
 {
 }
 

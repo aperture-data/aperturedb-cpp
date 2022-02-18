@@ -10,6 +10,10 @@ AddOption('--prefix', dest='prefix',
                       metavar='DIR',
                       help='Installation prefix [/usr/local/]')
 
+AddOption('--build-debug', action="store_true", dest="build-debug",
+                      default = False,
+                      help='Build debug symbols')
+
 def compileProtoFiles(client_env):
     #Compile .proto file to generate protobuf files (.h and .cc).
 
@@ -32,7 +36,11 @@ WFLAGS = "-Wall -Wextra -Werror -Weffc++ -Wpointer-arith -Wcast-align \
 
 WFLAGS += ' '.join([str(elem) for elem in compiler_warnings])
 
-OPTFLAGS = "-O3 "
+if GetOption('build-debug'):
+    OPTFLAGS = "-O0 -g3 -fvar-tracking-assignments -gdwarf-4 "
+else:
+    OPTFLAGS = "-O3 "
+
 # Enviroment use by all the builds
 env = Environment(CXXFLAGS="-std=c++11 " + FFLAGS + OPTFLAGS + WFLAGS)
 # env.MergeFlags(GetOption('cflags'))
@@ -126,6 +134,11 @@ env.Alias('install',
         )
 
 env.Alias('install',
+        env.Install(os.path.join(prefix, "bin"),
+                source="tools/prometheus_ambassador/prometheus_ambassador"),
+        )
+
+env.Alias('install',
         env.Install(os.path.join(prefix, "include/aperturedb/"),
                                  source=Glob("include/aperturedb/" + "*.h")),
         )
@@ -134,3 +147,15 @@ env.Alias('install',
         env.Install(os.path.join(prefix, "include/comm/"),
                                  source=Glob("include/comm/" + "*.h")),
         )
+
+env.Alias('install',
+        env.Install(os.path.join(prefix, "include/metrics/"),
+                                 source=Glob("include/metrics/" + "*.h")),
+        )
+
+env.Alias('install',
+        env.Install(os.path.join(prefix, "include/util/"),
+                                 source=Glob("include/util/" + "*.h")),
+        )
+
+SConscript(os.path.join('tools/prometheus_ambassador', 'SConscript'), exports=['env'])

@@ -84,34 +84,17 @@ std::unique_ptr<AuthToken> process_token_response(const std::string& response, c
 
 }
 
-VDMSClientImpl::VDMSClientImpl(std::string addr,
-                               int port,
-                               comm::Protocol protocols,
-                               std::string ca_certificate) :
-    TokenBasedVDMSClient(std::move(addr), port, static_cast<Protocol>(protocols), std::move(ca_certificate))
-{
-}
-
-VDMSClientImpl::VDMSClientImpl(std::string username,
-                               std::string password,
-                               std::string addr,
-                               int port,
-                               comm::Protocol protocols,
-                               std::string ca_certificate) :
-    TokenBasedVDMSClient(std::move(addr), port, static_cast<Protocol>(protocols), std::move(ca_certificate)),
-    _password(std::move(password)),
-    _username(std::move(username))
+VDMSClientImpl::VDMSClientImpl(std::string username, std::string password, const VDMSClientConfig& config)
+: TokenBasedVDMSClient(config)
+, _username(std::move(username))
+, _password(std::move(password))
 {
     re_authenticate();
 }
 
-VDMSClientImpl::VDMSClientImpl(std::string api_key,
-                               std::string addr,
-                               int port,
-                               comm::Protocol protocols,
-                               std::string ca_certificate) :
-    TokenBasedVDMSClient(std::move(addr), port, static_cast<Protocol>(protocols), std::move(ca_certificate)),
-    _api_key(std::move(api_key))
+VDMSClientImpl::VDMSClientImpl(std::string api_key, const VDMSClientConfig& config)
+: TokenBasedVDMSClient(config)
+, _api_key(std::move(api_key))
 {
     re_authenticate();
 }
