@@ -18,13 +18,13 @@ namespace metrics
 // A scoped timer that automatically records the duration
 // of its lifetime to the provided metric.
 template<
-    typename TIME_UNIT = std::chrono::seconds, // unit expected by the timer metric
-    typename METRIC_TYPE = prometheus::Histogram > // underlying metric type (histogram or summary)
+    typename METRIC_TYPE = prometheus::Histogram, // underlying metric type (histogram or summary)
+    typename TIME_UNIT = std::chrono::seconds > // unit expected by the timer metric
 class Timer
 {
 public:
-    using duration_type = typename std::chrono::duration< double, typename TIME_UNIT::period >;
     using metric_type = METRIC_TYPE;
+    using duration_type = typename std::chrono::duration< double, typename TIME_UNIT::period >;
 
 private:
     metric_type* _timer;
@@ -60,9 +60,11 @@ public:
     }
 
     Timer& operator=(Timer&& other) noexcept {
-        _timer = other._timer;
-        other._timer = nullptr;
-        _start = std::move( other._start );
+        if (&other != this) {
+            _timer = other._timer;
+            other._timer = nullptr;
+            _start = std::move( other._start );
+        }
         return *this;
     }
 

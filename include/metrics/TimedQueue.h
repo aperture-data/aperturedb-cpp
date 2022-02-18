@@ -16,15 +16,14 @@ namespace metrics
 // time each element spends inside.
 template<
     typename T, // queue value type
-    typename TIME_UNIT = std::chrono::seconds, // unit expected by the timer metric
-    typename METRIC_TYPE = prometheus::Histogram
->
+    typename METRIC_TYPE = prometheus::Histogram, // underlying metric type (histogram or summary)
+    typename TIME_UNIT = std::chrono::seconds >// unit expected by the underlying metric
 class TimedQueue
 {
 public:
     using value_type = T;
-    using timer_type = Timer<TIME_UNIT>;
     using metric_type = METRIC_TYPE;
+    using timer_type = Timer<TIME_UNIT, metric_type>;
 private:
     std::list<std::pair<value_type, timer_type> > _queue;
     metric_type* _wait_timer;

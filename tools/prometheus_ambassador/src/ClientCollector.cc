@@ -58,7 +58,7 @@ std::vector<prometheus::MetricFamily> ClientCollector::Collect() const {
     )"_json;
 
     try {
-        metrics::Timer<std::chrono::seconds, prometheus::Summary> timer;
+        metrics::Timer<prometheus::Summary> timer;
         if (!_client) {
             timer.reset(&_metrics.connect_timer);
             connect();
