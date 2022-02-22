@@ -101,11 +101,21 @@ CXXFLAGS = env['CXXFLAGS']
 # Comm Testing
 comm_test_env = Environment(
         CPPPATH  = ['include', 'src',
-                    os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include')
+                    os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include'),
+                    os.getenv('PROMETHEUS_CPP_CORE_INCLUDE', default=''),
                    ],
         CXXFLAGS = CXXFLAGS,
-        LIBS     = ['aperturedb-client', 'comm', 'pthread', 'gtest', 'glog'],
-        LIBPATH  = ['lib'],
+        LIBS     = [
+                    'aperturedb-client',
+                    'comm',
+                    'pthread',
+                    'gtest',
+                    'glog',
+                    'prometheus-cpp-core',
+                   ],
+        LIBPATH  = ['lib',
+                    os.getenv('PROMETHEUS_CPP_LIB',  default=''),
+                   ],
         RPATH    = ['../lib']
         )
 
@@ -118,7 +128,8 @@ comm_test_source_files = [
                           'test/TCPConnectionTests.cc',
                           'test/TLSConnectionTests.cc',
                           'test/VDMSServer.cc',
-                          'test/VDMSServerTests.cc'
+                          'test/VDMSServerTests.cc',
+                          'test/TimedQueueTests.cc',
                          ]
 
 comm_test = comm_test_env.Program('test/comm_test', comm_test_source_files)
