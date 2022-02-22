@@ -23,7 +23,7 @@ class TimedQueue
 public:
     using value_type = T;
     using metric_type = METRIC_TYPE;
-    using timer_type = Timer<TIME_UNIT, metric_type>;
+    using timer_type = Timer<metric_type, TIME_UNIT>;
 private:
     std::list<std::pair<value_type, timer_type> > _queue;
     metric_type* _wait_timer;
