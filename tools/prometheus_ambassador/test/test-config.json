@@ -11,7 +11,7 @@
     "vdms_port": 55557, // default:55555
 
     // Can be "tcp", "tls", or "any"
-    "allowed_protocols": "any", // default:"any"
+    "allowed_protocols": "tls", // default:"any"
 
     // ApertureDB use login
     "username": "admin",

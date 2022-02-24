@@ -7,6 +7,8 @@
 #include "gtest/gtest.h"
 
 #include "PromConfig.h"
+#include "prometheus_ambassador_defines.h"
+#include "comm/Exception.h"
 
 
 TEST(PromConfigTest, LoadConfig)
@@ -19,7 +21,7 @@ TEST(PromConfigTest, LoadConfig)
     EXPECT_EQ(cfg.username, "admin");
     EXPECT_EQ(cfg.password, "admin");
     EXPECT_TRUE(cfg.api_token.empty());
-    EXPECT_EQ(cfg.protocols, VDMS::Protocol::Any);
+    EXPECT_EQ(cfg.protocols, VDMS::Protocol::TLS);
 
     const std::string ca_cert(R"(-----BEGIN CERTIFICATE-----
 MIIDfTCCAmWgAwIBAgIUDMUB7YI1ybFb6FMWjwVHqBdIpf4wDQYJKoZIhvcNAQEL
@@ -44,4 +46,30 @@ zg1yCw6s5NT+eoASa+HpBYoqUCsnUDB1+D/aT6H7oYiV
 -----END CERTIFICATE-----
 )");
     EXPECT_EQ(cfg.ca_certificate, ca_cert);
+}
+
+TEST(PromConfigTest, DefaultValues)
+{
+    PromConfig cfg("{}"_json);
+    EXPECT_EQ(cfg.prometheus_address, PA_CONFIG_PROMETHEUS_ADDRESS_DEFAULT);
+    EXPECT_EQ(cfg.prometheus_port, PA_CONFIG_PROMETHEUS_PORT_DEFAULT);
+    EXPECT_EQ(cfg.vdms_address, PA_CONFIG_VDMS_ADDRESS_DEFAULT);
+    EXPECT_EQ(cfg.vdms_port, PA_CONFIG_VDMS_PORT_DEFAULT);
+    EXPECT_TRUE(cfg.username.empty());
+    EXPECT_TRUE(cfg.password.empty());
+    EXPECT_TRUE(cfg.api_token.empty());
+    EXPECT_EQ(cfg.protocols, VDMS::Protocol::Any);
+    EXPECT_TRUE(cfg.ca_certificate.empty());
+}
+
+
+TEST(PromConfigTest, BadCert)
+{
+    EXPECT_THROW(PromConfig("{\"ca_certificate\":\"file/that/does/not/exist\"}"_json), comm::Exception);
+}
+
+
+TEST(PromConfigTest, BadProtocols)
+{
+    EXPECT_THROW(PromConfig("{\"allowed_protocols\":\"foo\"}"_json), comm::Exception);
 }

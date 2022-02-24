@@ -29,6 +29,9 @@ namespace
         std::string out;
         if ( !path.empty() ) {
             std::ifstream ifs(path);
+            if (!ifs) {
+                THROW_EXCEPTION(ReadFail, "Unable to read CA certificate");
+            }
             using _it_type = std::istreambuf_iterator<char>;
             out.assign( _it_type(ifs), _it_type() );
         }
