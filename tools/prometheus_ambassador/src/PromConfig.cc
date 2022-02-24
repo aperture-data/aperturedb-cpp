@@ -24,6 +24,16 @@ namespace
         if (val == "any") return VDMS::Protocol::Any;
         THROW_EXCEPTION(ProtocolError, "Invalid protocol in config");
     }
+
+    std::string load_cert(std::string path) {
+        std::string out;
+        if ( !path.empty() ) {
+            std::ifstream ifs(path);
+            using _it_type = std::istreambuf_iterator<char>;
+            out.assign( _it_type(ifs), _it_type() );
+        }
+        return out;
+    }
 }
 
 PromConfig::PromConfig(const nlohmann::json& config_json)
@@ -35,5 +45,5 @@ PromConfig::PromConfig(const nlohmann::json& config_json)
 , password(config_json.value(PA_CONFIG_PASSWORD_KEY, PA_CONFIG_PASSWORD_DEFAULT))
 , api_token(config_json.value(PA_CONFIG_API_TOKEN_KEY, PA_CONFIG_API_TOKEN_DEFAULT))
 , protocols(parse_protocol(config_json.value(PA_CONFIG_PROTOCOLS_KEY, PA_CONFIG_PROTOCOLS_DEFAULT)))
-, ca_certificate(config_json.value(PA_CONFIG_CA_CERT_KEY, PA_CONFIG_CA_CERT_DEFAULT))
+, ca_certificate(load_cert(config_json.value(PA_CONFIG_CA_CERT_KEY, PA_CONFIG_CA_CERT_DEFAULT)))
 {}
