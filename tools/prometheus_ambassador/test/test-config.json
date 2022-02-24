@@ -3,23 +3,23 @@
 // a local aperturedb instance used by python tests.
 {
     // Mask and port to listen for Prometheus
-    // "prometheus_address": "localhost",
+    "prometheus_address": "0.0.0.0", // default:"localhost"
     // "prometheus_port": 8080,
 
     // ApertureDB API service address
-    // "vdms_address": "localhost",
-    "vdms_port": 55557, // default 55555
+    "vdms_address": "aperturedb", // default:"localhost"
+    "vdms_port": 55557, // default:55555
 
     // Can be "tcp", "tls", or "any"
-    // "allowed_protocols": "any",
+    "allowed_protocols": "tls", // default:"any"
 
     // ApertureDB use login
     "username": "admin",
-    "password": "admin"
+    "password": "admin",
 
     // ApertureDB api token (if not using username & password)
     // "api_token": null,
 
     // optional CA cert for SSL
-    // "ca_certificate": null
+    "ca_certificate": "test/test-cert.pem" // default:null
 }

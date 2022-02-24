@@ -27,13 +27,14 @@ prom_amb_env.Replace(
 )
 
 src = [
+  'prometheus_ambassador.cc',
   'src/ClientCollector.cc',
   'src/PromConfig.cc',
   'src/PromServer.cc',
   'src/PrintCaughtException.cc',
 ]
 
-prom_amb_env.Program('prometheus_ambassador', ['prometheus_ambassador.cc'] + src)
+prom_amb_env.Program('prometheus_ambassador', src)
 
 test_env = prom_amb_env.Clone()
 test_env.Replace(
@@ -41,7 +42,11 @@ test_env.Replace(
     CPPPATH = prom_amb_env['CPPPATH'] + ['../../test', '../../src'],
 )
 
-test_src = [ 'test/ClientCollectorTests.cc', 'test/main.cc' ]
+test_src = [
+  'test/main.cc',
+  'test/ClientCollectorTests.cc',
+  'test/PromConfigTests.cc',
+]
 
 test_obj = [
   '../../test/Barrier.o',
