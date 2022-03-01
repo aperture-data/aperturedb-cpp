@@ -51,10 +51,8 @@ ConnClient::ConnClient(const Address& server_address, ConnClientConfig config) :
     _config(std::move(config)),
     _connection(),
     _server(std::move(server_address)),
-    _ssl_ctx()
+    _ssl_ctx(create_client_context())
 {
-    _ssl_ctx = create_client_context();
-
     set_default_verify_paths(_ssl_ctx.get());
 
     if (config.verify_certificate) {
