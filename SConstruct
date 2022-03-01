@@ -53,7 +53,6 @@ comm_env.Replace(
         LIBPATH = []
              )
 
-comm_env.Replace(CXXFLAGS = comm_env['CXXFLAGS'].replace("-Weffc++", ""))
 comm_env.Replace(CXXFLAGS = re.sub("-Warray-bounds[^\s]+", "-Warray-bounds=1", comm_env['CXXFLAGS']))
 comm_env.Replace(CXXFLAGS = re.sub("-Wsuggest-attribute=const", "-Wno-suggest-attribute=const", comm_env['CXXFLAGS']))
 comm_env.Replace(CXXFLAGS = re.sub("-Wsuggest-final-types",     "-Wno-suggest-final-types",     comm_env['CXXFLAGS']))
