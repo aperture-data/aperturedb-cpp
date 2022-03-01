@@ -7,11 +7,12 @@ Import('env')
 
 prom_amb_env = env.Clone()
 prom_amb_env.Replace(
-    CPPPATH = [ 'src',
+    CPPPATH = [ 'src', '../../include/util',
                 os.getenv('AD_COMM_INCLUDE',     default='../../include'),
                 os.getenv('AD_CLIENT_INCLUDE',   default='../../include'),
                 os.getenv('PROMETHEUS_CPP_CORE_INCLUDE', default=''),
                 os.getenv('PROMETHEUS_CPP_PULL_INCLUDE', default=''),
+                os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include'),
               ],
     LIBS =    [ 'comm',
                 'aperturedb-client',

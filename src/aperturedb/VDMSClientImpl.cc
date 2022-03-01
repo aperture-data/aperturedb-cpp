@@ -88,13 +88,18 @@ VDMSClientImpl::VDMSClientImpl(std::string username, std::string password, const
 : TokenBasedVDMSClient(config)
 , _username(std::move(username))
 , _password(std::move(password))
+, _api_key()
+, _auth_token()
 {
     re_authenticate();
 }
 
 VDMSClientImpl::VDMSClientImpl(std::string api_key, const VDMSClientConfig& config)
 : TokenBasedVDMSClient(config)
+, _username()
+, _password()
 , _api_key(std::move(api_key))
+, _auth_token()
 {
     re_authenticate();
 }

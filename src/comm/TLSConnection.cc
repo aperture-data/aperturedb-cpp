@@ -18,6 +18,7 @@ using namespace comm;
 
 TLSConnection::TLSConnection(ConnMetrics* metrics)
 : Connection(metrics)
+, _tls_socket()
 {
 }
 

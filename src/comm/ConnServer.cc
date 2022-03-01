@@ -51,11 +51,11 @@ using namespace comm;
 
 ConnServer::ConnServer(int port, ConnServerConfig config) :
     _config(std::move(config)),
+    _listening_socket(),
     _open_ssl_initializer(OpenSSLInitializer::instance()),
-    _port(port)
+    _port(port),
+    _ssl_ctx(create_server_context())
 {
-    _ssl_ctx = create_server_context();
-
     set_default_verify_paths(_ssl_ctx.get());
 
     if (_config.auto_generate_certificate) {

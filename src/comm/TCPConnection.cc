@@ -43,6 +43,7 @@ using namespace comm;
 
 TCPConnection::TCPConnection(ConnMetrics* metrics)
 : Connection(metrics)
+, _tcp_socket()
 {
 }
 

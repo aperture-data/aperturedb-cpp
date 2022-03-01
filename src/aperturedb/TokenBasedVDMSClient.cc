@@ -54,8 +54,8 @@ TokenBasedVDMSClient::TokenBasedVDMSClient(const VDMSClientConfig& config)
         false,
         config.metrics
 )))
+, _connection(_client->connect())
 {
-    _connection = _client->connect();
 }
 
 TokenBasedVDMSClient::~TokenBasedVDMSClient() = default;
