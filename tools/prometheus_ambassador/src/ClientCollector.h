@@ -8,11 +8,14 @@
 
 #include <memory>
 #include <aperturedb/VDMSClient.h>
+#include "gcc_util.h"
+DISABLE_WARNING(effc++)
 #include <prometheus/registry.h>
 #include <prometheus/summary.h>
 #include <prometheus/histogram.h>
 #include <prometheus/counter.h>
 #include <prometheus/gauge.h>
+ENABLE_WARNING(effc++)
 #include "PromConfig.h"
 #include "comm/Connection.h"
 
