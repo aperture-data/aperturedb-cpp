@@ -53,11 +53,15 @@ comm_env.Replace(
         LIBPATH = []
              )
 
-comm_env.Replace(CXXFLAGS = re.sub("-Warray-bounds[^\s]+", "-Warray-bounds=1", comm_env['CXXFLAGS']))
-comm_env.Replace(CXXFLAGS = re.sub("-Wsuggest-attribute=const", "-Wno-suggest-attribute=const", comm_env['CXXFLAGS']))
-comm_env.Replace(CXXFLAGS = re.sub("-Wsuggest-final-types",     "-Wno-suggest-final-types",     comm_env['CXXFLAGS']))
-comm_env.Replace(CXXFLAGS = re.sub("-Wuseless-cast",            "-Wno-useless-cast",            comm_env['CXXFLAGS']))
-comm_env.Replace(CXXFLAGS = re.sub("-Wsuggest-override",        "-Wno-suggest-override",        comm_env['CXXFLAGS']))
+# This is to compile protobuf-based .cc whose code-generation we do not control.
+# The rest of the code is supposed to compiled using higher standards.
+lenient_env = comm_env.Clone()
+lenient_env.Replace(CXXFLAGS = lenient_env['CXXFLAGS'].replace("-Weffc++", ""))
+lenient_env.Replace(CXXFLAGS = re.sub("-Warray-bounds[^\s]+", "-Warray-bounds=1", lenient_env['CXXFLAGS']))
+lenient_env.Replace(CXXFLAGS = re.sub("-Wsuggest-attribute=const", "-Wno-suggest-attribute=const", lenient_env['CXXFLAGS']))
+lenient_env.Replace(CXXFLAGS = re.sub("-Wsuggest-final-types",     "-Wno-suggest-final-types",     lenient_env['CXXFLAGS']))
+lenient_env.Replace(CXXFLAGS = re.sub("-Wuseless-cast",            "-Wno-useless-cast",            lenient_env['CXXFLAGS']))
+lenient_env.Replace(CXXFLAGS = re.sub("-Wsuggest-override",        "-Wno-suggest-override",        lenient_env['CXXFLAGS']))
 
 comm_cc = [
            'src/comm/ConnClient.cc',
@@ -85,15 +89,19 @@ client_env.Replace(
 
 compileProtoFiles(client_env)
 
-client_cc = [
+protobuf_cc = [
            'src/aperturedb/queryMessage.pb.cc',
+           ]
+client_cc = [
            'src/aperturedb/TokenBasedVDMSClient.cc',
            'src/aperturedb/VDMSClient.cc',
            'src/aperturedb/VDMSClientImpl.cc'
           ]
 
 client_env.ParseConfig('pkg-config --cflags --libs protobuf')
-ulib = client_env.SharedLibrary('lib/aperturedb-client', client_cc)
+ulib = client_env.SharedLibrary('lib/aperturedb-client',
+        [client_cc, lenient_env.SharedObject(protobuf_cc)]
+        )
 
 CXXFLAGS = env['CXXFLAGS']
 
