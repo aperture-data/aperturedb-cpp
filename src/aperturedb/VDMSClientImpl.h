@@ -41,10 +41,10 @@
 namespace VDMS {
 
     struct AuthToken {
-        std::chrono::system_clock::time_point issued_at;
-        std::string refresh_token;
+        std::chrono::system_clock::time_point issued_at{};
+        std::string refresh_token{};
         int32_t refresh_token_expires_in{-1};
-        std::string session_token;
+        std::string session_token{};
         int32_t session_token_expires_in{-1};
     };
 

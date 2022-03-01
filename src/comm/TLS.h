@@ -11,8 +11,8 @@
 #include <openssl/ssl.h>
 
 struct Certificate {
-    std::string private_key;
-    std::string cert;
+    std::string private_key{};
+    std::string cert{};
 };
 
 class OpenSSLInitializer

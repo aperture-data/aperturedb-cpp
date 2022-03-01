@@ -51,8 +51,10 @@ using namespace comm;
 
 ConnServer::ConnServer(int port, ConnServerConfig config) :
     _config(std::move(config)),
+    _listening_socket(),
     _open_ssl_initializer(OpenSSLInitializer::instance()),
-    _port(port)
+    _port(port),
+    _ssl_ctx()
 {
     _ssl_ctx = create_server_context();
 
