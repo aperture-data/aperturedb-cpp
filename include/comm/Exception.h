@@ -31,6 +31,7 @@
 #pragma once
 
 #include <string>
+#include <iostream>
 
 namespace comm {
 
@@ -65,6 +66,7 @@ namespace comm {
         // Additional information
         const std::string msg;
         const int errno_val;
+        const int ssl_err_code;
 
         // Where it was thrown
         const char * const file;   // Source file name
@@ -72,7 +74,7 @@ namespace comm {
 
         Exception(int exc, const char *exc_name, const char *f, int l)
             : num(exc), name(exc_name),
-              msg(), errno_val(0),
+              msg(), errno_val(0), ssl_err_code(0),
               file(f), line(l)
         {}
 
@@ -80,22 +82,34 @@ namespace comm {
                   const std::string &m,
                   const char *f, int l)
             : num(exc), name(exc_name),
-              msg(m), errno_val(0),
+              msg(m), errno_val(0), ssl_err_code(0),
+              file(f), line(l)
+        {}
+
+        Exception(int exc, const char *exc_name,
+                  int err, const char* m,
+                  int ssl_err,
+                  const char *f, int l)
+            : num(exc), name(exc_name),
+              msg(m), errno_val(err), ssl_err_code(ssl_err),
               file(f), line(l)
         {}
 
         Exception(int exc, const char *exc_name,
                   int err, const std::string &m,
+                  int ssl_err,
                   const char *f, int l)
             : num(exc), name(exc_name),
-              msg(m), errno_val(err),
+              msg(m), errno_val(err), ssl_err_code(ssl_err),
               file(f), line(l)
         {}
         Exception() = delete;
         Exception(const Exception&) = default;
         Exception& operator=(const Exception&) = delete;
+        friend std::ostream& operator<<(std::ostream&, const Exception&);
     };
 
+    std::ostream& operator<<(std::ostream&, const Exception&);
 };
 
 #define THROW_EXCEPTION(name, ...) \
