@@ -25,7 +25,8 @@ TLSSocket::TLSSocket(std::unique_ptr<TCPSocket> tcp_socket, SSL* ssl) :
 TLSSocket::~TLSSocket()
 {
     if (_ssl) {
-        if (!(SSL_get_shutdown(_ssl) & SSL_SENT_SHUTDOWN)) {
+        int status = SSL_get_shutdown(_ssl);
+        if ((status & (SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN)) == 0) {
             SSL_shutdown(_ssl);
         }
         SSL_free(_ssl);
@@ -34,21 +35,22 @@ TLSSocket::~TLSSocket()
 
 void TLSSocket::accept()
 {
+    errno = 0;
     auto result = ::SSL_accept(_ssl);
-
+    int errno_r = errno;
     if (result < 1) {
-        THROW_EXCEPTION(TLSError,
-                        "Error accepting connection. SSL Error: " +
-                        std::to_string(result));
+        THROW_EXCEPTION(TLSError, errno_r, "SSL_accept()", result);
     }
 }
 
 void TLSSocket::connect()
 {
+    errno = 0;
     auto result = ::SSL_connect(_ssl);
+    int errno_r = errno;
 
     if (result < 1) {
-        THROW_EXCEPTION(TLSError);
+        THROW_EXCEPTION(TLSError, errno_r, "SSL_connect()", result);
     }
 }
 
