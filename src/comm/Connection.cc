@@ -97,10 +97,10 @@ const std::basic_string<uint8_t>& Connection::recv_message()
     };
 
     size_t bytes_recv = recv_and_check(reinterpret_cast<uint8_t*>(&recv_message_size),
-                                       sizeof(uint32_t));
+                                       sizeof(recv_message_size));
 
     if (bytes_recv != sizeof(recv_message_size)) {
-        THROW_EXCEPTION(ReadFail);
+        THROW_EXCEPTION(ReadFail, "Short read msg header");
     }
 
     if (recv_message_size > _max_buffer_size) {
@@ -115,11 +115,11 @@ const std::basic_string<uint8_t>& Connection::recv_message()
     bytes_recv = recv_and_check(const_cast<uint8_t*>(_buffer_str.data()), recv_message_size);
 
     if (recv_message_size != bytes_recv) {
-        THROW_EXCEPTION(ReadFail);
+        THROW_EXCEPTION(ReadFail, "Short read msg body");
     }
 
     if (recv_message_size != _buffer_str.size()) {
-        THROW_EXCEPTION(ReadFail);
+        THROW_EXCEPTION(ReadFail, "Short read other");
     }
 
     if (_metrics) {
