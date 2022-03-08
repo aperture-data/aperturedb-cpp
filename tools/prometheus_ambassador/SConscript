@@ -20,6 +20,7 @@ prom_amb_env.Replace(
                 'prometheus-cpp-pull',
               ],
     LIBPATH = [ '/usr/local/lib/',
+                '/usr/lib/',
                 os.getenv('AD_COMM_LIB',         default='../../lib'),
                 os.getenv('AD_CLIENT_LIB',       default='../../lib'),
                 os.getenv('JSONCPP_LIB',         default=''),
