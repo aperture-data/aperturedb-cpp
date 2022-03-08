@@ -39,7 +39,7 @@ prom_amb_env.Program('prometheus_ambassador', src)
 
 test_env = prom_amb_env.Clone()
 test_env.Replace(
-    LIBS = prom_amb_env['LIBS'] + ['gtest', 'pthread', 'protobuf'],
+    LIBS = prom_amb_env['LIBS'] + ['gtest', 'pthread', 'protobuf', 'glog'],
     CPPPATH = prom_amb_env['CPPPATH'] + ['../../test', '../../src'],
 )
 
