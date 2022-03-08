@@ -18,9 +18,9 @@ prom_amb_env.Replace(
                 'aperturedb-client',
                 'prometheus-cpp-core',
                 'prometheus-cpp-pull',
+                'glog',
               ],
     LIBPATH = [ '/usr/local/lib/',
-                '/usr/lib/',
                 os.getenv('AD_COMM_LIB',         default='../../lib'),
                 os.getenv('AD_CLIENT_LIB',       default='../../lib'),
                 os.getenv('JSONCPP_LIB',         default=''),
@@ -40,7 +40,7 @@ prom_amb_env.Program('prometheus_ambassador', src)
 
 test_env = prom_amb_env.Clone()
 test_env.Replace(
-    LIBS = prom_amb_env['LIBS'] + ['glog', 'pthread', 'protobuf', 'gtest'],
+    LIBS = prom_amb_env['LIBS'] + ['pthread', 'protobuf', 'gtest'],
     CPPPATH = prom_amb_env['CPPPATH'] + ['../../test', '../../src'],
 )
 
