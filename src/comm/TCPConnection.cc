@@ -59,22 +59,25 @@ size_t TCPConnection::read(uint8_t* buffer, size_t length)
         THROW_EXCEPTION(SocketFail);
     }
 
+    errno = 0;
     auto count = ::recv(_tcp_socket->_socket_fd, buffer, length, MSG_WAITALL);
+    int errno_r = errno;
 
     if (count < 0) {
         DISABLE_WARNING(logical-op)
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            THROW_EXCEPTION(ConnectionShutDown, "Connection being cleaned cause of timeout");
+            THROW_EXCEPTION(ConnectionShutDown, // Not, really. Read expired for blocking socket.
+                    errno_r, "recv()", 0);
         }
         else {
-            THROW_EXCEPTION(ReadFail);
+            THROW_EXCEPTION(ReadFail, errno_r, "recv()", 0);
         }
         ENABLE_WARNING(logical-op)
     }
     // When a stream socket peer has performed an orderly shutdown, the
     // return value will be 0 (the traditional "end-of-file" return).
     else if (count == 0) {
-        THROW_EXCEPTION(ConnectionShutDown, "Closing Connection.");
+        THROW_EXCEPTION(ConnectionShutDown, "Peer Closed Connection.");
     }
 
     return static_cast<size_t>(count);

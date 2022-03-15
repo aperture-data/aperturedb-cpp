@@ -9,6 +9,7 @@
 #include <netinet/ip.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <glog/logging.h>
 
 #include "comm/Exception.h"
 #include "comm/Variables.h"
@@ -27,6 +28,15 @@ TCPSocket::~TCPSocket()
     }
 }
 
+static long msec_diff(const struct timespec& a,
+                      const struct timespec& b)
+{
+    return
+        (a.tv_sec  - b.tv_sec)  * 1000 +
+        (a.tv_nsec - b.tv_nsec) / 1000000;
+}
+
+
 std::unique_ptr<TCPSocket> TCPSocket::accept(const std::unique_ptr<TCPSocket>& listening_socket)
 {
     struct sockaddr_in clnt_addr;
@@ -34,12 +44,26 @@ std::unique_ptr<TCPSocket> TCPSocket::accept(const std::unique_ptr<TCPSocket>& l
 
     // This is where client connects.
     // Server will stall here until incoming connection
-    // unless the socket is marked and nonblocking
-    int connected_socket = ::accept(listening_socket->_socket_fd, reinterpret_cast<sockaddr*>(&clnt_addr), &len);
+    // unless the socket is marked as nonblocking
+again:
+    timespec t1;
+    clock_gettime(CLOCK_REALTIME_COARSE, &t1);
 
+    errno = 0;
+    int connected_socket = ::accept(listening_socket->_socket_fd, reinterpret_cast<sockaddr*>(&clnt_addr), &len);
+    int errno_r = errno;
     if (connected_socket < 0) {
-        THROW_EXCEPTION(ConnectionError);
+        if (errno_r == EAGAIN) {
+            timespec t2;
+            clock_gettime(CLOCK_REALTIME_COARSE, &t2);
+            auto dt = msec_diff(t2, t1);
+            VLOG(3) << "accept(): no activity for " << dt << " msec. Going back to listening";
+            goto again;
+        } else {
+            THROW_EXCEPTION(ConnectionError, errno_r, "accept()", 0);
+        }
     }
+    // MAGICK can be done here
 
     return std::unique_ptr<TCPSocket>(new TCPSocket(connected_socket));
 }
