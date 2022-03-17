@@ -9,63 +9,46 @@
 #include <iostream>
 #include <fstream>
 
-// Json parsing files
-#include <jsoncpp/json/value.h>
-#include <jsoncpp/json/writer.h>
-#include <jsoncpp/json/reader.h>
+#include <nlohmann/json.hpp>
+#include <glog/logging.h>
 
-#include "VDMSClient.h"
+#include "aperturedb/VDMSClient.h"
 
-
-std::string get_pretty_json(std::string& json_str)
+template< typename T >
+inline std::string get_pretty_json(T input)
 {
-    Json::StyledWriter wr;
-
-    Json::Value root;
-    Json::Reader reader;
-    bool parsingSuccessful = reader.parse(json_str, root);
-    if ( !parsingSuccessful ) {
-        std::cout << "Error parsing json_string" << std::endl;
-        exit(0);
-    }
-
-    return wr.write(root);
+    return nlohmann::json::parse(input).dump();
 }
 
 int main(int argc, char const *argv[])
 {
+    static bool _always_false{false};
+    if (_always_false) {
+        // This will never run, but it needs to be here to force the linker to link glog.
+        // Otherwise the linker will fail due to missing VLOG symbols in libcomm.
+        LOG(INFO) << "wtf";
+    }
 
-    if (argc != 4) {
-        std::cout << "Usage: send_query db_ip db_port query_file(json)";
+    if (argc != 6) {
+        std::cout << "Usage: send_query db_ip db_port username password query_file(json)";
         std::cout << std::endl;
         return 0;
     }
 
     std::string ip(argv[1]);
     int port = std::stoi(std::string(argv[2]));
-    std::string filename(argv[3]);
+    std::string username(argv[3]);
+    std::string password(argv[4]);
+    std::string filename(argv[5]);
 
-    std::string query;
-
-    std::ifstream ifs(filename);
-    while (ifs.good()) {
-        std::string word;
-        ifs >> word;
-        if (ifs.eof()) {
-            break;
-        }
-
-       query += word + " ";
-    }
-
-    query = get_pretty_json(query);
+    auto query = get_pretty_json(std::ifstream(filename));
 
     std::cout << "Connecting to server " << ip << ":"
                                          << port << "..." << std::endl;
-    VDMS::VDMSClient connector(ip, port);
-    std::cout << "Connection successful." << std::endl;
 
-    Json::StyledWriter wr;
+    VDMS::VDMSClient connector(username, password, VDMS::VDMSClientConfig(ip, port));
+
+    std::cout << "Connection successful." << std::endl;
 
     std::cout << "Sending query:" << std::endl;
     std::cout << query << std::endl;
