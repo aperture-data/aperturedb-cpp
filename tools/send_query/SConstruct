@@ -1,0 +1,31 @@
+#
+# @copyright Copyright (c) 2020 ApertureData Inc.
+#
+import os
+Import('env')
+
+cfg_inherit_compiler_options = True
+if cfg_inherit_compiler_options:
+    CXXFLAGS = env['CXXFLAGS']
+else:
+    WFLAGS   = "-Wall -Wextra -Werror -Weffc++ -Wpointer-arith -Wcast-align \
+                -Wwrite-strings -Wno-dangling-else -Wno-sign-compare "
+    OPTFLAGS = "-O3 "
+    CXXFLAGS = "-std=c++11 " + OPTFLAGS + WFLAGS,
+
+
+env = Environment(CXXFLAGS=CXXFLAGS)
+
+# The 'os.getenv('JSONCPP_*)', below, is to support versions of JsonCpp library
+# other than one that comes with the standard repo. If these environment
+# variables are not set, then the location pointed to by 'default=', then
+# standard locations are searched.
+env.Append(
+    CPPPATH = ['src', '../../client/cpp/', '../../utils/include'],
+    LIBS =    ['libvdms-client', 'libvdms-utils', 'glog', 'libjsoncpp'],
+    LIBPATH = ['/usr/local/lib/', os.getenv('JSONCPP_INCLUDE', default='')]
+)
+
+files = [ 'send_query.cc' ]
+
+env.Program('send_query', files)
