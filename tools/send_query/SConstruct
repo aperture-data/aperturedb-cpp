@@ -1,0 +1,23 @@
+#
+# @copyright Copyright (c) 2020 ApertureData Inc.
+#
+import os
+Import('env')
+
+send_query_env = env.Clone()
+
+send_query_env.Replace(
+    CPPPATH = [ os.getenv('AD_COMM_INCLUDE',     default='../../include'),
+                os.getenv('AD_CLIENT_INCLUDE',   default='../../include'),
+                os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include'),
+    ],
+    LIBS =    ['libglog', 'comm', 'aperturedb-client'],
+    LIBPATH = ['/usr/local/lib/',
+                os.getenv('AD_COMM_LIB',         default='../../lib'),
+                os.getenv('AD_CLIENT_LIB',       default='../../lib'),
+    ],
+)
+
+files = [ 'send_query.cc' ]
+
+send_query_env.Program('send_query', files)

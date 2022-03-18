@@ -3,6 +3,7 @@ __pycache__
 /test/comm_test
 /tools/prometheus_ambassador/prometheus_ambassador
 /tools/prometheus_ambassador/prometheus_ambassador_test
+/tools/send_query/send_query
 /data
 .sconsign.dblite
 .vscode

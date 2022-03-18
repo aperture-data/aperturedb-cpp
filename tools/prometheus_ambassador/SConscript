@@ -23,7 +23,6 @@ prom_amb_env.Replace(
     LIBPATH = [ '/usr/local/lib/',
                 os.getenv('AD_COMM_LIB',         default='../../lib'),
                 os.getenv('AD_CLIENT_LIB',       default='../../lib'),
-                os.getenv('JSONCPP_LIB',         default=''),
                 os.getenv('PROMETHEUS_CPP_LIB',  default=''),
               ],
 )

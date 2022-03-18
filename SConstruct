@@ -177,3 +177,4 @@ env.Alias('install',
         )
 
 SConscript(os.path.join('tools/prometheus_ambassador', 'SConscript'), exports=['env'])
+SConscript(os.path.join('tools/send_query', 'SConstruct'), exports=['env'])
