@@ -22,11 +22,11 @@ inline std::string get_pretty_json(T input)
 
 int main(int argc, char const *argv[])
 {
-    static bool _always_false{false};
+    static volatile bool _always_false{false};
     if (_always_false) {
         // This will never run, but it needs to be here to force the linker to link glog.
         // Otherwise the linker will fail due to missing VLOG symbols in libcomm.
-        LOG(INFO) << "wtf";
+        LOG(INFO);
     }
 
     if (argc != 6) {
