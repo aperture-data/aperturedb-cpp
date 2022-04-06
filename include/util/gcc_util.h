@@ -24,4 +24,8 @@
 #define __SANITIZE_THREAD__ 0
 #endif
 
+#ifndef STRIP_LOG
+#define STRIP_LOG 0
+#endif
+
 #endif
