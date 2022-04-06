@@ -19,4 +19,9 @@
 #    endif
 #  endif
 
+// Cleaning after developers of glog 0.5.0:
+#ifndef __SANITIZE_THREAD__
+#define __SANITIZE_THREAD__ 0
+#endif
+
 #endif
