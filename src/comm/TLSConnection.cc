@@ -10,10 +10,15 @@
 #include <netdb.h>
 #include <string>
 #include <unistd.h>
+
+#include "util/gcc_util.h"
+DISABLE_WARNING(effc++)
+DISABLE_WARNING(suggest-override)
 #include <glog/logging.h>
+ENABLE_WARNING(suggest-override)
+ENABLE_WARNING(effc++)
 
 #include "comm/Exception.h"
-#include "util/gcc_util.h"
 
 using namespace comm;
 
