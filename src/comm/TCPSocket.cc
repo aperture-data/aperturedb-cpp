@@ -9,7 +9,13 @@
 #include <netinet/ip.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#include "util/gcc_util.h"
+DISABLE_WARNING(effc++)
+DISABLE_WARNING(suggest-override)
 #include <glog/logging.h>
+ENABLE_WARNING(suggest-override)
+ENABLE_WARNING(effc++)
 
 #include "comm/Exception.h"
 #include "comm/Variables.h"

@@ -10,7 +10,13 @@
 #include <fstream>
 
 #include <nlohmann/json.hpp>
+
+#include "util/gcc_util.h"
+DISABLE_WARNING(effc++)
+DISABLE_WARNING(suggest-override)
 #include <glog/logging.h>
+ENABLE_WARNING(suggest-override)
+ENABLE_WARNING(effc++)
 
 #include "aperturedb/VDMSClient.h"
 

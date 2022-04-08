@@ -8,7 +8,7 @@
 
 #include <memory>
 #include <aperturedb/VDMSClient.h>
-#include "gcc_util.h"
+#include "util/gcc_util.h"
 DISABLE_WARNING(effc++)
 #include <prometheus/registry.h>
 #include <prometheus/summary.h>
