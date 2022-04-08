@@ -48,7 +48,8 @@ env = Environment(CXXFLAGS="-std=c++11 " + FFLAGS + OPTFLAGS + WFLAGS)
 comm_env = env.Clone()
 comm_env.Replace(
         CPPPATH = ['include', 'src',
-                   os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include')],
+                   os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include'),
+                   os.getenv('GLOG_INCLUDE', default='')],
         LIBS    = [],
         LIBPATH = []
              )
@@ -110,6 +111,11 @@ comm_test_env = Environment(
         CPPPATH  = ['include', 'src',
                     os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include'),
                     os.getenv('PROMETHEUS_CPP_CORE_INCLUDE', default=''),
+                    os.getenv('GLOG_INCLUDE',          default=''),
+                   ],
+        LIBPATH  = ['lib',
+                    os.getenv('PROMETHEUS_CPP_LIB',    default=''),
+                    os.getenv('GLOG_LIB',              default=''),
                    ],
         CXXFLAGS = CXXFLAGS,
         LIBS     = [
@@ -119,9 +125,6 @@ comm_test_env = Environment(
                     'gtest',
                     'glog',
                     'prometheus-cpp-core',
-                   ],
-        LIBPATH  = ['lib',
-                    os.getenv('PROMETHEUS_CPP_LIB',  default=''),
                    ],
         RPATH    = ['../lib']
         )
