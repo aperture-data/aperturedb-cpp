@@ -26,7 +26,7 @@ This is a development guide for operational metrics exposed by ApertureDB.
 
 #### Counter
 
-* A **counter** is a single numeric value that only ever increases over time. Counters are suitable for tasks such as counting discrete events as they happen or tracking the consumption of a resource (eg. time spent). Generally, the value of a counter is less interesting than its rate of change. Counters are appropriate for both discrete and continuous use cases, though they are internally represented as floating-point[*](#wish-list).
+* A **counter** is a single numeric value that only ever increases over time. Counters are suitable for tasks such as counting discrete events as they happen or tracking the consumption of a resource (eg. time spent). Generally, the value of a counter is less interesting than its rate of change. Counters are appropriate for both discrete and continuous use cases, though they are internally represented as floating-point[*](#typed-metric-values).
 
 #### Gauge
 
@@ -108,7 +108,7 @@ erDiagram
 
 #### Registry
 
-* The `MetricsRegistry` is a singleton owned by the athena service that manages the current metric state.  The `MetricsRegistry` is required in order to create or query[*](#wish-list) `Family`s.
+* The `MetricsRegistry` is a singleton owned by the athena service that manages the current metric state.  The `MetricsRegistry` is required in order to create or query[*](#efficient-lookup) `Family`s.
 
 #### Family
 
@@ -141,7 +141,7 @@ erDiagram
 ### Mind measurement frequency
 * If a metric value is being modified >100 times per second, consider using a coarser measurement.
 ### Cache metrics
-* Retrieving Metric families and/or values by name and/or label is expensive[*](#wish-list). Prefer keeping references to metrics objects.
+* Retrieving Metric families and/or values by name and/or label is expensive[*](#efficient-lookup). Prefer keeping references to metrics objects.
 ### Mind label cardinality
 * Avoid labels with unbounded values like *username* or *timestamp*.
 ### Mind distribution cardinality
@@ -151,7 +151,7 @@ erDiagram
 
 We currently rely on [*prometheus-cpp*](https://github.com/jupp0r/prometheus-cpp) for metric instrumentation. This is sufficient for our needs, but has a few shortcomings. The following are nice-to-have features that would be possible if we were to migrate to our own metric instrumentation implementation.
 
-### Efficient metric lookup
+### Efficient lookup
 * Lookup of existing metric object is supported by *prometheus-cpp* but inefficient. A more optimized lookup would make metric values more accessible in disjoint places within ApertureDB.
 ### Typed metric values
 * Metric values with templatized value types may provide performance, memory, and/or payload improvements.
