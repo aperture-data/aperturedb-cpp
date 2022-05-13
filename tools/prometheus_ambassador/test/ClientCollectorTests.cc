@@ -120,7 +120,7 @@ TEST(ClientCollectorTest, CollectClientMetrics)
             VDMS::protobufs::queryMessage res;
             res.set_json(resp.dump());
             std::basic_string<uint8_t> msg(res.ByteSizeLong(), 0);
-            res.SerializeToArray(const_cast<uint8_t*>(msg.data()), msg.length());
+            res.SerializeToArray(msg.data(), msg.length());
             server_conn->send_message(msg.data(), msg.length());
         };
 

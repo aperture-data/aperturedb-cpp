@@ -112,7 +112,7 @@ const std::basic_string<uint8_t>& Connection::recv_message()
 
     _buffer_str.resize(recv_message_size);
 
-    bytes_recv = recv_and_check(const_cast<uint8_t*>(_buffer_str.data()), recv_message_size);
+    bytes_recv = recv_and_check(_buffer_str.data(), recv_message_size);
 
     if (recv_message_size != bytes_recv) {
         THROW_EXCEPTION(ReadFail, "Short read msg body");

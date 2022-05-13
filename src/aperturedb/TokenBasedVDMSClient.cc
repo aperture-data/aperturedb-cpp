@@ -75,7 +75,8 @@ VDMS::Response TokenBasedVDMSClient::query(const std::string& json,
         }
 
         std::basic_string<uint8_t> msg(cmd.ByteSizeLong(), 0);
-        cmd.SerializeToArray(const_cast<uint8_t*>(msg.data()), msg.length());
+        //cmd.SerializeToArray(const_cast<uint8_t*>(msg.data()), msg.length());
+        cmd.SerializeToArray(msg.data(), msg.length());
 
         _connection->send_message(msg.data(), msg.length());
 

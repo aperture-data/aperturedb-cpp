@@ -38,7 +38,7 @@ TEST(TCPConnectionTests, SyncMessages)
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
             //Recieve something
             BytesBuffer message_received = server_conn->recv_message();
-            std::string recv_message(reinterpret_cast<char*>(const_cast<uint8_t*>(message_received.data())));
+            std::string recv_message(reinterpret_cast<char*>(message_received.data()));
             ASSERT_EQ(0, recv_message.compare(client_to_server));
 
             //Send something
@@ -60,7 +60,7 @@ TEST(TCPConnectionTests, SyncMessages)
 
         // Receive something
         BytesBuffer message_received = connection->recv_message();
-        std::string recv_message(reinterpret_cast<char*>(const_cast<uint8_t*>(message_received.data())));
+        std::string recv_message(reinterpret_cast<char*>(message_received.data()));
         ASSERT_EQ(0, recv_message.compare(server_to_client));
     }
 
@@ -92,7 +92,7 @@ TEST(TCPConnectionTests, AsyncMessages)
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
             //Recieve something
             BytesBuffer message_received = server_conn->recv_message();
-            std::string recv_message(reinterpret_cast<char*>(const_cast<uint8_t*>(message_received.data())));
+            std::string recv_message(reinterpret_cast<char*>(message_received.data()));
             ASSERT_EQ(0, recv_message.compare(client_to_server));
         }
     });
@@ -112,7 +112,7 @@ TEST(TCPConnectionTests, AsyncMessages)
     for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
         // Receive something
         BytesBuffer message_received = connection->recv_message();
-        std::string recv_message(reinterpret_cast<char*>(const_cast<uint8_t*>(message_received.data())));
+        std::string recv_message(reinterpret_cast<char*>(message_received.data()));
         ASSERT_EQ(0, recv_message.compare(server_to_client));
     }
 
