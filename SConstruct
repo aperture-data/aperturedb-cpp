@@ -42,7 +42,7 @@ else:
     OPTFLAGS = "-O3 "
 
 # Enviroment use by all the builds
-env = Environment(CXXFLAGS="-std=c++11 " + FFLAGS + OPTFLAGS + WFLAGS)
+env = Environment(CXXFLAGS="-std=c++2a " + FFLAGS + OPTFLAGS + WFLAGS)
 # env.MergeFlags(GetOption('cflags'))
 
 comm_env = env.Clone()
