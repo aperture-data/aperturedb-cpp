@@ -76,7 +76,7 @@ void VDMSServer::send_message(const std::shared_ptr<comm::Connection>& connectio
                               const protobufs::queryMessage& protobuf_response)
 {
     std::basic_string<uint8_t> message(protobuf_response.ByteSizeLong(), 0);
-    protobuf_response.SerializeToArray(const_cast<uint8_t*>(message.data()), message.length());
+    protobuf_response.SerializeToArray(message.data(), message.length());
 
     connection->send_message(message.data(), message.length());
 }
