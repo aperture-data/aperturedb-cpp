@@ -1,6 +1,13 @@
 import os
 import re
+import os.path
 from compiler_warnings import compiler_warnings
+
+# maintains which options were triggered on the commandline
+setOptions = {}
+def optionWasSet(option, opt, value, parser):
+	setOptions[option.dest] = True
+	setattr(parser.values, option.dest, value)
 
 AddOption('--prefix', dest='prefix',
                       type='string',
@@ -10,9 +17,37 @@ AddOption('--prefix', dest='prefix',
                       metavar='DIR',
                       help='Installation prefix [/usr/local/]')
 
+AddOption( '--json-root', dest='json_root',
+			  type='string',
+			  default='/usr/',
+			  nargs=1,
+			  action='callback',
+			  callback=optionWasSet,
+			  metavar='DIR',
+			  help='Location of nlohmann/json [/usr/]')
+
+AddOption( '--glog-root', dest='glog_root',
+			  type='string',
+			  default='/usr/local',
+			  nargs=1,
+			  action='callback',
+			  callback=optionWasSet,
+			  metavar='DIR',
+			  help='Location of google logging [/usr/local]')
+
+AddOption( '--prometheus-root', dest='prometheus_root',
+			  type='string',
+			  default='/usr/local',
+			  nargs=1,
+			  action='callback',
+			  callback=optionWasSet,
+			  metavar='DIR',
+			  help='Location of prometheus-cpp [/usr/local]')
+
 AddOption('--build-debug', action="store_true", dest="build-debug",
                       default = False,
                       help='Build debug symbols')
+
 
 def compileProtoFiles(client_env):
     #Compile .proto file to generate protobuf files (.h and .cc).
@@ -45,14 +80,64 @@ else:
 env = Environment(CXXFLAGS="-std=c++2a " + FFLAGS + OPTFLAGS + WFLAGS)
 # env.MergeFlags(GetOption('cflags'))
 
+# favors varible set in commandline over environment.
+json_inc_path=""
+if "json_root" in setOptions:
+	json_inc_path = os.path.join(GetOption('json_root'), 'include')
+else:
+	json_inc_path = os.getenv('NLOHMANN_JSON_INCLUDE', default=os.path.join(GetOption('json_root'),'include'))
+
+glog_inc_path=""
+if "glog_root" in setOptions:
+	glog_inc_path = os.path.join(GetOption('glog_root'), 'include')
+else:
+	glog_inc_path = os.getenv('GLOG_INCLUDE', default=os.path.join(GetOption('glog_root'),'include'))
+
+glog_lib_path=""
+if "glog_root" in setOptions:
+	glog_lib_path = os.path.join(GetOption('glog_root'), 'lib')
+else:
+	glog_lib_path = os.getenv('GLOG_LIB', default=os.path.join(GetOption('glog_root'),'lib'))
+
+prometheus_inc_path=""
+if "prometheus_root" in setOptions:
+	prometheus_inc_path = os.path.join(GetOption('prometheus_root'), 'include')
+else:
+	prometheus_inc_path = os.getenv('PROMETHEUS_CPP_CORE_INCLUDE', default=os.path.join(GetOption('prometheus_root'),'include'))
+
+prometheus_lib_path=""
+if "prometheus_root" in setOptions:
+	prometheus_lib_path = os.path.join(GetOption('prometheus_root'), 'lib')
+else:
+	prometheus_lib_path = os.getenv('PROMETHEUS_CPP_LIB', default=os.path.join(GetOption('prometheus_root'),'lib'))
+
 comm_env = env.Clone()
 comm_env.Replace(
         CPPPATH = ['include', 'src',
-                   os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include'),
-                   os.getenv('GLOG_INCLUDE', default='')],
+                   json_inc_path,
+                   glog_inc_path,
+		   prometheus_inc_path],
         LIBS    = [],
         LIBPATH = []
              )
+
+comm_conf = Configure(comm_env)
+if not comm_conf.CheckCXXHeader('nlohmann/json.hpp'):
+	print(f"Unable to find nlohmann/json in {json_inc_path}")
+	Exit(1)
+if not comm_conf.CheckCXXHeader('glog/logging.h'):
+	print(f"Unable to find glog in {glog_inc_path}")
+	Exit(1)
+
+if not comm_conf.CheckCXXHeader('prometheus/histogram.h'):
+	print(f"Unable to find prometheus in {prometheus_inc_path}")
+	Exit(1)
+
+if not comm_conf.CheckCXXHeader('prometheus/registry.h'):
+	print(f"Unable to find prometheus in {prometheus_inc_path}")
+	Exit(1)
+
+
 
 # This is to compile protobuf-based .cc whose code-generation we do not control.
 # The rest of the code is supposed to compiled using higher standards.
@@ -83,7 +168,7 @@ ulib = comm_env.SharedLibrary('lib/comm', comm_cc)
 client_env = comm_env.Clone()
 client_env.Replace(
         CPPPATH = ['include', 'src',
-                    os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include')],
+                    json_inc_path],
         LIBS    = ['comm'],
         LIBPATH = ['lib/']
              )
@@ -109,13 +194,13 @@ CXXFLAGS = env['CXXFLAGS']
 # Comm Testing
 comm_test_env = Environment(
         CPPPATH  = ['include', 'src',
-                    os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include'),
-                    os.getenv('PROMETHEUS_CPP_CORE_INCLUDE', default=''),
-                    os.getenv('GLOG_INCLUDE',          default=''),
+                    json_inc_path,
+                    prometheus_inc_path,
+                    glog_inc_path
                    ],
         LIBPATH  = ['lib',
-                    os.getenv('PROMETHEUS_CPP_LIB',    default=''),
-                    os.getenv('GLOG_LIB',              default=''),
+                    prometheus_lib_path,
+                    glog_lib_path
                    ],
         CXXFLAGS = CXXFLAGS,
         LIBS     = [
