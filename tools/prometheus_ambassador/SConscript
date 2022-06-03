@@ -9,7 +9,6 @@ prom_amb_env = env.Clone()
 prom_amb_env.Replace(
     CPPPATH = [ 'src', '../../include/util' ] +
 		env.adbPackageIncludePaths('ad_comm','ad_client','prometheus-cpp','nlohmann/json','glog'),
-              
     LIBPATH = [ '/usr/local/lib/' ] +
 		env.adbPackageLibPaths( 'ad_comm','ad_client','prometheus-cpp','glog'),
     LIBS =    [ 'comm',
