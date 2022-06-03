@@ -77,64 +77,43 @@ else:
     OPTFLAGS = "-O3 "
 
 # Enviroment use by all the builds
-env = Environment(CXXFLAGS="-std=c++2a " + FFLAGS + OPTFLAGS + WFLAGS)
-# env.MergeFlags(GetOption('cflags'))
+#env = Environment(CXXFLAGS="-std=c++2a " + FFLAGS + OPTFLAGS + WFLAGS)
+env = Environment(CXXFLAGS="-std=c++2a " + FFLAGS + OPTFLAGS + WFLAGS, tools=['default','adb-conf'])
 
-# favors varible set in commandline over environment.
-json_inc_path=""
-if "json_root" in setOptions:
-	json_inc_path = os.path.join(GetOption('json_root'), 'include')
-else:
-	json_inc_path = os.getenv('NLOHMANN_JSON_INCLUDE', default=os.path.join(GetOption('json_root'),'include'))
+env.adbSetOptionMap( setOptions )
+env.adbAddPackageFromOption( "nlohmann/json", "json_root", "NLOHMANN_JSON", with_lib=False )
+env.adbAddPackageFromOption( "glog", "glog_root", "GLOG" )
+env.adbAddPackageFromOption( "prometheus-cpp", "prometheus_root", "PROMETHEUS_CPP", override={"ENV_INC_POST":"CORE_INCLUDE"} )
 
-glog_inc_path=""
-if "glog_root" in setOptions:
-	glog_inc_path = os.path.join(GetOption('glog_root'), 'include')
-else:
-	glog_inc_path = os.getenv('GLOG_INCLUDE', default=os.path.join(GetOption('glog_root'),'include'))
-
-glog_lib_path=""
-if "glog_root" in setOptions:
-	glog_lib_path = os.path.join(GetOption('glog_root'), 'lib')
-else:
-	glog_lib_path = os.getenv('GLOG_LIB', default=os.path.join(GetOption('glog_root'),'lib'))
-
-prometheus_inc_path=""
-if "prometheus_root" in setOptions:
-	prometheus_inc_path = os.path.join(GetOption('prometheus_root'), 'include')
-else:
-	prometheus_inc_path = os.getenv('PROMETHEUS_CPP_CORE_INCLUDE', default=os.path.join(GetOption('prometheus_root'),'include'))
-
-prometheus_lib_path=""
-if "prometheus_root" in setOptions:
-	prometheus_lib_path = os.path.join(GetOption('prometheus_root'), 'lib')
-else:
-	prometheus_lib_path = os.getenv('PROMETHEUS_CPP_LIB', default=os.path.join(GetOption('prometheus_root'),'lib'))
 
 comm_env = env.Clone()
 comm_env.Replace(
-        CPPPATH = ['include', 'src',
-                   json_inc_path,
-                   glog_inc_path,
-		   prometheus_inc_path],
+        CPPPATH = ['include', 'src' ] +
+		   env.adbPackageIncludePaths( "nlohmann/json", "glog","prometheus-cpp")
+		   ,
         LIBS    = [],
         LIBPATH = []
              )
 
+#nlohmann/json
 comm_conf = Configure(comm_env)
 if not comm_conf.CheckCXXHeader('nlohmann/json.hpp'):
-	print(f"Unable to find nlohmann/json in {json_inc_path}")
+	print("Unable to find nlohmann/json in " + env.adbPackageIncludePath( "nlohmann/json"))
 	Exit(1)
+#glog
 if not comm_conf.CheckCXXHeader('glog/logging.h'):
+	print("Unable to find glog in " + env.adbPackageIncludePath( "glog" ))
 	print(f"Unable to find glog in {glog_inc_path}")
 	Exit(1)
 
-if not comm_conf.CheckCXXHeader('prometheus/histogram.h'):
-	print(f"Unable to find prometheus in {prometheus_inc_path}")
+#prometheus
+if not comm_conf.CheckCXXHeader('prometheus/registry.h'):
+	print(f"Unable to find prometheus in "+ env.adbPackageIncludePath( "prometheus-cpp" ))
 	Exit(1)
 
-if not comm_conf.CheckCXXHeader('prometheus/registry.h'):
-	print(f"Unable to find prometheus in {prometheus_inc_path}")
+# prometheus-pull
+if not comm_conf.CheckCXXHeader('prometheus/exposer.h'):
+	print(f"Unable to find prometheus-pull in "+ env.adbPackageIncludePath( "prometheus-cpp" ))
 	Exit(1)
 
 
@@ -167,8 +146,8 @@ ulib = comm_env.SharedLibrary('lib/comm', comm_cc)
 
 client_env = comm_env.Clone()
 client_env.Replace(
-        CPPPATH = ['include', 'src',
-                    json_inc_path],
+        CPPPATH = ['include', 'src'] +
+			   env.adbPackageIncludePaths( "nlohmann/json"),
         LIBS    = ['comm'],
         LIBPATH = ['lib/']
              )
@@ -193,15 +172,10 @@ CXXFLAGS = env['CXXFLAGS']
 
 # Comm Testing
 comm_test_env = Environment(
-        CPPPATH  = ['include', 'src',
-                    json_inc_path,
-                    prometheus_inc_path,
-                    glog_inc_path
-                   ],
-        LIBPATH  = ['lib',
-                    prometheus_lib_path,
-                    glog_lib_path
-                   ],
+        CPPPATH  = ['include', 'src',] +
+		   env.adbPackageIncludePaths( "nlohmann/json", "glog","prometheus-cpp"),
+        LIBPATH  = ['lib', ] +
+		   env.adbPackageLibPaths( "glog","prometheus-cpp"),
         CXXFLAGS = CXXFLAGS,
         LIBS     = [
                     'aperturedb-client',
@@ -264,5 +238,7 @@ env.Alias('install',
                                  source=Glob("include/util/" + "*.h")),
         )
 
+env.adbAddLocalPackage("ad_comm","AD_COMM","src","lib")
+env.adbAddLocalPackage("ad_client","AD_CLIENT","src","lib")
 SConscript(os.path.join('tools/prometheus_ambassador', 'SConscript'), exports=['env'])
 SConscript(os.path.join('tools/send_query', 'SConstruct'), exports=['env'])
