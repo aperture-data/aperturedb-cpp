@@ -82,7 +82,7 @@ compiler_warnings = [
 "-Winvalid-pch",
 #"-Wlogical-op",               # Useful, but buggy in g++ v 7.
 #"-Wmismatched-tags",          # N/A
-"-Wmissing-declarations",
+#"-Wmissing-declarations",     # Otherwise protobuf 3.20 complains
 "-Wmissing-format-attribute",
 "-Wmissing-include-dirs",
 "-Wmultichar",
