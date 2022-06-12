@@ -18,13 +18,14 @@ RUN apt-get -qq update && apt-get -qq upgrade -y && \
 RUN cd /usr/src/gtest && cmake . && make && mv ./lib/libgtest* /usr/local/lib/
 
 # Protobuf
-RUN wget --no-check-certificate -q https://github.com/protocolbuffers/protobuf/archive/v3.9.0.tar.gz && \
-    tar xf v3.9.0.tar.gz && rm v3.9.0.tar.gz && \
-    cd protobuf-3.9.0 && ./autogen.sh &&  \
+ENV PROTOBUF_VERSION=3.20.0
+RUN wget --no-check-certificate -q https://github.com/protocolbuffers/protobuf/archive/v$PROTOBUF_VERSION.tar.gz && \
+    tar xf v$PROTOBUF_VERSION.tar.gz && rm v$PROTOBUF_VERSION.tar.gz && \
+    cd protobuf-$PROTOBUF_VERSION && ./autogen.sh &&  \
     ./configure --prefix=/usr/local && \
     make -j6 && \
     make install && ldconfig && \
-    rm -rf /protobuf-3.9.0
+    rm -rf /protobuf-$PROTOBUF_VERSION
 
 # JSON for Modern C++
 RUN wget --no-check-certificate -q https://github.com/nlohmann/json/archive/refs/tags/v3.10.2.zip && \
