@@ -7,16 +7,10 @@ Import('env')
 send_query_env = env.Clone()
 
 send_query_env.Replace(
-    CPPPATH = [ os.getenv('AD_COMM_INCLUDE',       default='../../include'),
-                os.getenv('AD_CLIENT_INCLUDE',     default='../../include'),
-                os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include'),
-                os.getenv('GLOG_INCLUDE',          default=''),
-    ],
-    LIBPATH = ['/usr/local/lib/',
-                os.getenv('AD_COMM_LIB',           default='../../lib'),
-                os.getenv('AD_CLIENT_LIB',         default='../../lib'),
-                os.getenv('GLOG_LIB',              default=''),
-    ],
+    CPPPATH =
+		env.adbPackageIncludePaths('ad_comm','ad_client','prometheus-cpp','nlohmann/json','glog'),
+    LIBPATH = ['/usr/local/lib/']+
+		env.adbPackageLibPaths( 'ad_comm','ad_client','prometheus-cpp','glog'),
     LIBS =    ['libglog', 'comm', 'aperturedb-client', 'glog'],
 )
 

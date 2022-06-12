@@ -7,7 +7,8 @@ __pycache__
 /data
 .sconsign.dblite
 .vscode
-
+.sconf_temp
+config.log
 *.o
 *.os
 *.pb.h
