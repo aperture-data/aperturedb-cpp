@@ -42,14 +42,22 @@ else:
     OPTFLAGS = "-O3 "
 
 # Enviroment use by all the builds
-env = Environment(CXXFLAGS="-std=c++2a " + FFLAGS + OPTFLAGS + WFLAGS)
+env = Environment(
+    # The PATH should contain version-specific tools, such as 'protoc',
+    # otherwise e.g. '/bin/protoc' would be called and the latter would produce
+    # *.pb.* of a version different from the one of $PROTOBUF_INCLUDE dir.
+    ENV = {'PATH' : os.environ['PATH']},
+    CXXFLAGS="-std=c++2a " + FFLAGS + OPTFLAGS + WFLAGS
+)
 # env.MergeFlags(GetOption('cflags'))
 
 comm_env = env.Clone()
 comm_env.Replace(
         CPPPATH = ['include', 'src',
                    os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include'),
-                   os.getenv('GLOG_INCLUDE', default='')],
+                   os.getenv('GLOG_INCLUDE', default=''),
+                   os.getenv('PROTOBUF_INCLUDE', default='')
+                  ],
         LIBS    = [],
         LIBPATH = []
              )
@@ -58,11 +66,15 @@ comm_env.Replace(
 # The rest of the code is supposed to compiled using higher standards.
 lenient_env = comm_env.Clone()
 lenient_env.Replace(CXXFLAGS = lenient_env['CXXFLAGS'].replace("-Weffc++", ""))
-lenient_env.Replace(CXXFLAGS = re.sub("-Warray-bounds[^\s]+", "-Warray-bounds=1", lenient_env['CXXFLAGS']))
+lenient_env.Replace(CXXFLAGS = re.sub("-Warray-bounds[^\s]+",      "-Warray-bounds=1",             lenient_env['CXXFLAGS']))
 lenient_env.Replace(CXXFLAGS = re.sub("-Wsuggest-attribute=const", "-Wno-suggest-attribute=const", lenient_env['CXXFLAGS']))
 lenient_env.Replace(CXXFLAGS = re.sub("-Wsuggest-final-types",     "-Wno-suggest-final-types",     lenient_env['CXXFLAGS']))
 lenient_env.Replace(CXXFLAGS = re.sub("-Wuseless-cast",            "-Wno-useless-cast",            lenient_env['CXXFLAGS']))
 lenient_env.Replace(CXXFLAGS = re.sub("-Wsuggest-override",        "-Wno-suggest-override",        lenient_env['CXXFLAGS']))
+lenient_env.Replace(CXXFLAGS = re.sub("-Wshadow",                  "-Wno-shadow",                  lenient_env['CXXFLAGS']))
+lenient_env.Replace(CXXFLAGS = re.sub("-Wredundant-decls",         "-Wno-redundant-decls",         lenient_env['CXXFLAGS']))
+lenient_env.Replace(CXXFLAGS = re.sub("-Wdeprecated-declarations", "-Wno-deprecated-declarations", lenient_env['CXXFLAGS']))
+lenient_env.Replace(CXXFLAGS = re.sub("-Wundef",                   "-Wno-undef",                   lenient_env['CXXFLAGS']))
 
 comm_cc = [
            'src/comm/ConnClient.cc',
@@ -83,10 +95,27 @@ ulib = comm_env.SharedLibrary('lib/comm', comm_cc)
 client_env = comm_env.Clone()
 client_env.Replace(
         CPPPATH = ['include', 'src',
-                    os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include')],
+                    os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include'),
+                    os.getenv('PROTOBUF_INCLUDE',      default='')
+                  ],
+        # This might not be required:
         LIBS    = ['comm'],
-        LIBPATH = ['lib/']
-             )
+
+        # Pointing to $XYZ_LIB in LIBPATH and RPATH is a way for the executables
+        # that will be linked with this lib to ibe able to find the correct
+        # version of XYZ lib, even if serveral version of XYZ lib exists on the
+        # system. (And to avoid potential coredumps when a wrong .so is used at
+        # run-time.) If curious, do
+        #
+        #    % ldd lib/libaperturedb-client.so  | grep protobuf
+        #
+        # once the lib is build.
+        LIBPATH = ['lib/',
+                    os.getenv('PROTOBUF_LIB', default='')
+                  ],
+        )
+
+client_env.Append(RPATH = client_env['LIBPATH'])
 
 compileProtoFiles(client_env)
 
@@ -108,29 +137,46 @@ CXXFLAGS = env['CXXFLAGS']
 
 # Comm Testing
 comm_test_env = Environment(
+        ENV      = {'PATH' : os.environ['PATH']},
         CPPPATH  = ['include', 'src',
                     os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include'),
                     os.getenv('PROMETHEUS_CPP_CORE_INCLUDE', default=''),
                     os.getenv('GLOG_INCLUDE',          default=''),
+                    os.getenv('PROTOBUF_INCLUDE',      default='')
                    ],
         LIBPATH  = ['lib',
                     os.getenv('PROMETHEUS_CPP_LIB',    default=''),
                     os.getenv('GLOG_LIB',              default=''),
+                    os.getenv('PROTOBUF_LIB',          default='')
                    ],
         CXXFLAGS = CXXFLAGS,
-        LIBS     = [
-                    'aperturedb-client',
+        LIBS     = ['aperturedb-client',
+                    'prometheus-cpp-core',
                     'comm',
-                    'pthread',
                     'gtest',
                     'glog',
-                    'prometheus-cpp-core',
+                    'protobuf',
+                    'pthread',
                    ],
-        RPATH    = ['../lib']
         )
 
+# Using RPATH causes the linker to record locations of shared libs inside the
+# executable, so that we do not need to either (a) copy the libs to standard
+# locations or (b) point to them in LD_LIBRARY_PATH.  To check if this worked
+# correctly, do
+#
+#     % ldd test/comm_test | grep 'not found'
+#
+# To check for which libs relative paths are used, do
+#
+#     % ldd test/comm_test | grep '=>' | grep -v '=> /'
+#
+# For an info on RPATH, see the man page for 'ld'.
 
-comm_test_env.ParseConfig('pkg-config --cflags --libs protobuf')
+comm_test_env.Append(RPATH = comm_test_env['LIBPATH'])
+
+
+##comm_test_env.ParseConfig('pkg-config --cflags --libs protobuf')
 
 comm_test_source_files = [
                           'test/AuthEnabledVDMSServer.cc',
