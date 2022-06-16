@@ -29,16 +29,7 @@
  */
 
 #include "aperturedb/VDMSClient.h"
-
-#include "util/gcc_util.h" // DISABLE_WARNING
-DISABLE_WARNING(effc++)
-DISABLE_WARNING(useless-cast)
-DISABLE_WARNING(suggest-override)
-#include "aperturedb/queryMessage.pb.h"
-ENABLE_WARNING(suggest-override)
-ENABLE_WARNING(useless-cast)
-ENABLE_WARNING(effc++)
-
+#include "aperturedb/queryMessageWrapper.h"
 #include "aperturedb/Exception.h"
 #include "comm/ConnClient.h"
 #include "comm/Connection.h"
