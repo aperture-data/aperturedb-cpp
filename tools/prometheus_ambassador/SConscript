@@ -14,18 +14,21 @@ prom_amb_env.Replace(
                 os.getenv('PROMETHEUS_CPP_PULL_INCLUDE', default=''),
                 os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include'),
                 os.getenv('GLOG_INCLUDE',          default=''),
+                os.getenv('PROTOBUF_INCLUDE',      default='')
               ],
     LIBPATH = [ '/usr/local/lib/',
                 os.getenv('AD_COMM_LIB',           default='../../lib'),
                 os.getenv('AD_CLIENT_LIB',         default='../../lib'),
                 os.getenv('PROMETHEUS_CPP_LIB',    default=''),
                 os.getenv('GLOG_INCLUDE',          default=''),
+                os.getenv('PROTOBUF_LIB',          default='')
               ],
     LIBS =    [ 'comm',
                 'aperturedb-client',
                 'prometheus-cpp-core',
                 'prometheus-cpp-pull',
                 'glog',
+                'protobuf',
               ],
 )
 
