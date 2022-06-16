@@ -55,6 +55,7 @@ compiler_warnings = [
 "-Wdelete-incomplete",
 "-Wdelete-non-virtual-dtor",
 #"-Wdeprecated-copy",          # N/A
+"-Wdeprecated-declarations",
 #"-Wdeprecated-copy-dtor",     # N/A
 "-Wdisabled-optimization",
 #"-Wdouble-promotion",         # FOR NOW
