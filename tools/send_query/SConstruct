@@ -11,13 +11,19 @@ send_query_env.Replace(
                 os.getenv('AD_CLIENT_INCLUDE',     default='../../include'),
                 os.getenv('NLOHMANN_JSON_INCLUDE', default='/usr/include'),
                 os.getenv('GLOG_INCLUDE',          default=''),
+                os.getenv('PROTOBUF_INCLUDE',      default='')
     ],
     LIBPATH = ['/usr/local/lib/',
                 os.getenv('AD_COMM_LIB',           default='../../lib'),
                 os.getenv('AD_CLIENT_LIB',         default='../../lib'),
                 os.getenv('GLOG_LIB',              default=''),
+                os.getenv('PROTOBUF_LIB',          default='')
     ],
-    LIBS =    ['libglog', 'comm', 'aperturedb-client', 'glog'],
+    LIBS =    [ 'comm',
+                'aperturedb-client',
+                'glog',
+                'protobuf'
+    ],
 )
 
 files = [ 'send_query.cc' ]
