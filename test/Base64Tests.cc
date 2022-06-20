@@ -55,3 +55,21 @@ TEST(Base64Test, serialize_pod)
         EXPECT_EQ(my_pods[i].buf, rt_pods[i].buf);
     }
 }
+
+TEST(Base64Test, corresponding_sizes) {
+    for (int i = 0; i < 100; ++i) {
+        auto rt_size = Base64::decoded_bytes( Base64::encoded_bytes(i));
+        switch(i%3) {
+        case 0: {
+            EXPECT_EQ(rt_size, i);
+        } break;
+        case 1: {
+            EXPECT_EQ(rt_size, i + 2);
+        } break;
+        case 2: {
+            EXPECT_EQ(rt_size, i + 1);
+        } break;
+        default: break;
+        }
+    }
+}
