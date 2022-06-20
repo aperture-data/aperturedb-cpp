@@ -11,16 +11,25 @@
 #include <cassert>
 #include <openssl/evp.h>
 
+// Utilities to serialize binary data as base64 strings.
+// Base64 uses 4 ASCII characters to encode 3 bytes of binary data.
+// https://en.wikipedia.org/wiki/Base64
 class Base64 {
 public:
     // static methods only
     Base64() = delete;
 
+    // Returns the number of characters required to serialize data of size `bytes` as base64.
+    // If the input size is not divisible by 3, up to 2 `=` chars are used as padding in the
+    // final quadruplet so as to guarantee that the encoded size is always a multiple of 4.
     static constexpr std::size_t encoded_bytes( std::size_t bytes )
     {
         return ( ( ( bytes + 2 ) / 3 ) * 4 );
     }
 
+    // Returns the buffer size needed to decode the specified number of base64 characters.
+    // Warning: Base64 decodes data in 3 byte chunks, so the required buffer size will exceed
+    // the size of the encoded binary data if it is not divisible by 3 bytes.
     static constexpr std::size_t decoded_bytes( std::size_t chars )
     {
         return ( ( ( chars + 3 ) / 4 ) * 3 );
