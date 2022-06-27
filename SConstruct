@@ -176,7 +176,7 @@ comm_test_env = Environment(
 comm_test_env.Append(RPATH = comm_test_env['LIBPATH'])
 
 
-##comm_test_env.ParseConfig('pkg-config --cflags --libs protobuf')
+comm_test_env.ParseConfig('pkg-config --cflags --libs openssl')
 
 comm_test_source_files = [
                           'test/AuthEnabledVDMSServer.cc',
@@ -186,6 +186,7 @@ comm_test_source_files = [
                           'test/VDMSServer.cc',
                           'test/VDMSServerTests.cc',
                           'test/TimedQueueTests.cc',
+                          'test/Base64Tests.cc',
                          ]
 
 comm_test = comm_test_env.Program('test/comm_test', comm_test_source_files)
