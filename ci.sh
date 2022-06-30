@@ -2,16 +2,7 @@
 
 set -e
 
-read_version() {
-  MAJOR_V=$(awk '/VDMS_VERSION_MAJOR/{print $NF}' src/version.h)
-  MINOR_V=$(awk '/VDMS_VERSION_MINOR/{print $NF}' src/version.h)
-  MICRO_V=$(awk '/VDMS_VERSION_MICRO/{print $NF}' src/version.h)
-  # Verify all the fields in version are set
-  if [ $MAJOR_V != '' ] && [ $MINOR_V != '' ] && [ $MICRO_V != '' ]
-  then
-    BUILD_VERSION="$MAJOR_V.$MINOR_V.$MICRO_V"
-  fi
-}
+source $(dirname "$0")/version.sh
 
 # Check and updates version based on release branch name
 update_version() {
@@ -40,14 +31,15 @@ update_version() {
     fi
     echo "Updating version $BUILD_VERSION to $VERSION_BUMP"
     # Replace version in __init__.py
-    printf '%s\n' "%s/__version__.*/__version__ = \"$VERSION_BUMP\"/g" 'x' | ex aperturedb/__init__.py
-    printf '%s\n' "%s/version=.*/version=\"$VERSION_BUMP\",/g" 'x' | ex setup.py
+    sed -i "/#define VDMS_VERSION .*/c\#define VDMS_VERSION  \"${UPDATED_APP_VERSION}\"" ./src/aperturedb/version.h
+    sed -i "/#define VDMS_VERSION_MAJOR .*/c\#define VDMS_VERSION_MAJOR  ${MAJOR_V}" ./src/aperturedb/version.h
+    sed -i "/#define VDMS_VERSION_MINOR .*/c\#define VDMS_VERSION_MINOR  ${MINOR_V}" ./src/aperturedb/version.h
+    sed -i "/#define VDMS_VERSION_MICRO .*/c\#define VDMS_VERSION_MICRO  ${MICRO_V}" ./src/aperturedb/version.h
 
     # Commit and push version bump
     git config --local user.name "github-actions[bot]"
     git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-    git add ./aperturedb/__init__.py
-    git add ./setup.py
+    git add ./src/aperturedb/version.h
     git commit -m "Version bump: ${BUILD_VERSION} to ${VERSION_BUMP}"
     git push --set-upstream origin $BRANCH_NAME
     BUILD_VERSION=$VERSION_BUMP

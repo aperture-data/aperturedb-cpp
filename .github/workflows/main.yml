@@ -4,11 +4,6 @@ name: CI-main
 
 # Controls when the action will run.
 on:
-
-  pull_request:
-    branches:
-      - '**'
-
   push:
     branches:
       - main
@@ -38,6 +33,14 @@ jobs:
       - name: Run tests
         run: |
           docker run aperturedb-client-testing
+
+      - name: Tag
+        run: './tag.sh'
+        shell: bash
+
+      - name: GitHub Release
+        run: './github_release.sh'
+        shell: bash
 
   trailing-spaces:
 

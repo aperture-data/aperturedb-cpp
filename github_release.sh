@@ -1,15 +1,6 @@
 #! /bin/bash
 
-read_version() {
-  MAJOR_V=$(awk '/VDMS_VERSION_MAJOR/{print $NF}' src/version.h)
-  MINOR_V=$(awk '/VDMS_VERSION_MINOR/{print $NF}' src/version.h)
-  MICRO_V=$(awk '/VDMS_VERSION_MICRO/{print $NF}' src/version.h)
-  # Verify all the fields in version are set
-  if [ $MAJOR_V != '' ] && [ $MINOR_V != '' ] && [ $MICRO_V != '' ]
-  then
-    BUILD_VERSION="$MAJOR_V.$MINOR_V.$MICRO_V"
-  fi
-}
+source $(dirname "$0")/version.sh
 
 # Set default version to develop
 BUILD_VERSION=develop
@@ -44,16 +35,34 @@ create_release() {
     fi
 }
 
-upload_release_file() {
-    token=$1
-    file=$2
-    name=$3
+upload_custom_release_file() {
+    #Generate the custom release file
+    mkdir /tmp/aperturedb-cpp
+    mkdir -p /tmp/aperturedb-cpp/lib
+    mkdir -p /tmp/aperturedb-cpp/include
+
+    docker create -ti --name aperturedb aperturedb-client-testing bash
+    docker start aperturedb
+    docker exec aperturedb bash -c "mkdir -p /x64; cp /usr/local/lib/libprotobuf.so.* /x64"
+    docker exec aperturedb bash -c "cp /aperturedb-client/lib/* /x64"
+    docker exec aperturedb bash -c "mkdir -p /comm; cp /aperturedb-client/include/comm/* /comm"
+    docker cp aperturedb:/x64/ /tmp/aperturedb-cpp/lib/
+    docker cp aperturedb:/comm/ /tmp/aperturedb-cpp/include/
+
+    tar -cvzf libs_64.tgz -C /tmp aperturedb-cpp
+    docker stop aperturedb
+    docker rm -f aperturedb
+
+    token="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"
+    file="libs_64.tgz"
+    name="libs_64.tgz"
 
     url=`jq -r .upload_url release.json | cut -d{ -f'1'`
     command="\
       curl -s -o upload.json -w '%{http_code}' \
            --request POST \
-           --header 'authorization: token ${token}' \
+           --header 'Accept: application/vnd.github.v3+json' \
+           --header 'Authorization: token ${token}' \
            --header 'Content-Type: application/octet-stream' \
            --data-binary @\"${file}\"
            ${url}?name=${name}"
@@ -72,3 +81,4 @@ upload_release_file() {
 
 
 create_release
+upload_custom_release_file
