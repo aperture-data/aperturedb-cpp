@@ -10,9 +10,9 @@ read_version
 echo "Build version: $BUILD_VERSION"
 
 create_release() {
-    user="AdaptiveScale"
-    repo="aperturedb-cpp-experiment"
-    token="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"
+    user="aperture-data"
+    repo="aperturedb-cpp"
+    token=$TOKEN
     tag="v$BUILD_VERSION"
 
     command="curl -s -o release.json -w '%{http_code}' \
@@ -36,7 +36,6 @@ create_release() {
 }
 
 upload_custom_release_file() {
-    #Generate the custom release file
     mkdir /tmp/aperturedb-cpp
     mkdir -p /tmp/aperturedb-cpp/lib
     mkdir -p /tmp/aperturedb-cpp/include
@@ -53,7 +52,7 @@ upload_custom_release_file() {
     docker stop aperturedb
     docker rm -f aperturedb
 
-    token="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"
+    token=$TOKEN
     file="libs_64.tgz"
     name="libs_64.tgz"
 

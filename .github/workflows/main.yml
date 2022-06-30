@@ -39,7 +39,7 @@ jobs:
         shell: bash
 
       - name: GitHub Release
-        run: './github_release.sh'
+        run: 'TOKEN=${{ secrets.GITHUBPAT }} ./github_release.sh'
         shell: bash
 
   trailing-spaces:
