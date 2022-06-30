@@ -14,9 +14,9 @@
 // Versioning
 
 // This is the version as a string
-#define VDMS_VERSION  "0.0.4"
+#define VDMS_VERSION  ""
 
 // This is the version for comparison
 #define VDMS_VERSION_MAJOR  0
 #define VDMS_VERSION_MINOR  0
-#define VDMS_VERSION_MICRO  4
+#define VDMS_VERSION_MICRO  5
