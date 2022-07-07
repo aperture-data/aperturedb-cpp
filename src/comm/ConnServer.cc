@@ -47,6 +47,13 @@
 #include "comm/TLSConnection.h"
 #include "comm/Variables.h"
 
+#include "util/gcc_util.h"
+DISABLE_WARNING(effc++)
+DISABLE_WARNING(suggest-override)
+#include <glog/logging.h>
+ENABLE_WARNING(suggest-override)
+ENABLE_WARNING(effc++)
+
 using namespace comm;
 
 ConnServer::ConnServer(int port, ConnServerConfig config) :
@@ -116,17 +123,22 @@ ConnServer::~ConnServer() = default;
 
 std::unique_ptr<Connection> ConnServer::accept()
 {
+    LOG(WARNING) << "about to accept...";
     auto connected_socket = TCPSocket::accept(_listening_socket);
+    LOG(WARNING) << "about to accept done." ;
 
     auto tcp_connection = std::unique_ptr<TCPConnection>(
         new TCPConnection(std::move(connected_socket), _config.metrics));
 
+    LOG(WARNING) << "moved done. TCPConnection created.";
     auto response = tcp_connection->recv_message();
 
     if (response.length() != sizeof(HelloMessage)) {
+    LOG(WARNING) << "recieved message.";
         THROW_EXCEPTION(ProtocolError);
     }
 
+    LOG(WARNING) << "hello message size ok.";
     auto client_hello_message = reinterpret_cast<const HelloMessage*>(response.data());
 
     HelloMessage server_hello_message;
@@ -140,18 +152,24 @@ std::unique_ptr<Connection> ConnServer::accept()
         server_hello_message.protocol = client_hello_message->protocol & _config.allowed_protocols;
     }
 
+    // LOG(WARNING) << "about to send hello message back....";
     tcp_connection->send_message(reinterpret_cast<uint8_t*>(&server_hello_message), sizeof(server_hello_message));
 
+    // LOG(WARNING) << "hello message sent.";
     if (server_hello_message.version == 0) {
         THROW_EXCEPTION(ProtocolError, "Protocol version mismatch");
     }
 
     if ((server_hello_message.protocol & Protocol::TLS) == Protocol::TLS) {
+        // LOG(WARNING) << "swtiching to TLS socket...";
         auto tcp_socket = tcp_connection->release_socket();
+        // LOG(WARNING) << "done releasing socket.";
 
         auto tls_socket = TLSSocket::create(std::move(tcp_socket), _ssl_ctx);
+        // LOG(WARNING) << "done creating ";
 
         tls_socket->accept();
+        // LOG(WARNING) << "tls socket accepted.";
 
         return std::unique_ptr<TLSConnection>(
             new TLSConnection(std::move(tls_socket), _config.metrics));
