@@ -16,6 +16,7 @@ VDMSServer::VDMSServer(int port, comm::ConnServerConfig config) :
     auto thread_function = [&]()
     {
         std::shared_ptr<comm::Connection> server_conn = _server->accept();
+        server_conn = _server->negotiate_protocol(server_conn);
 
         while (!_stop_signal) {
             protobufs::queryMessage protobuf_request;

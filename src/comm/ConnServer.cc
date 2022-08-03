@@ -61,7 +61,8 @@ ConnServer::ConnServer(int port, ConnServerConfig config) :
     _listening_socket(),
     _open_ssl_initializer(OpenSSLInitializer::instance()),
     _port(port),
-    _ssl_ctx(create_server_context())
+    _ssl_ctx(create_server_context()),
+    _ssl_lock()
 {
     set_default_verify_paths(_ssl_ctx.get());
 
@@ -117,68 +118,93 @@ ConnServer::ConnServer(int port, ConnServerConfig config) :
     if (!_listening_socket->listen()) {
         THROW_EXCEPTION(ListentFail);
     }
+
+    std::cout << "ConnServer Constructor"<< std::endl;
 }
 
 ConnServer::~ConnServer() = default;
 
-std::unique_ptr<Connection> ConnServer::accept()
+// c contains a TCPConnection, unencrypted, connection to a client.
+// The ConnServer will implement the protocol negotiation.
+// This right now is a simple handshake, design for ApertureDB Server use-case.
+// This protocol can be a virtual method in the future to support arbitrary protocols.
+std::shared_ptr<Connection> ConnServer::negotiate_protocol(std::shared_ptr<Connection> conn)
 {
-    LOG(WARNING) << "about to accept...";
-    auto connected_socket = TCPSocket::accept(_listening_socket);
-    LOG(WARNING) << "about to accept done." ;
+    auto tcp_connection = std::static_pointer_cast<TCPConnection>(conn);
 
-    auto tcp_connection = std::unique_ptr<TCPConnection>(
-        new TCPConnection(std::move(connected_socket), _config.metrics));
-
-    LOG(WARNING) << "moved done. TCPConnection created.";
     auto response = tcp_connection->recv_message();
 
-    if (response.length() != sizeof(HelloMessage)) {
-    LOG(WARNING) << "recieved message.";
+    if (response.length() != sizeof(HelloMessage))
+    {
         THROW_EXCEPTION(ProtocolError);
     }
 
-    LOG(WARNING) << "hello message size ok.";
     auto client_hello_message = reinterpret_cast<const HelloMessage*>(response.data());
 
     HelloMessage server_hello_message;
 
-    if (client_hello_message->version != PROTOCOL_VERSION) {
+    if (client_hello_message->version != PROTOCOL_VERSION)
+    {
         server_hello_message.version = 0;
         server_hello_message.protocol = Protocol::None;
     }
-    else {
+    else
+    {
         server_hello_message.version = PROTOCOL_VERSION;
-        server_hello_message.protocol = client_hello_message->protocol & _config.allowed_protocols;
+        server_hello_message.protocol =
+            client_hello_message->protocol & _config.allowed_protocols;
     }
 
-    // LOG(WARNING) << "about to send hello message back....";
-    tcp_connection->send_message(reinterpret_cast<uint8_t*>(&server_hello_message), sizeof(server_hello_message));
+    std::cout << "about to send hello message back...." << std::endl;
+    tcp_connection->send_message(
+        reinterpret_cast<uint8_t *>(&server_hello_message),
+        sizeof(server_hello_message));
 
-    // LOG(WARNING) << "hello message sent.";
-    if (server_hello_message.version == 0) {
+    std::cout << "hello message sent." << std::endl;
+    if (server_hello_message.version == 0)
+    {
         THROW_EXCEPTION(ProtocolError, "Protocol version mismatch");
     }
 
-    if ((server_hello_message.protocol & Protocol::TLS) == Protocol::TLS) {
-        // LOG(WARNING) << "swtiching to TLS socket...";
-        auto tcp_socket = tcp_connection->release_socket();
-        // LOG(WARNING) << "done releasing socket.";
+    if ((server_hello_message.protocol & Protocol::TLS) == Protocol::TLS)
+    {
+        // std::unique_ptr<comm::TCPSocket> tcp_socket;
+        // std::unique_ptr<comm::TLSSocket> tls_socket;
 
-        auto tls_socket = TLSSocket::create(std::move(tcp_socket), _ssl_ctx);
-        // LOG(WARNING) << "done creating ";
+        // {
+            std::unique_lock<std::mutex> lock(_ssl_lock);
 
-        tls_socket->accept();
-        // LOG(WARNING) << "tls socket accepted.";
+            std::cout << "swtiching to TLS socket..." << std::endl;
+            auto tcp_socket = tcp_connection->release_socket();
+            std::cout << "done releasing socket." << std::endl;
 
-        return std::unique_ptr<TLSConnection>(
-            new TLSConnection(std::move(tls_socket), _config.metrics));
+            auto tls_socket = TLSSocket::create(std::move(tcp_socket), _ssl_ctx);
+            std::cout << "done creating " << std::endl;
+
+            tls_socket->accept();
+            std::cout << "tls socket accepted." << std::endl;
+        // }
+
+        return std::make_shared<TLSConnection>(std::move(tls_socket), _config.metrics);
     }
-    else if ((server_hello_message.protocol & Protocol::TCP) == Protocol::TCP) {
+    else if ((server_hello_message.protocol & Protocol::TCP) == Protocol::TCP)
+    {
         // Nothing to do, already using TCP
         return tcp_connection;
     }
-    else {
+    else
+    {
+        std::cout << "Protocol negotiation failed" << std::endl;
         THROW_EXCEPTION(ProtocolError, "Protocol negotiation failed");
     }
+}
+
+std::unique_ptr<Connection> ConnServer::accept()
+{
+    auto connected_socket = TCPSocket::accept(_listening_socket);
+
+    auto tcp_connection = std::unique_ptr<TCPConnection>(
+        new TCPConnection(std::move(connected_socket), _config.metrics));
+
+    return tcp_connection;
 }
