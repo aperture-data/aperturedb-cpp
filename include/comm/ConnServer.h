@@ -31,7 +31,6 @@
 #pragma once
 
 #include <memory>
-#include <mutex>
 
 #include <openssl/ssl.h>
 
@@ -98,8 +97,6 @@ namespace comm {
         OpenSSLInitializer& _open_ssl_initializer;
         int _port; // Server port
         std::shared_ptr<SSL_CTX> _ssl_ctx;
-
-        std::mutex _ssl_lock;
     };
 
 };

@@ -121,12 +121,9 @@ const std::basic_string<uint8_t>& Connection::recv_message()
         THROW_EXCEPTION(ReadFail, "Short read other");
     }
 
-    // std::cout << "About to collect metrics..." << std::endl;
-
-    // if (_metrics) {
-    //     _metrics->observe_bytes_recv(bytes_recv);
-    // }
-    // std::cout << "Done collecting metrics." << std::endl;
+    if (_metrics) {
+        _metrics->observe_bytes_recv(bytes_recv);
+    }
 
     return _buffer_str;
 }

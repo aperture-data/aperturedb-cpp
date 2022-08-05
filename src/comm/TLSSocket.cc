@@ -19,7 +19,7 @@ using namespace comm;
 
 TLSSocket::TLSSocket(std::unique_ptr<TCPSocket> tcp_socket, SSL* ssl) :
     _ssl(ssl),
-    _tcp_socket(std::move(tcp_socket)) // TODO this member is not used
+    _tcp_socket(std::move(tcp_socket))
 {
 }
 
