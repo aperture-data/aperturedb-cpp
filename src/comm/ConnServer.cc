@@ -179,7 +179,7 @@ std::unique_ptr<Connection> ConnServer::accept()
     auto connected_socket = TCPSocket::accept(_listening_socket);
 
     auto tcp_connection = std::make_unique<TCPConnection>(
-        std::move(connected_socket), _config.metrics));
+                                std::move(connected_socket), _config.metrics);
 
     return tcp_connection;
 }

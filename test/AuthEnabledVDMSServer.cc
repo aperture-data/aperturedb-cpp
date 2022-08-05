@@ -38,7 +38,7 @@ AuthEnabledVDMSServer::AuthEnabledVDMSServer(int port, AuthEnabledVDMSServerConf
 {
     auto thread_function = [&]()
     {
-        auto server_conn = server.negotiate_protocol(server.accept());
+        auto server_conn = _server.negotiate_protocol(_server.accept());
 
         while (!_stop_signal) {
             protobufs::queryMessage protobuf_request;

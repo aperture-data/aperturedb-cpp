@@ -15,7 +15,7 @@ VDMSServer::VDMSServer(int port, comm::ConnServerConfig config) :
 {
     auto thread_function = [&]()
     {
-        auto server_conn = _server.negotiate_protocol(_server.accept());
+        auto server_conn = _server->negotiate_protocol(_server->accept());
 
         while (!_stop_signal) {
             protobufs::queryMessage protobuf_request;
