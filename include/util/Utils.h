@@ -12,7 +12,6 @@
 template<typename T>
 void print_binary_data(const T& data)
 {
-    // print size of hellomessage
     std::cout << "sizeof(" << type_name(data) << "): " << sizeof(T) << std::endl;
     for (int i = 0; i < sizeof(T); ++i)
     {
