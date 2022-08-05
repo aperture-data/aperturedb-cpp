@@ -6,7 +6,6 @@
 
 #include <memory>
 #include <string>
-#include <mutex>
 
 #include <openssl/ssl.h>
 
