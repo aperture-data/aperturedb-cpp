@@ -35,8 +35,6 @@
 #include <unistd.h>
 #include <cstdlib>
 
-#include <iomanip> // removeme
-
 #include <netdb.h>
 #include <netinet/tcp.h>
 
@@ -120,22 +118,10 @@ ConnServer::ConnServer(int port, ConnServerConfig config) :
     if (!_listening_socket->listen()) {
         THROW_EXCEPTION(ListentFail);
     }
-
-    std::cout << "ConnServer Constructor"<< std::endl;
 }
 
 ConnServer::~ConnServer() = default;
 
-void print_hello_message(HelloMessage msg)
-{
-    // print size of hellomessage
-    std::cout << "sizeof(HelloMessage): " << sizeof(HelloMessage) << std::endl;
-    for (int i = 0; i < sizeof(HelloMessage); ++i)
-    {
-        printf("%02X ", reinterpret_cast<uint8_t *>(&msg)[i] & 0xff);
-    }
-    std::cout << std::dec << std::endl;
-}
 // c contains a TCPConnection, unencrypted, connection to a client.
 // The ConnServer will implement the protocol negotiation.
 // This right now is a simple handshake, design for ApertureDB Server use-case.
@@ -153,8 +139,6 @@ std::shared_ptr<Connection> ConnServer::negotiate_protocol(std::shared_ptr<Conne
 
     auto client_hello_message = reinterpret_cast<const HelloMessage*>(response.data());
 
-    print_hello_message(*client_hello_message);
-
     HelloMessage server_hello_message;
 
     if (client_hello_message->version != PROTOCOL_VERSION)
@@ -166,44 +150,24 @@ std::shared_ptr<Connection> ConnServer::negotiate_protocol(std::shared_ptr<Conne
     {
         server_hello_message.version = PROTOCOL_VERSION;
         server_hello_message.protocol = client_hello_message->protocol & _config.allowed_protocols;
-        std::cout << "version: " << server_hello_message.version << std::endl;
-        std::cout << "protocol: " << int(server_hello_message.protocol) << std::endl;
-
-        print_hello_message(server_hello_message);
     }
 
-    std::cout << "about to send hello message back...." << std::endl;
     tcp_connection->send_message(
         reinterpret_cast<uint8_t *>(&server_hello_message),
         sizeof(server_hello_message));
 
-    std::cout << "hello message sent." << std::endl;
     if (server_hello_message.version == 0)
     {
         THROW_EXCEPTION(ProtocolError, "Protocol version mismatch");
     }
 
-    print_hello_message(server_hello_message);
-    std::cout << "protocol after sent: " << int(server_hello_message.protocol) << std::endl;
-
     if ((server_hello_message.protocol & Protocol::TLS) == Protocol::TLS)
     {
-        // std::unique_ptr<comm::TCPSocket> tcp_socket;
-        // std::unique_ptr<comm::TLSSocket> tls_socket;
+        auto tcp_socket = tcp_connection->release_socket();
 
-        // {
-            // std::unique_lock<std::mutex> lock(_ssl_lock);
+        auto tls_socket = TLSSocket::create(std::move(tcp_socket), _ssl_ctx);
 
-            std::cout << "swtiching to TLS socket..." << std::endl;
-            auto tcp_socket = tcp_connection->release_socket();
-            std::cout << "done releasing socket." << std::endl;
-
-            auto tls_socket = TLSSocket::create(std::move(tcp_socket), _ssl_ctx);
-            std::cout << "done creating " << std::endl;
-
-            tls_socket->accept();
-            std::cout << "tls socket accepted." << std::endl;
-        // }
+        tls_socket->accept();
 
         return std::make_shared<TLSConnection>(std::move(tls_socket), _config.metrics);
     }
@@ -214,7 +178,6 @@ std::shared_ptr<Connection> ConnServer::negotiate_protocol(std::shared_ptr<Conne
     }
     else
     {
-        std::cout << "Protocol negotiation failed" << std::endl;
         THROW_EXCEPTION(ProtocolError, "Protocol negotiation failed");
     }
 }
