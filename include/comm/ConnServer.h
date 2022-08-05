@@ -88,7 +88,7 @@ namespace comm {
 
         std::unique_ptr<Connection> accept();
 
-        std::shared_ptr<Connection> negotiate_protocol(std::shared_ptr<Connection> conn);
+        std::unique_ptr<Connection> negotiate_protocol(std::shared_ptr<Connection> conn);
 
     private:
 

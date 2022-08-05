@@ -118,7 +118,7 @@ ConnServer::~ConnServer() = default;
 // The ConnServer will implement the protocol negotiation.
 // This right now is a simple handshake, design for ApertureDB Server use-case.
 // This protocol can be a virtual method in the future to support arbitrary protocols.
-std::shared_ptr<Connection> ConnServer::negotiate_protocol(std::shared_ptr<Connection> conn)
+std::unique_ptr<Connection> ConnServer::negotiate_protocol(std::shared_ptr<Connection> conn)
 {
     auto tcp_connection = std::static_pointer_cast<TCPConnection>(conn);
 
@@ -161,12 +161,14 @@ std::shared_ptr<Connection> ConnServer::negotiate_protocol(std::shared_ptr<Conne
 
         tls_socket->accept();
 
-        return std::make_shared<TLSConnection>(std::move(tls_socket), _config.metrics);
+        return std::make_unique<TLSConnection>(std::move(tls_socket), _config.metrics);
     }
     else if ((server_hello_message.protocol & Protocol::TCP) == Protocol::TCP)
     {
+        auto tcp_socket = tcp_connection->release_socket();
         // Nothing to do, already using TCP
-        return tcp_connection;
+        // return tcp_connection;
+        return std::make_unique<TCPConnection>(std::move(tcp_socket), _config.metrics);
     }
     else
     {
