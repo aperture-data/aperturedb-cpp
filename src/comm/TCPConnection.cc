@@ -36,6 +36,8 @@
 #include <string>
 #include <unistd.h>
 
+#include <stdio.h> // removeme
+
 #include "comm/Exception.h"
 #include "util/gcc_util.h"
 
@@ -101,12 +103,27 @@ size_t TCPConnection::write(const uint8_t* buffer, size_t length)
         THROW_EXCEPTION(SocketFail);
     }
 
+    std::cout << "TCPConnection::write(): " << length << std::endl;
+    for (int i = 0; i < length; ++i)
+    {
+        printf("%02X ", buffer[i] & 0xff);
+    }
+    std::cout << std::dec << std::endl;
+
     // We need MSG_NOSIGNAL so we don't get SIGPIPE, and we can throw.
     auto count = ::send(_tcp_socket->_socket_fd, buffer, length, MSG_NOSIGNAL);
+
 
     if (count < 0) {
         THROW_EXCEPTION(WriteFail, "Error sending message.");
     }
+
+    std::cout << "TCPConnection::write() after send: " << length << std::endl;
+    for (int i = 0; i < length; ++i)
+    {
+        printf("%02X ", buffer[i] & 0xff);
+    }
+    std::cout << std::dec << std::endl;
 
     return static_cast<size_t>(count);
 }
