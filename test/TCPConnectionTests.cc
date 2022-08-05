@@ -33,8 +33,7 @@ TEST(TCPConnectionTests, SyncMessages)
 
         barrier.wait();
 
-        std::shared_ptr<comm::Connection> server_conn = server.accept();
-        server_conn = server.negotiate_protocol(server_conn);
+        auto server_conn = server.negotiate_protocol(server.accept());
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
             //Recieve something
@@ -82,8 +81,7 @@ TEST(TCPConnectionTests, AsyncMessages)
 
         barrier.wait();
 
-        std::shared_ptr<comm::Connection> server_conn = server.accept();
-        server_conn = server.negotiate_protocol(server_conn);
+        auto server_conn = server.negotiate_protocol(server.accept());
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
             //Send something
@@ -132,8 +130,7 @@ TEST(TCPConnectionTests, ServerShutdownRecv)
 
         barrier.wait();
 
-        std::shared_ptr<comm::Connection> server_conn = server.accept();
-        server_conn = server.negotiate_protocol(server_conn);
+        auto server_conn = server.negotiate_protocol(server.accept());
     });
 
     comm::ConnClient conn_client({"localhost", SERVER_PORT_INTERCHANGE});
@@ -162,8 +159,7 @@ TEST(TCPConnectionTests, SendArrayInts)
 
         barrier.wait();
 
-        std::shared_ptr<comm::Connection> server_conn = server.accept();
-        server_conn = server.negotiate_protocol(server_conn);
+        auto server_conn = server.negotiate_protocol(server.accept());
 
         server_conn->send_message(reinterpret_cast<const uint8_t*>(arr), sizeof(arr));
     });

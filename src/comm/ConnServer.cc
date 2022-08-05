@@ -47,13 +47,6 @@
 #include "comm/TLSConnection.h"
 #include "comm/Variables.h"
 
-#include "util/gcc_util.h"
-DISABLE_WARNING(effc++)
-DISABLE_WARNING(suggest-override)
-#include <glog/logging.h>
-ENABLE_WARNING(suggest-override)
-ENABLE_WARNING(effc++)
-
 using namespace comm;
 
 ConnServer::ConnServer(int port, ConnServerConfig config) :
@@ -185,8 +178,8 @@ std::unique_ptr<Connection> ConnServer::accept()
 {
     auto connected_socket = TCPSocket::accept(_listening_socket);
 
-    auto tcp_connection = std::unique_ptr<TCPConnection>(
-        new TCPConnection(std::move(connected_socket), _config.metrics));
+    auto tcp_connection = std::make_unique<TCPConnection>(
+        std::move(connected_socket), _config.metrics));
 
     return tcp_connection;
 }
