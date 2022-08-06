@@ -12,4 +12,4 @@
 // This is the version for comparison
 #define VDMS_VERSION_MAJOR  0
 #define VDMS_VERSION_MINOR  0
-#define VDMS_VERSION_MICRO  6
+#define VDMS_VERSION_MICRO  7
