@@ -88,6 +88,8 @@ namespace comm {
 
         std::unique_ptr<Connection> accept();
 
+        std::unique_ptr<Connection> negotiate_protocol(std::shared_ptr<Connection> conn);
+
     private:
 
         ConnServerConfig _config;

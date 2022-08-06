@@ -57,6 +57,7 @@ again:
 
     errno = 0;
     int connected_socket = ::accept(listening_socket->_socket_fd, reinterpret_cast<sockaddr*>(&clnt_addr), &len);
+
     int errno_r = errno;
     if (connected_socket < 0) {
         if (errno_r == EAGAIN) {

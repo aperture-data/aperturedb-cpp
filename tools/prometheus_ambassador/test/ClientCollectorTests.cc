@@ -97,7 +97,7 @@ TEST(ClientCollectorTest, CollectClientMetrics)
 
         barrier.wait();
 
-        auto server_conn = server.accept();
+        auto server_conn = server.negotiate_protocol(server.accept());
 
         auto handle_query = [&](const std::string& expected, const nlohmann::json& resp) {
             auto recv = server_conn->recv_message();

@@ -39,7 +39,6 @@ Connection::Connection(ConnMetrics* metrics)
 : _max_buffer_size(DEFAULT_BUFFER_SIZE)
 , _metrics(metrics)
 {
-
 }
 
 Connection::~Connection() = default;

@@ -3,6 +3,7 @@
  */
 
 #include "comm/TLSSocket.h"
+#include <openssl/err.h>
 
 #include <cstring>
 #include <netdb.h>
@@ -38,6 +39,7 @@ void TLSSocket::accept()
     errno = 0;
     auto result = ::SSL_accept(_ssl);
     int errno_r = errno;
+    ERR_print_errors_fp(stdout);
     if (result < 1) {
         THROW_EXCEPTION(TLSError, errno_r, "SSL_accept()", result);
     }
