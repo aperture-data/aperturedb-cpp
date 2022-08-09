@@ -157,5 +157,5 @@ We currently rely on [*prometheus-cpp*](https://github.com/jupp0r/prometheus-cpp
 * Metric values with templatized value types may provide performance, memory, and/or payload improvements. For example, integer-valued counters.
 ### Remove redundancy
 * Histograms and Summaries currently encode redundant data in the distribution. As an added benefit, this may remove the need to represent infinite floating point values in JSON.
-### Histogram Nuances
-* We could add the ability to control the count incrementation amount for histogram observation, which would allowing for 2-dimensional floating-point data.  For example, "time spent per bucket".
+### Floating-point observation counts
+* This would provide for more nuanced 2-dimensional data in histograms & summaries, for example, "seconds spent per bucket". (It's unclear whether this is supported by prometheus)
