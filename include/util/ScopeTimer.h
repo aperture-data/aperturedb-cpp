@@ -13,8 +13,8 @@
 // A scoped timer that calls the provided callback on destruction passing the elapsed time as arg.
 // Usage example:
 // void profile_foo() {
-//     ScopeTimer _timer([](double elapsed){
-//         std::cout << "foo() took " << elapsed << " seconds." << std::endl;
+//     ScopeTimer<> _timer([](double elapsed_sec){
+//         std::cout << "foo() took " << elapsed_sec << " seconds." << std::endl;
 //     });
 //     foo();
 // }
@@ -48,7 +48,7 @@ public:
                 duration_type dur =
                     std::chrono::nanoseconds(now.tv_nsec - _start.tv_nsec) +
                     std::chrono::seconds(now.tv_sec - _start.tv_sec);
-                _cb(dur.count());
+                _cb(std::move(dur).count());
             }
         } catch (...) {}
     }
