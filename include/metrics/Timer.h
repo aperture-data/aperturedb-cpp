@@ -31,11 +31,11 @@ private:
     std::unique_ptr< timer_type > _timer;
 
 public:
-    explicit Timer(metric_type* timer = nullptr,
+    explicit Timer(metric_type* metric = nullptr,
         prometheus::Counter* start_counter = nullptr)
     : _timer()
     {
-        reset(timer, start_counter);
+        reset(metric, start_counter);
     }
 
     // not copyable

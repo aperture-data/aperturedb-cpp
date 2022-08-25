@@ -32,8 +32,7 @@ private:
     timespec _start;
 
 public:
-    template< typename CALLBACK >
-    explicit ScopeTimer(CALLBACK cb)
+    explicit ScopeTimer(callback_type cb)
     : _cb(std::move(cb))
     , _start()
     {
