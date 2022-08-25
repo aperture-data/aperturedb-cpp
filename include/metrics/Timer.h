@@ -6,11 +6,10 @@
 
 #pragma once
 
-#include <time.h>
-#include <math.h>
-#include <chrono>
+#include <memory>
 #include <prometheus/histogram.h>
 #include <prometheus/counter.h>
+#include "util/ScopeTimer.h"
 
 namespace metrics
 {
@@ -23,28 +22,20 @@ template<
 class Timer
 {
 public:
+    using this_type = Timer< METRIC_TYPE, TIME_UNIT >;
     using metric_type = METRIC_TYPE;
-    using duration_type = typename std::chrono::duration< double, typename TIME_UNIT::period >;
+    using timer_type = ScopeTimer< TIME_UNIT, double >;
+    using duration_type = typename timer_type::duration_type;
 
 private:
-    metric_type* _timer;
-    timespec _start;
+    std::unique_ptr< timer_type > _timer;
 
 public:
-    explicit Timer(metric_type* timer = nullptr,
+    explicit Timer(metric_type* metric = nullptr,
         prometheus::Counter* start_counter = nullptr)
-    : _timer(timer)
-    , _start()
+    : _timer()
     {
-        clock_gettime(CLOCK_MONOTONIC, &_start);
-        if (start_counter)
-            start_counter->Increment();
-    }
-
-    ~Timer() {
-        try {
-            reset();
-        } catch (...) {}
+        reset(metric, start_counter);
     }
 
     // not copyable
@@ -53,34 +44,28 @@ public:
 
     // noexcept moveable
     explicit Timer(Timer&& other) noexcept
-    : _timer( other._timer )
-    , _start( std::move(other._start) )
+    : _timer(std::move(other._timer))
     {
-        other._timer = nullptr;
     }
 
     Timer& operator=(Timer&& other) noexcept {
         if (&other != this) {
-            _timer = other._timer;
-            other._timer = nullptr;
-            _start = std::move( other._start );
+            _timer = std::move( other._timer );
         }
         return *this;
     }
 
-    void reset(metric_type* timer = nullptr,
+    void reset(metric_type* metric = nullptr,
         prometheus::Counter* start_counter = nullptr)
     {
-        timespec now;
-        clock_gettime(CLOCK_MONOTONIC, &now);
-        if (_timer) {
-            duration_type dur =
-                std::chrono::nanoseconds(now.tv_nsec - _start.tv_nsec) +
-                std::chrono::seconds(now.tv_sec - _start.tv_sec);
-            _timer->Observe(dur.count());
+        if (metric) {
+            _timer = std::make_unique< timer_type >([metric](double elapsed) {
+                metric->Observe(elapsed);
+            });
         }
-        _timer = timer;
-        _start = std::move( now );
+        else {
+            _timer.reset();
+        }
         if ( start_counter ) start_counter->Increment();
     }
 };

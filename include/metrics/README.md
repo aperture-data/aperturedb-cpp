@@ -154,6 +154,6 @@ We currently rely on [*prometheus-cpp*](https://github.com/jupp0r/prometheus-cpp
 ### Efficient lookup
 * Lookup of existing metric object is supported by *prometheus-cpp* but inefficient. A more optimized lookup would make metric values more accessible in disjoint places within ApertureDB.
 ### Typed metric values
-* Metric values with templatized value types may provide performance, memory, and/or payload improvements.
+* Metric values with templatized value types may provide performance, memory, and/or payload improvements. For example, integer-valued counters.
 ### Remove redundancy
 * Histograms and Summaries currently encode redundant data in the distribution. As an added benefit, this may remove the need to represent infinite floating point values in JSON.
