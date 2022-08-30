@@ -20,13 +20,13 @@ ENABLE_WARNING(effc++)
 
 #include "aperturedb/VDMSClient.h"
 
-template< typename T >
+template < typename T >
 inline std::string get_pretty_json(T input)
 {
     return nlohmann::json::parse(input).dump();
 }
 
-int main(int argc, char const *argv[])
+int main(int argc, char const* argv[])
 {
     static volatile bool _always_false{false};
     if (_always_false) {
@@ -49,8 +49,7 @@ int main(int argc, char const *argv[])
 
     auto query = get_pretty_json(std::ifstream(filename));
 
-    std::cout << "Connecting to server " << ip << ":"
-                                         << port << "..." << std::endl;
+    std::cout << "Connecting to server " << ip << ":" << port << "..." << std::endl;
 
     VDMS::VDMSClient connector(username, password, VDMS::VDMSClientConfig(ip, port));
 

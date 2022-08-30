@@ -17,32 +17,30 @@ struct Certificate {
 
 class OpenSSLInitializer
 {
-public:
-   static OpenSSLInitializer& instance();
+   public:
+    static OpenSSLInitializer& instance();
 
-private:
+   private:
     OpenSSLInitializer();
 };
 
-template<typename T>
-struct OpenSSLDeleter
-{
+template < typename T >
+struct OpenSSLDeleter {
 };
 
-#define DEFINE_OPENSSL_DELETER(Type, FreeFunc)                  \
-    template<>                                                  \
-    struct OpenSSLDeleter<Type>                                 \
-    {                                                           \
-        void operator()(Type* obj) noexcept { FreeFunc(obj); }  \
+#define DEFINE_OPENSSL_DELETER(Type, FreeFunc)                 \
+    template <>                                                \
+    struct OpenSSLDeleter< Type > {                            \
+        void operator()(Type* obj) noexcept { FreeFunc(obj); } \
     };
 
 DEFINE_OPENSSL_DELETER(SSL_CTX, SSL_CTX_free);
 
-template<typename T>
-using OpenSSLPointer = std::unique_ptr<T, OpenSSLDeleter<T>>;
+template < typename T >
+using OpenSSLPointer = std::unique_ptr< T, OpenSSLDeleter< T > >;
 
-OpenSSLPointer<SSL_CTX> create_client_context();
-OpenSSLPointer<SSL_CTX> create_server_context();
+OpenSSLPointer< SSL_CTX > create_client_context();
+OpenSSLPointer< SSL_CTX > create_server_context();
 Certificate generate_certificate();
 void set_ca_certificate(SSL_CTX* ssl_ctx, const std::string& ca_certificate);
 bool set_default_verify_paths(SSL_CTX* ssl_ctx);

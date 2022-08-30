@@ -10,12 +10,12 @@
 
 using namespace VDMS;
 
-VDMSServer::VDMSServer(int port, comm::ConnServerConfig config) :
-    _server(new comm::ConnServer(port, config))
+VDMSServer::VDMSServer(int port, comm::ConnServerConfig config)
+    : _server(new comm::ConnServer(port, config))
 {
-    auto thread_function = [&]()
-    {
-        std::shared_ptr<comm::Connection> server_conn = _server->negotiate_protocol(_server->accept());
+    auto thread_function = [&]() {
+        std::shared_ptr< comm::Connection > server_conn =
+            _server->negotiate_protocol(_server->accept());
 
         while (!_stop_signal) {
             protobufs::queryMessage protobuf_request;
@@ -37,7 +37,7 @@ VDMSServer::VDMSServer(int port, comm::ConnServerConfig config) :
         }
     };
 
-    _work_thread = std::unique_ptr<std::thread>(new std::thread(thread_function));
+    _work_thread = std::unique_ptr< std::thread >(new std::thread(thread_function));
 }
 
 VDMSServer::~VDMSServer()
@@ -49,9 +49,10 @@ VDMSServer::~VDMSServer()
     }
 }
 
-protobufs::queryMessage VDMSServer::receive_message(const std::shared_ptr<comm::Connection>& connection)
+protobufs::queryMessage VDMSServer::receive_message(
+    const std::shared_ptr< comm::Connection >& connection)
 {
-    std::basic_string<uint8_t> message_received = connection->recv_message();
+    std::basic_string< uint8_t > message_received = connection->recv_message();
 
     protobufs::queryMessage protobuf_request;
     bool ok = protobuf_request.ParseFromArray(message_received.data(), message_received.length());
@@ -63,10 +64,10 @@ protobufs::queryMessage VDMSServer::receive_message(const std::shared_ptr<comm::
     return protobuf_request;
 }
 
-void VDMSServer::send_message(const std::shared_ptr<comm::Connection>& connection,
+void VDMSServer::send_message(const std::shared_ptr< comm::Connection >& connection,
                               const protobufs::queryMessage& protobuf_response)
 {
-    std::basic_string<uint8_t> message(protobuf_response.ByteSizeLong(), 0);
+    std::basic_string< uint8_t > message(protobuf_response.ByteSizeLong(), 0);
     protobuf_response.SerializeToArray(message.data(), message.length());
 
     connection->send_message(message.data(), message.length());

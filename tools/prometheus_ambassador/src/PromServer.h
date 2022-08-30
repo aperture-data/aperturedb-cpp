@@ -15,15 +15,15 @@
 
 class PromServer
 {
-    std::shared_ptr<prometheus::Registry> self_collector;
-    std::shared_ptr<ClientCollector> client_collector;
+    std::shared_ptr< prometheus::Registry > self_collector;
+    std::shared_ptr< ClientCollector > client_collector;
     prometheus::Exposer exposer;
 
     // Handle ^c
-    static std::atomic<bool> shutdown;
+    static std::atomic< bool > shutdown;
     static void sighandler(int signo);
 
-public:
+   public:
     PromServer(const PromConfig& config);
 
     void run();

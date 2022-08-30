@@ -16,24 +16,23 @@ namespace metrics
 
 // A scoped timer that automatically records the duration
 // of its lifetime to the provided metric.
-template<
-    typename METRIC_TYPE = prometheus::Histogram, // underlying metric type (histogram or summary)
-    typename TIME_UNIT = std::chrono::seconds > // unit expected by the timer metric
+template < typename METRIC_TYPE =
+               prometheus::Histogram,  // underlying metric type (histogram or summary)
+           typename TIME_UNIT = std::chrono::seconds >  // unit expected by the timer metric
 class Timer
 {
-public:
-    using this_type = Timer< METRIC_TYPE, TIME_UNIT >;
-    using metric_type = METRIC_TYPE;
-    using timer_type = ScopeTimer< TIME_UNIT, double >;
+   public:
+    using this_type     = Timer< METRIC_TYPE, TIME_UNIT >;
+    using metric_type   = METRIC_TYPE;
+    using timer_type    = ScopeTimer< TIME_UNIT, double >;
     using duration_type = typename timer_type::duration_type;
 
-private:
+   private:
     std::unique_ptr< timer_type > _timer;
 
-public:
-    explicit Timer(metric_type* metric = nullptr,
-        prometheus::Counter* start_counter = nullptr)
-    : _timer()
+   public:
+    explicit Timer(metric_type* metric = nullptr, prometheus::Counter* start_counter = nullptr)
+        : _timer()
     {
         reset(metric, start_counter);
     }
@@ -43,30 +42,25 @@ public:
     Timer& operator=(const Timer&) = delete;
 
     // noexcept moveable
-    explicit Timer(Timer&& other) noexcept
-    : _timer(std::move(other._timer))
-    {
-    }
+    explicit Timer(Timer&& other) noexcept : _timer(std::move(other._timer)) {}
 
-    Timer& operator=(Timer&& other) noexcept {
+    Timer& operator=(Timer&& other) noexcept
+    {
         if (&other != this) {
-            _timer = std::move( other._timer );
+            _timer = std::move(other._timer);
         }
         return *this;
     }
 
-    void reset(metric_type* metric = nullptr,
-        prometheus::Counter* start_counter = nullptr)
+    void reset(metric_type* metric = nullptr, prometheus::Counter* start_counter = nullptr)
     {
         if (metric) {
-            _timer = std::make_unique< timer_type >([metric](double elapsed) {
-                metric->Observe(elapsed);
-            });
-        }
-        else {
+            _timer = std::make_unique< timer_type >(
+                [metric](double elapsed) { metric->Observe(elapsed); });
+        } else {
             _timer.reset();
         }
-        if ( start_counter ) start_counter->Increment();
+        if (start_counter) start_counter->Increment();
     }
 };
-} // namespace metrics
+}  // namespace metrics

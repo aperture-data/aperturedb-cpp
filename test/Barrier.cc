@@ -4,20 +4,15 @@
 
 #include "Barrier.h"
 
-Barrier::Barrier(std::size_t count) :
-    _count(count)
-{
-}
+Barrier::Barrier(std::size_t count) : _count(count) {}
 
 void Barrier::wait()
 {
-    std::unique_lock<std::mutex> lock(_mutex);
+    std::unique_lock< std::mutex > lock(_mutex);
 
     if (--_count == 0) {
         _condition_variable.notify_all();
     } else {
-        _condition_variable.wait(lock, [this] {
-            return _count == 0;
-        });
+        _condition_variable.wait(lock, [this] { return _count == 0; });
     }
 }

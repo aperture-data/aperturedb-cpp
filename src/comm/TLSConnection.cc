@@ -22,27 +22,16 @@ ENABLE_WARNING(effc++)
 
 using namespace comm;
 
-TLSConnection::TLSConnection(ConnMetrics* metrics)
-: Connection(metrics)
-, _tls_socket()
+TLSConnection::TLSConnection(ConnMetrics* metrics) : Connection(metrics), _tls_socket() {}
+
+TLSConnection::TLSConnection(std::unique_ptr< TLSSocket > tls_socket, ConnMetrics* metrics)
+    : Connection(metrics), _tls_socket(std::move(tls_socket))
 {
 }
 
-TLSConnection::TLSConnection(
-    std::unique_ptr<TLSSocket> tls_socket,
-    ConnMetrics* metrics
-)
-: Connection(metrics)
-, _tls_socket(std::move(tls_socket))
+static long msec_diff(const struct timespec& a, const struct timespec& b)
 {
-}
-
-static long msec_diff(const struct timespec& a,
-                      const struct timespec& b)
-{
-    return
-        (a.tv_sec  - b.tv_sec)  * 1000 +
-        (a.tv_nsec - b.tv_nsec) / 1000000;
+    return (a.tv_sec - b.tv_sec) * 1000 + (a.tv_nsec - b.tv_nsec) / 1000000;
 }
 
 size_t TLSConnection::read(uint8_t* buffer, size_t length)
@@ -51,18 +40,19 @@ again:
     timespec t1;
     clock_gettime(CLOCK_REALTIME_COARSE, &t1);
 
-    errno = 0;
-    auto count = SSL_read(_tls_socket->_ssl, buffer, length);
+    errno       = 0;
+    auto count  = SSL_read(_tls_socket->_ssl, buffer, length);
     int errno_r = errno;
 
     if (count <= 0) {
         auto error = SSL_get_error(_tls_socket->_ssl, count);
 
         if (error == SSL_ERROR_ZERO_RETURN) {
-            THROW_EXCEPTION(ConnectionShutDown, // FIXME -- misleading 'ConnectionShutDown'
-                     errno_r, "SSL_read()", error); // Peer closed conn for writing, so no more reads
-        }
-        else if (error == SSL_ERROR_WANT_READ) {
+            THROW_EXCEPTION(ConnectionShutDown,  // FIXME -- misleading 'ConnectionShutDown'
+                            errno_r,
+                            "SSL_read()",
+                            error);  // Peer closed conn for writing, so no more reads
+        } else if (error == SSL_ERROR_WANT_READ) {
             if (errno_r == EAGAIN) {
                 timespec t2;
                 clock_gettime(CLOCK_REALTIME_COARSE, &t2);
@@ -73,29 +63,26 @@ again:
                 // This error is recoverable. Consider handling it.
                 THROW_EXCEPTION(ReadFail, errno_r, "SSL_read()", error);
             }
-        }
-        else if (error == SSL_ERROR_SYSCALL ||
-                 error == SSL_ERROR_SSL) {
+        } else if (error == SSL_ERROR_SYSCALL || error == SSL_ERROR_SSL) {
             THROW_EXCEPTION(ConnectionShutDown, errno_r, "SSL_read()", error);
             // FIXME: *we* must close the conn
-        }
-        else {
+        } else {
             THROW_EXCEPTION(ReadFail, errno_r, "SSL_read()", error);
         }
     }
 
-    return static_cast<size_t>(count);
+    return static_cast< size_t >(count);
 }
 
 size_t TLSConnection::write(const uint8_t* buffer, size_t length)
 {
-    errno = 0;
-    auto count = SSL_write(_tls_socket->_ssl, buffer, static_cast<int>(length));
+    errno       = 0;
+    auto count  = SSL_write(_tls_socket->_ssl, buffer, static_cast< int >(length));
     int errno_r = errno;
     if (count <= 0) {
         auto error = SSL_get_error(_tls_socket->_ssl, count);
         THROW_EXCEPTION(WriteFail, errno_r, "SSL_write()", error);
     }
 
-    return static_cast<size_t>(count);
+    return static_cast< size_t >(count);
 }

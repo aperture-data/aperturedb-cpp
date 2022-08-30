@@ -47,16 +47,17 @@
 
 using namespace comm;
 
-ConnClient::ConnClient(const Address& server_address, ConnClientConfig config) :
-    _config(std::move(config)),
-    _connection(),
-    _server(std::move(server_address)),
-    _ssl_ctx(create_client_context())
+ConnClient::ConnClient(const Address& server_address, ConnClientConfig config)
+    : _config(std::move(config))
+    , _connection()
+    , _server(std::move(server_address))
+    , _ssl_ctx(create_client_context())
 {
     set_default_verify_paths(_ssl_ctx.get());
 
     if (config.verify_certificate) {
-        SSL_CTX_set_verify(_ssl_ctx.get(), SSL_VERIFY_PEER, ::SSL_CTX_get_verify_callback(_ssl_ctx.get()));
+        SSL_CTX_set_verify(
+            _ssl_ctx.get(), SSL_VERIFY_PEER, ::SSL_CTX_get_verify_callback(_ssl_ctx.get()));
     }
 
     if (!_config.ca_certificate.empty()) {
@@ -66,10 +67,10 @@ ConnClient::ConnClient(const Address& server_address, ConnClientConfig config) :
 
 ConnClient::~ConnClient() = default;
 
-std::shared_ptr<Connection> ConnClient::connect()
+std::shared_ptr< Connection > ConnClient::connect()
 {
     if (!_connection) {
-        if (_server.port <= 0 || static_cast<unsigned>(_server.port) > MAX_PORT_NUMBER) {
+        if (_server.port <= 0 || static_cast< unsigned >(_server.port) > MAX_PORT_NUMBER) {
             THROW_EXCEPTION(PortError);
         }
 
@@ -92,15 +93,16 @@ std::shared_ptr<Connection> ConnClient::connect()
             THROW_EXCEPTION(ConnectionError);
         }
 
-        auto tcp_connection = std::unique_ptr<TCPConnection>(
+        auto tcp_connection = std::unique_ptr< TCPConnection >(
             new TCPConnection(std::move(tcp_socket), _config.metrics));
 
         HelloMessage client_hello_message;
 
-        client_hello_message.version = PROTOCOL_VERSION;
+        client_hello_message.version  = PROTOCOL_VERSION;
         client_hello_message.protocol = _config.allowed_protocols;
 
-        tcp_connection->send_message(reinterpret_cast<uint8_t*>(&client_hello_message), sizeof(client_hello_message));
+        tcp_connection->send_message(reinterpret_cast< uint8_t* >(&client_hello_message),
+                                     sizeof(client_hello_message));
 
         auto response = tcp_connection->recv_message();
 
@@ -108,7 +110,7 @@ std::shared_ptr<Connection> ConnClient::connect()
             THROW_EXCEPTION(InvalidMessageSize);
         }
 
-        auto server_hello_message = reinterpret_cast<const HelloMessage*>(response.data());
+        auto server_hello_message = reinterpret_cast< const HelloMessage* >(response.data());
 
         if (server_hello_message->version == 0) {
             THROW_EXCEPTION(ProtocolError, "Protocol version mismatch");
@@ -116,25 +118,22 @@ std::shared_ptr<Connection> ConnClient::connect()
 
         if (server_hello_message->protocol == Protocol::None) {
             THROW_EXCEPTION(ProtocolError, "Server rejected protocol");
-        }
-        else if ((server_hello_message->protocol & Protocol::TLS) == Protocol::TLS) {
+        } else if ((server_hello_message->protocol & Protocol::TLS) == Protocol::TLS) {
             tcp_socket = tcp_connection->release_socket();
 
             auto tls_socket = TLSSocket::create(std::move(tcp_socket), _ssl_ctx);
 
             tls_socket->connect();
 
-            _connection = std::unique_ptr<TLSConnection>(
+            _connection = std::unique_ptr< TLSConnection >(
                 new TLSConnection(std::move(tls_socket), _config.metrics));
-        }
-        else if ((server_hello_message->protocol & Protocol::TCP) == Protocol::TCP) {
+        } else if ((server_hello_message->protocol & Protocol::TCP) == Protocol::TCP) {
             // Nothing to do, already using TCP
             _connection = std::move(tcp_connection);
-        }
-        else {
+        } else {
             THROW_EXCEPTION(ProtocolError, "Protocol negotiation failed");
         }
     }
 
-    return std::static_pointer_cast<Connection>(_connection);
+    return std::static_pointer_cast< Connection >(_connection);
 }

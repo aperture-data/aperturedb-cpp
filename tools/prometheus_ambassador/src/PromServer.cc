@@ -11,12 +11,12 @@
 
 #include "PromServer.h"
 
-std::atomic<bool> PromServer::shutdown{false};
+std::atomic< bool > PromServer::shutdown{false};
 
 PromServer::PromServer(const PromConfig& config)
-: self_collector(std::make_shared<prometheus::Registry>())
-, client_collector(std::make_shared<ClientCollector>(config, *self_collector))
-, exposer(config.prometheus_address + ':' + std::to_string(config.prometheus_port), 1)
+    : self_collector(std::make_shared< prometheus::Registry >())
+    , client_collector(std::make_shared< ClientCollector >(config, *self_collector))
+    , exposer(config.prometheus_address + ':' + std::to_string(config.prometheus_port), 1)
 {
     struct sigaction action;
     memset(&action, 0, sizeof(action));
@@ -28,46 +28,46 @@ PromServer::PromServer(const PromConfig& config)
     if (sigaction(SIGQUIT, &action, NULL) != 0)
         throw std::runtime_error("failed to install signal handler");
 
-    std::cout << "Prometheus ambassador listening on "
-        << config.prometheus_address << ":" << config.prometheus_port
-        << std::endl;
+    std::cout << "Prometheus ambassador listening on " << config.prometheus_address << ":"
+              << config.prometheus_port << std::endl;
 }
 
 namespace
 {
-    class CollectableRegistration
+class CollectableRegistration
+{
+    prometheus::Exposer& exposer;
+    std::weak_ptr< prometheus::Collectable > collector;
+
+   public:
+    CollectableRegistration(prometheus::Exposer& exp,
+                            const std::shared_ptr< prometheus::Collectable >& coll)
+        : exposer(exp), collector(coll)
     {
-        prometheus::Exposer& exposer;
-        std::weak_ptr<prometheus::Collectable> collector;
-    public:
-        CollectableRegistration(prometheus::Exposer& exp,
-            const std::shared_ptr<prometheus::Collectable>& coll)
-        : exposer(exp)
-        , collector(coll)
-        {
-            exposer.RegisterCollectable(collector);
-        }
+        exposer.RegisterCollectable(collector);
+    }
 
-        ~CollectableRegistration()
-        {
-            try {
-                exposer.RemoveCollectable(collector);
-            }
-            catch (...) {}
+    ~CollectableRegistration()
+    {
+        try {
+            exposer.RemoveCollectable(collector);
+        } catch (...) {
         }
-    };
-}
+    }
+};
+}  // namespace
 
-void PromServer::run() {
+void PromServer::run()
+{
     CollectableRegistration register_self(exposer, self_collector);
     CollectableRegistration register_client(exposer, client_collector);
 
-    while(!shutdown) {
+    while (!shutdown) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
 
 void PromServer::sighandler(int signo)
 {
-    shutdown = (signo == SIGINT) || (signo == SIGTERM)|| (signo == SIGQUIT);
+    shutdown = (signo == SIGINT) || (signo == SIGTERM) || (signo == SIGQUIT);
 }

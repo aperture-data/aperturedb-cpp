@@ -22,10 +22,7 @@ ENABLE_WARNING(effc++)
 
 using namespace comm;
 
-TCPSocket::TCPSocket(int socket_fd) :
-    _socket_fd(socket_fd)
-{
-}
+TCPSocket::TCPSocket(int socket_fd) : _socket_fd(socket_fd) {}
 
 TCPSocket::~TCPSocket()
 {
@@ -34,19 +31,15 @@ TCPSocket::~TCPSocket()
     }
 }
 
-static long msec_diff(const struct timespec& a,
-                      const struct timespec& b)
+static long msec_diff(const struct timespec& a, const struct timespec& b)
 {
-    return
-        (a.tv_sec  - b.tv_sec)  * 1000 +
-        (a.tv_nsec - b.tv_nsec) / 1000000;
+    return (a.tv_sec - b.tv_sec) * 1000 + (a.tv_nsec - b.tv_nsec) / 1000000;
 }
 
-
-std::unique_ptr<TCPSocket> TCPSocket::accept(const std::unique_ptr<TCPSocket>& listening_socket)
+std::unique_ptr< TCPSocket > TCPSocket::accept(const std::unique_ptr< TCPSocket >& listening_socket)
 {
     struct sockaddr_in clnt_addr;
-    socklen_t len = sizeof(clnt_addr); //store size of the address
+    socklen_t len = sizeof(clnt_addr);  // store size of the address
 
     // This is where client connects.
     // Server will stall here until incoming connection
@@ -56,7 +49,8 @@ again:
     clock_gettime(CLOCK_REALTIME_COARSE, &t1);
 
     errno = 0;
-    int connected_socket = ::accept(listening_socket->_socket_fd, reinterpret_cast<sockaddr*>(&clnt_addr), &len);
+    int connected_socket =
+        ::accept(listening_socket->_socket_fd, reinterpret_cast< sockaddr* >(&clnt_addr), &len);
 
     int errno_r = errno;
     if (connected_socket < 0) {
@@ -72,19 +66,20 @@ again:
     }
     // MAGICK can be done here
 
-    return std::unique_ptr<TCPSocket>(new TCPSocket(connected_socket));
+    return std::unique_ptr< TCPSocket >(new TCPSocket(connected_socket));
 }
 
 bool TCPSocket::bind(int port)
 {
     struct sockaddr_in svr_addr;
     memset(&svr_addr, 0, sizeof(svr_addr));
-    svr_addr.sin_family = AF_INET;
+    svr_addr.sin_family      = AF_INET;
     svr_addr.sin_addr.s_addr = INADDR_ANY;
-    svr_addr.sin_port = htons(port);
+    svr_addr.sin_port        = htons(port);
 
     // bind socket : "assigning a name to a socket"
-    return ::bind(_socket_fd, reinterpret_cast<const sockaddr*>(&svr_addr), sizeof(svr_addr)) == 0;
+    return ::bind(_socket_fd, reinterpret_cast< const sockaddr* >(&svr_addr), sizeof(svr_addr)) ==
+           0;
 }
 
 bool TCPSocket::connect(const Address& address)
@@ -102,10 +97,11 @@ bool TCPSocket::connect(const Address& address)
     memcpy(&svr_addr.sin_addr.s_addr, server->h_addr, server->h_length);
     svr_addr.sin_port = htons(address.port);
 
-    return ::connect(_socket_fd, reinterpret_cast<const sockaddr*>(&svr_addr), sizeof(svr_addr)) == 0;
+    return ::connect(
+               _socket_fd, reinterpret_cast< const sockaddr* >(&svr_addr), sizeof(svr_addr)) == 0;
 }
 
-std::unique_ptr<TCPSocket> TCPSocket::create()
+std::unique_ptr< TCPSocket > TCPSocket::create()
 {
     int tcp_socket = ::socket(AF_INET, SOCK_STREAM, 0);
 
@@ -113,17 +109,14 @@ std::unique_ptr<TCPSocket> TCPSocket::create()
         THROW_EXCEPTION(SocketFail);
     }
 
-    return std::unique_ptr<TCPSocket>(new TCPSocket(tcp_socket));
+    return std::unique_ptr< TCPSocket >(new TCPSocket(tcp_socket));
 }
 
-bool TCPSocket::listen()
-{
-    return ::listen(_socket_fd, MAX_CONN_QUEUE) == 0;
-}
+bool TCPSocket::listen() { return ::listen(_socket_fd, MAX_CONN_QUEUE) == 0; }
 
 bool TCPSocket::set_boolean_option(int level, int option_name, bool value)
 {
-    int option = value ? 1 : 0 ;
+    int option = value ? 1 : 0;
 
     return ::setsockopt(_socket_fd, level, option_name, &option, sizeof(option)) == 0;
 }
@@ -133,7 +126,4 @@ bool TCPSocket::set_timeval_option(int level, int option_name, timeval value)
     return ::setsockopt(_socket_fd, level, option_name, &value, sizeof(value)) == 0;
 }
 
-void TCPSocket::shutdown()
-{
-    ::shutdown(_socket_fd, SHUT_RDWR);
-}
+void TCPSocket::shutdown() { ::shutdown(_socket_fd, SHUT_RDWR); }

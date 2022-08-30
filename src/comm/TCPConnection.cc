@@ -41,15 +41,10 @@
 
 using namespace comm;
 
-TCPConnection::TCPConnection(ConnMetrics* metrics)
-: Connection(metrics)
-, _tcp_socket()
-{
-}
+TCPConnection::TCPConnection(ConnMetrics* metrics) : Connection(metrics), _tcp_socket() {}
 
-TCPConnection::TCPConnection(std::unique_ptr<TCPSocket> tcp_socket, ConnMetrics* metrics)
-: Connection(metrics)
-, _tcp_socket(std::move(tcp_socket))
+TCPConnection::TCPConnection(std::unique_ptr< TCPSocket > tcp_socket, ConnMetrics* metrics)
+    : Connection(metrics), _tcp_socket(std::move(tcp_socket))
 {
 }
 
@@ -59,17 +54,18 @@ size_t TCPConnection::read(uint8_t* buffer, size_t length)
         THROW_EXCEPTION(SocketFail);
     }
 
-    errno = 0;
-    auto count = ::recv(_tcp_socket->_socket_fd, buffer, length, MSG_WAITALL);
+    errno       = 0;
+    auto count  = ::recv(_tcp_socket->_socket_fd, buffer, length, MSG_WAITALL);
     int errno_r = errno;
 
     if (count < 0) {
         DISABLE_WARNING(logical-op)
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            THROW_EXCEPTION(ConnectionShutDown, // Not, really. Read expired for blocking socket.
-                    errno_r, "recv()", 0);
-        }
-        else {
+            THROW_EXCEPTION(ConnectionShutDown,  // Not, really. Read expired for blocking socket.
+                            errno_r,
+                            "recv()",
+                            0);
+        } else {
             THROW_EXCEPTION(ReadFail, errno_r, "recv()", 0);
         }
         ENABLE_WARNING(logical-op)
@@ -80,13 +76,10 @@ size_t TCPConnection::read(uint8_t* buffer, size_t length)
         THROW_EXCEPTION(ConnectionShutDown, "Peer Closed Connection.");
     }
 
-    return static_cast<size_t>(count);
+    return static_cast< size_t >(count);
 }
 
-std::unique_ptr<TCPSocket> TCPConnection::release_socket()
-{
-    return std::move(_tcp_socket);
-}
+std::unique_ptr< TCPSocket > TCPConnection::release_socket() { return std::move(_tcp_socket); }
 
 void TCPConnection::shutdown()
 {
@@ -108,5 +101,5 @@ size_t TCPConnection::write(const uint8_t* buffer, size_t length)
         THROW_EXCEPTION(WriteFail, "Error sending message.");
     }
 
-    return static_cast<size_t>(count);
+    return static_cast< size_t >(count);
 }

@@ -35,35 +35,35 @@
 
 #include "comm/Address.h"
 
-namespace comm {
+namespace comm
+{
 
-    class TCPSocket
-    {
-        friend class TCPConnection;
-        friend class TLSSocket;
+class TCPSocket
+{
+    friend class TCPConnection;
+    friend class TLSSocket;
 
-    public:
+   public:
+    TCPSocket(const TCPSocket&) = delete;
+    ~TCPSocket();
 
-        TCPSocket(const TCPSocket&) = delete;
-        ~TCPSocket();
+    TCPSocket& operator=(const TCPSocket&) = delete;
 
-        TCPSocket& operator=(const TCPSocket&) = delete;
+    static std::unique_ptr< TCPSocket > create();
+    static std::unique_ptr< TCPSocket > accept(
+        const std::unique_ptr< TCPSocket >& listening_socket);
 
-        static std::unique_ptr<TCPSocket> create();
-        static std::unique_ptr<TCPSocket> accept(const std::unique_ptr<TCPSocket>& listening_socket);
+    bool bind(int port);
+    bool connect(const Address& address);
+    bool listen();
+    bool set_boolean_option(int level, int option_name, bool value);
+    bool set_timeval_option(int level, int option_name, timeval value);
+    void shutdown();
 
-        bool bind(int port);
-        bool connect(const Address& address);
-        bool listen();
-        bool set_boolean_option(int level, int option_name, bool value);
-        bool set_timeval_option(int level, int option_name, timeval value);
-        void shutdown();
+   private:
+    explicit TCPSocket(int socket_fd);
 
-    private:
-
-        explicit TCPSocket(int socket_fd);
-
-        int _socket_fd{-1};
-    };
-
+    int _socket_fd{-1};
 };
+
+};  // namespace comm

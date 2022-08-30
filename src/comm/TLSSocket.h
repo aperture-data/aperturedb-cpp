@@ -11,33 +11,33 @@
 
 #include "TCPSocket.h"
 
-namespace comm {
+namespace comm
+{
 
-    class TLSSocket
-    {
-        friend class TLSConnection;
+class TLSSocket
+{
+    friend class TLSConnection;
 
-    public:
+   public:
+    TLSSocket(const TLSSocket&) = delete;
+    ~TLSSocket();
 
-        TLSSocket(const TLSSocket&) = delete;
-        ~TLSSocket();
+    TLSSocket& operator=(const TLSSocket&) = delete;
 
-        TLSSocket& operator=(const TLSSocket&) = delete;
+    static std::unique_ptr< TLSSocket > create(std::unique_ptr< TCPSocket > tcp_socket,
+                                               const std::shared_ptr< SSL_CTX >& ssl_ctx);
 
-        static std::unique_ptr<TLSSocket> create(std::unique_ptr<TCPSocket> tcp_socket, const std::shared_ptr<SSL_CTX>& ssl_ctx);
+    void accept();
+    void connect();
 
-        void accept();
-        void connect();
+   private:
+    explicit TLSSocket(std::unique_ptr< TCPSocket > tcp_socket, SSL* ssl);
 
-    private:
+    SSL* _ssl{nullptr};
 
-        explicit TLSSocket(std::unique_ptr<TCPSocket> tcp_socket, SSL* ssl);
-
-        SSL* _ssl{nullptr};
-
-        // Even if this member is not used, it is necessary to keep it alive
-        // until the destructor is called.
-        std::unique_ptr<TCPSocket> _tcp_socket;
-    };
-
+    // Even if this member is not used, it is necessary to keep it alive
+    // until the destructor is called.
+    std::unique_ptr< TCPSocket > _tcp_socket;
 };
+
+};  // namespace comm

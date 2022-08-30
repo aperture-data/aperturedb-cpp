@@ -17,7 +17,7 @@ static void comm_openssl_bio_init(void)
 {
     comm_bio_method = BIO_meth_new(BIO_TYPE_SOCKET, "libcomm");
 
-    auto default_bio_method = const_cast<BIO_METHOD*>(BIO_s_socket());
+    auto default_bio_method = const_cast< BIO_METHOD* >(BIO_s_socket());
 
     BIO_meth_set_create(comm_bio_method, BIO_meth_get_create(default_bio_method));
     BIO_meth_set_destroy(comm_bio_method, BIO_meth_get_destroy(default_bio_method));
@@ -33,18 +33,18 @@ static void comm_openssl_bio_init(void)
 
 static int comm_openssl_bio_read(BIO* bio, char* buffer, int length)
 {
-  int fd;
-  BIO_get_fd(bio, &fd);
+    int fd;
+    BIO_get_fd(bio, &fd);
 
-  auto count = ::recv(fd, buffer, length, MSG_NOSIGNAL);
+    auto count = ::recv(fd, buffer, length, MSG_NOSIGNAL);
 
-  BIO_clear_retry_flags(bio);
+    BIO_clear_retry_flags(bio);
 
-  if (count <= 0 && BIO_sock_should_retry(count)) {
-    BIO_set_retry_read(bio);
-  }
+    if (count <= 0 && BIO_sock_should_retry(count)) {
+        BIO_set_retry_read(bio);
+    }
 
-  return count;
+    return count;
 }
 
 static int comm_openssl_bio_write(BIO* bio, const char* buffer, int length)

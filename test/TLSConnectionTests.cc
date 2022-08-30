@@ -15,12 +15,13 @@
 
 #define SERVER_PORT_INTERCHANGE 43444
 #define SERVER_PORT_MULTIPLE    43444
-#define NUMBER_OF_MESSAGES 20
+#define NUMBER_OF_MESSAGES      20
 
-typedef std::basic_string<uint8_t> BytesBuffer;
+typedef std::basic_string< uint8_t > BytesBuffer;
 
-class TLSConnectionTests : public testing::Test {
-protected:
+class TLSConnectionTests : public testing::Test
+{
+   protected:
     void SetUp() override
     {
         auto certificates = generate_certificate();
@@ -29,7 +30,8 @@ protected:
         std::string server_certificate = certificates.cert;
 
         connClientConfig = comm::ConnClientConfig{comm::Protocol::TLS, "", false};
-        connServerConfig = comm::ConnServerConfig{comm::Protocol::TLS, false, "", server_certificate, server_private_key};
+        connServerConfig = comm::ConnServerConfig{
+            comm::Protocol::TLS, false, "", server_certificate, server_private_key};
     }
 
     comm::ConnClientConfig connClientConfig{};
@@ -44,8 +46,7 @@ TEST_F(TLSConnectionTests, SyncMessages)
 
     Barrier barrier(2);
 
-    std::thread server_thread([&]()
-    {
+    std::thread server_thread([&]() {
         comm::ConnServer server(SERVER_PORT_INTERCHANGE, connServerConfig);
 
         barrier.wait();
@@ -53,14 +54,14 @@ TEST_F(TLSConnectionTests, SyncMessages)
         auto server_conn = server.negotiate_protocol(server.accept());
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
-            //Recieve something
+            // Recieve something
             BytesBuffer message_received = server_conn->recv_message();
-            std::string recv_message(reinterpret_cast<char*>(message_received.data()));
+            std::string recv_message(reinterpret_cast< char* >(message_received.data()));
             ASSERT_EQ(0, recv_message.compare(client_to_server));
 
-            //Send something
-            server_conn->send_message(reinterpret_cast<const uint8_t*>(server_to_client.c_str()),
-                                     server_to_client.length());
+            // Send something
+            server_conn->send_message(reinterpret_cast< const uint8_t* >(server_to_client.c_str()),
+                                      server_to_client.length());
         }
     });
 
@@ -72,12 +73,12 @@ TEST_F(TLSConnectionTests, SyncMessages)
 
     for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
         // Send something
-        connection->send_message(reinterpret_cast<const uint8_t*>(client_to_server.c_str()),
+        connection->send_message(reinterpret_cast< const uint8_t* >(client_to_server.c_str()),
                                  client_to_server.length());
 
         // Receive something
         BytesBuffer message_received = connection->recv_message();
-        std::string recv_message(reinterpret_cast<char*>(message_received.data()));
+        std::string recv_message(reinterpret_cast< char* >(message_received.data()));
         ASSERT_EQ(0, recv_message.compare(server_to_client));
     }
 
@@ -92,8 +93,7 @@ TEST_F(TLSConnectionTests, AsyncMessages)
 
     Barrier barrier(2);
 
-    std::thread server_thread([&]()
-    {
+    std::thread server_thread([&]() {
         comm::ConnServer server(SERVER_PORT_MULTIPLE, connServerConfig);
 
         barrier.wait();
@@ -101,15 +101,15 @@ TEST_F(TLSConnectionTests, AsyncMessages)
         auto server_conn = server.negotiate_protocol(server.accept());
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
-            //Send something
-            server_conn->send_message(reinterpret_cast<const uint8_t*>(server_to_client.c_str()),
-                                     server_to_client.length());
+            // Send something
+            server_conn->send_message(reinterpret_cast< const uint8_t* >(server_to_client.c_str()),
+                                      server_to_client.length());
         }
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
-            //Recieve something
+            // Recieve something
             BytesBuffer message_received = server_conn->recv_message();
-            std::string recv_message(reinterpret_cast<char*>(message_received.data()));
+            std::string recv_message(reinterpret_cast< char* >(message_received.data()));
             ASSERT_EQ(0, recv_message.compare(client_to_server));
         }
     });
@@ -122,14 +122,14 @@ TEST_F(TLSConnectionTests, AsyncMessages)
 
     for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
         // Send something
-        connection->send_message(reinterpret_cast<const uint8_t*>(client_to_server.c_str()),
+        connection->send_message(reinterpret_cast< const uint8_t* >(client_to_server.c_str()),
                                  client_to_server.length());
     }
 
     for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
         // Receive something
         BytesBuffer message_received = connection->recv_message();
-        std::string recv_message(reinterpret_cast<char*>(message_received.data()));
+        std::string recv_message(reinterpret_cast< char* >(message_received.data()));
         ASSERT_EQ(0, recv_message.compare(server_to_client));
     }
 
@@ -141,8 +141,7 @@ TEST_F(TLSConnectionTests, ServerShutdownRecv)
 {
     Barrier barrier(2);
 
-    std::thread server_thread([&]()
-    {
+    std::thread server_thread([&]() {
         comm::ConnServer server(SERVER_PORT_INTERCHANGE, connServerConfig);
 
         barrier.wait();
@@ -156,12 +155,9 @@ TEST_F(TLSConnectionTests, ServerShutdownRecv)
 
     auto connection = conn_client.connect();
 
-    server_thread.join(); // Here the server will close the port.
+    server_thread.join();  // Here the server will close the port.
 
-    ASSERT_THROW(
-        connection->recv_message(),
-        comm::Exception
-    );
+    ASSERT_THROW(connection->recv_message(), comm::Exception);
 }
 
 TEST_F(TLSConnectionTests, SendArrayInts)
@@ -170,15 +166,14 @@ TEST_F(TLSConnectionTests, SendArrayInts)
 
     Barrier barrier(2);
 
-    std::thread server_thread([&]()
-    {
+    std::thread server_thread([&]() {
         comm::ConnServer server(SERVER_PORT_INTERCHANGE, connServerConfig);
 
         barrier.wait();
 
         auto server_conn = server.negotiate_protocol(server.accept());
 
-        server_conn->send_message(reinterpret_cast<const uint8_t*>(arr), sizeof(arr));
+        server_conn->send_message(reinterpret_cast< const uint8_t* >(arr), sizeof(arr));
     });
 
     comm::ConnClient conn_client({"localhost", SERVER_PORT_INTERCHANGE}, connClientConfig);
@@ -189,7 +184,7 @@ TEST_F(TLSConnectionTests, SendArrayInts)
 
     BytesBuffer message_received = connection->recv_message();
 
-    const int *arr_recv = reinterpret_cast<const int*>(message_received.data());
+    const int* arr_recv = reinterpret_cast< const int* >(message_received.data());
     for (int i = 0; i < 10; ++i) {
         ASSERT_EQ(arr[i], arr_recv[i]);
     }
@@ -201,62 +196,40 @@ TEST_F(TLSConnectionTests, Unreachable)
 {
     comm::ConnClient client_1({"unreachable.com.ar.something", 5555});
 
-    ASSERT_THROW (
-        client_1.connect(),
-        comm::Exception
-    );
+    ASSERT_THROW(client_1.connect(), comm::Exception);
 
     comm::ConnClient client_2({"localhost", -1});
 
-    ASSERT_THROW (
-        client_2.connect(),
-        comm::Exception
-    );
+    ASSERT_THROW(client_2.connect(), comm::Exception);
 }
 
 TEST_F(TLSConnectionTests, ServerWrongPort)
 {
-    ASSERT_THROW (
-        comm::ConnServer server(-22, connServerConfig),
-        comm::Exception
-    );
+    ASSERT_THROW(comm::ConnServer server(-22, connServerConfig), comm::Exception);
 
-    ASSERT_THROW (
-        comm::ConnServer server(0, connServerConfig),
-        comm::Exception
-    );
+    ASSERT_THROW(comm::ConnServer server(0, connServerConfig), comm::Exception);
 }
 
 TEST_F(TLSConnectionTests, ClientWrongAddrOrPort)
 {
     comm::ConnClient client_1({"", 3424});
 
-    ASSERT_THROW (
-        client_1.connect(),
-        comm::Exception
-    );
+    ASSERT_THROW(client_1.connect(), comm::Exception);
 
     comm::ConnClient client_2({"intel.com", -32});
 
-    ASSERT_THROW (
-        client_2.connect(),
-        comm::Exception
-    );
+    ASSERT_THROW(client_2.connect(), comm::Exception);
 
     comm::ConnClient client_3({"intel.com", 0});
 
-    ASSERT_THROW (
-        client_3.connect(),
-        comm::Exception
-    );
+    ASSERT_THROW(client_3.connect(), comm::Exception);
 }
 
 TEST_F(TLSConnectionTests, UseAutogeneratedCertificates)
 {
     Barrier barrier(2);
 
-    std::thread server_thread([&]()
-    {
+    std::thread server_thread([&]() {
         static const comm::ConnServerConfig connServerConfig_{comm::Protocol::TLS, true};
 
         comm::ConnServer server(SERVER_PORT_INTERCHANGE, connServerConfig_);

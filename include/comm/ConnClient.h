@@ -40,52 +40,49 @@
 #include "util/Macros.h"
 #include "comm/Protocol.h"
 
-namespace comm {
+namespace comm
+{
 
-    struct ConnClientConfig
+struct ConnClientConfig {
+    Protocol allowed_protocols{Protocol::TCP};
+    std::string ca_certificate{};
+    bool verify_certificate{false};
+    ConnMetrics* metrics{nullptr};
+
+    ConnClientConfig() = default;
+
+    ConnClientConfig(Protocol allowed_protocols_,
+                     std::string ca_certificate_ = "",
+                     bool verify_certificate_    = false,
+                     ConnMetrics* metrics_       = nullptr)
+        : allowed_protocols(allowed_protocols_)
+        , ca_certificate(std::move(ca_certificate_))
+        , verify_certificate(verify_certificate_)
+        , metrics(metrics_)
     {
-        Protocol allowed_protocols{Protocol::TCP};
-        std::string ca_certificate{};
-        bool verify_certificate{false};
-        ConnMetrics* metrics{nullptr};
+    }
 
-        ConnClientConfig() = default;
+    MOVEABLE_BY_DEFAULT(ConnClientConfig);
+    COPYABLE_BY_DEFAULT(ConnClientConfig);
+};
 
-        ConnClientConfig(Protocol allowed_protocols_,
-                         std::string ca_certificate_ = "",
-                         bool verify_certificate_ = false,
-                         ConnMetrics* metrics_ = nullptr) :
-            allowed_protocols(allowed_protocols_),
-            ca_certificate(std::move(ca_certificate_)),
-            verify_certificate(verify_certificate_),
-            metrics(metrics_)
-        {
-        }
+// Implementation of a client
+class ConnClient final
+{
+   public:
+    explicit ConnClient(const Address& server_address, ConnClientConfig config = {});
+    ~ConnClient();
 
-        MOVEABLE_BY_DEFAULT(ConnClientConfig);
-        COPYABLE_BY_DEFAULT(ConnClientConfig);
-    };
+    MOVEABLE_BY_DEFAULT(ConnClient);
+    NOT_COPYABLE(ConnClient);
 
-    // Implementation of a client
-    class ConnClient final
-    {
+    std::shared_ptr< Connection > connect();
 
-    public:
+   private:
+    ConnClientConfig _config;
+    std::shared_ptr< Connection > _connection;
+    Address _server;
+    std::shared_ptr< SSL_CTX > _ssl_ctx;
+};
 
-        explicit ConnClient(const Address& server_address, ConnClientConfig config = {});
-        ~ConnClient();
-
-        MOVEABLE_BY_DEFAULT(ConnClient);
-        NOT_COPYABLE(ConnClient);
-
-        std::shared_ptr<Connection> connect();
-
-    private:
-
-        ConnClientConfig _config;
-        std::shared_ptr<Connection> _connection;
-        Address _server;
-        std::shared_ptr<SSL_CTX> _ssl_ctx;
-    };
-
-}
+}  // namespace comm

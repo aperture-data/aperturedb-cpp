@@ -32,68 +32,62 @@
 
 #include <string>
 
-namespace VDMS {
+namespace VDMS
+{
 
-    enum ExceptionType {
-        FATAL_Internal_Error,
+enum ExceptionType {
+    FATAL_Internal_Error,
 
-        WriteFail,    // For write/send failure
-        ReadFail,     // For read/recv failure
-        BindFail,     // Fail to bind a port
-        SocketFail,
-        ListentFail,
+    WriteFail,  // For write/send failure
+    ReadFail,   // For read/recv failure
+    BindFail,   // Fail to bind a port
+    SocketFail,
+    ListentFail,
 
-        ServerAddError,
-        PortError,
-        ConnectionError,
-        ConnectionShutDown,
+    ServerAddError,
+    PortError,
+    ConnectionError,
+    ConnectionShutDown,
 
-        ProtocolError,
-        TLSError,
+    ProtocolError,
+    TLSError,
 
-        AuthenticationError,
+    AuthenticationError,
 
-        InvalidMessageSize,
-        Undefined = 100,// Any undefined error
-    };
-
-    struct Exception {
-        // Which exception
-        const int num;            // Exception number
-        const char *const name;   // Exception name
-
-        // Additional information
-        const std::string msg;
-        const int errno_val;
-
-        // Where it was thrown
-        const char * const file;   // Source file name
-        const int line;           // Source line number
-
-        Exception(int exc, const char *exc_name, const char *f, int l)
-            : num(exc), name(exc_name),
-              msg(), errno_val(0),
-              file(f), line(l)
-        {}
-
-        Exception(int exc, const char *exc_name,
-                  const std::string &m,
-                  const char *f, int l)
-            : num(exc), name(exc_name),
-              msg(m), errno_val(0),
-              file(f), line(l)
-        {}
-
-        Exception(int exc, const char *exc_name,
-                  int err, const std::string &m,
-                  const char *f, int l)
-            : num(exc), name(exc_name),
-              msg(m), errno_val(err),
-              file(f), line(l)
-        {}
-        Exception() = delete;
-        Exception(const Exception&) = default;
-        Exception& operator=(const Exception&) = delete;
-    };
-
+    InvalidMessageSize,
+    Undefined = 100,  // Any undefined error
 };
+
+struct Exception {
+    // Which exception
+    const int num;           // Exception number
+    const char* const name;  // Exception name
+
+    // Additional information
+    const std::string msg;
+    const int errno_val;
+
+    // Where it was thrown
+    const char* const file;  // Source file name
+    const int line;          // Source line number
+
+    Exception(int exc, const char* exc_name, const char* f, int l)
+        : num(exc), name(exc_name), msg(), errno_val(0), file(f), line(l)
+    {
+    }
+
+    Exception(int exc, const char* exc_name, const std::string& m, const char* f, int l)
+        : num(exc), name(exc_name), msg(m), errno_val(0), file(f), line(l)
+    {
+    }
+
+    Exception(int exc, const char* exc_name, int err, const std::string& m, const char* f, int l)
+        : num(exc), name(exc_name), msg(m), errno_val(err), file(f), line(l)
+    {
+    }
+    Exception()                 = delete;
+    Exception(const Exception&) = default;
+    Exception& operator=(const Exception&) = delete;
+};
+
+};  // namespace VDMS

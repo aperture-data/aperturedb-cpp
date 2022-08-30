@@ -38,21 +38,17 @@
 using namespace VDMS;
 
 TokenBasedVDMSClient::TokenBasedVDMSClient(const VDMSClientConfig& config)
-: _client(new comm::ConnClient(
-    {config.addr, config.port},
-    comm::ConnClientConfig(config.protocols,
-        config.ca_certificate,
-        false,
-        config.metrics
-)))
-, _connection(_client->connect())
+    : _client(new comm::ConnClient(
+          {config.addr, config.port},
+          comm::ConnClientConfig(config.protocols, config.ca_certificate, false, config.metrics)))
+    , _connection(_client->connect())
 {
 }
 
 TokenBasedVDMSClient::~TokenBasedVDMSClient() = default;
 
 VDMS::Response TokenBasedVDMSClient::query(const std::string& json,
-                                           const std::vector<std::string*> blobs,
+                                           const std::vector< std::string* > blobs,
                                            const std::string& token)
 {
     try {
@@ -61,11 +57,11 @@ VDMS::Response TokenBasedVDMSClient::query(const std::string& json,
         cmd.set_token(token);
 
         for (auto& it : blobs) {
-            std::string *blob = cmd.add_blobs();
-            *blob = *it;
+            std::string* blob = cmd.add_blobs();
+            *blob             = *it;
         }
 
-        std::basic_string<uint8_t> msg(cmd.ByteSizeLong(), 0);
+        std::basic_string< uint8_t > msg(cmd.ByteSizeLong(), 0);
         cmd.SerializeToArray(msg.data(), msg.length());
 
         _connection->send_message(msg.data(), msg.length());
@@ -84,8 +80,7 @@ VDMS::Response TokenBasedVDMSClient::query(const std::string& json,
         }
 
         return response;
-    }
-    catch (const comm::Exception& e) {
+    } catch (const comm::Exception& e) {
         throw VDMS::Exception(e.num, e.name, e.errno_val, e.msg, e.file, e.line);
     }
 }
