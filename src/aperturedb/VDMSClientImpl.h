@@ -38,39 +38,38 @@
 #include "aperturedb/VDMSClient.h"
 #include "comm/Protocol.h"
 
-namespace VDMS {
+namespace VDMS
+{
 
-    struct AuthToken {
-        std::chrono::system_clock::time_point issued_at{};
-        std::string refresh_token{};
-        int32_t refresh_token_expires_in{-1};
-        std::string session_token{};
-        int32_t session_token_expires_in{-1};
-    };
-
-    class VDMSClientImpl : public TokenBasedVDMSClient {
-    public:
-        VDMSClientImpl(std::string username,
-                       std::string password,
-                       const VDMSClientConfig& config);
-        VDMSClientImpl(std::string api_key,
-                       const VDMSClientConfig& config);
-        ~VDMSClientImpl();
-
-        // Blocking call
-        VDMS::Response query(const std::string& json_query,
-                             const std::vector<std::string*> blobs = {},
-                             bool ignore_authentication = false);
-
-    private:
-        bool needs_re_authentication();
-        bool needs_token_refresh();
-        void re_authenticate();
-        void refresh_token();
-
-        std::string _username;
-        std::string _password;
-        std::string _api_key;
-        std::unique_ptr<AuthToken> _auth_token;
-    };
+struct AuthToken {
+    std::chrono::system_clock::time_point issued_at{};
+    std::string refresh_token{};
+    int32_t refresh_token_expires_in{-1};
+    std::string session_token{};
+    int32_t session_token_expires_in{-1};
 };
+
+class VDMSClientImpl : public TokenBasedVDMSClient
+{
+   public:
+    VDMSClientImpl(std::string username, std::string password, const VDMSClientConfig& config);
+    VDMSClientImpl(std::string api_key, const VDMSClientConfig& config);
+    ~VDMSClientImpl();
+
+    // Blocking call
+    VDMS::Response query(const std::string& json_query,
+                         const std::vector< std::string* > blobs = {},
+                         bool ignore_authentication              = false);
+
+   private:
+    bool needs_re_authentication();
+    bool needs_token_refresh();
+    void re_authenticate();
+    void refresh_token();
+
+    std::string _username;
+    std::string _password;
+    std::string _api_key;
+    std::unique_ptr< AuthToken > _auth_token;
+};
+};  // namespace VDMS

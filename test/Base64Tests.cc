@@ -9,7 +9,7 @@
 TEST(Base64Test, string)
 {
     std::string str("The quick brown fox jumps over the lazy dog.");
-    auto b64 = Base64::encode(str);
+    auto b64           = Base64::encode(str);
     auto decoded_bytes = Base64::decode(b64);
     std::string round_trip(decoded_bytes.begin(), decoded_bytes.end());
 
@@ -19,12 +19,12 @@ TEST(Base64Test, string)
 TEST(Base64Test, partial_string)
 {
     std::string str("The quick brown fox jumps over the lazy dog.");
-    for (std::size_t i = 0; i < 20; ++i ) {
-        auto b64 = Base64::encode(str.data(), i);
+    for (std::size_t i = 0; i < 20; ++i) {
+        auto b64           = Base64::encode(str.data(), i);
         auto decoded_bytes = Base64::decode(b64);
         std::string round_trip(decoded_bytes.begin(), decoded_bytes.end());
 
-        EXPECT_EQ(str.substr(0,i), round_trip);
+        EXPECT_EQ(str.substr(0, i), round_trip);
     }
 }
 
@@ -34,17 +34,17 @@ TEST(Base64Test, serialize_pod)
         int x;
         float y;
         bool flag;
-        std::array<char, 16> buf;
+        std::array< char, 16 > buf;
     };
 
     std::vector< my_pod > my_pods = {
-        my_pod{ 1, 2, true, "first thing" },
-        my_pod{ 3, 4, false, "second thing" },
-        my_pod{ 5, 6, true, "third thing" },
-        my_pod{ 7, 8, false, "fourth thing" },
+        my_pod{1, 2, true, "first thing"},
+        my_pod{3, 4, false, "second thing"},
+        my_pod{5, 6, true, "third thing"},
+        my_pod{7, 8, false, "fourth thing"},
     };
 
-    auto b64 = Base64::encode(my_pods);
+    auto b64           = Base64::encode(my_pods);
     auto decoded_bytes = Base64::decode(b64);
     ASSERT_EQ(decoded_bytes.size(), sizeof(my_pod) * my_pods.size());
     const auto* rt_pods = reinterpret_cast< const my_pod* >(decoded_bytes.data());
@@ -56,20 +56,22 @@ TEST(Base64Test, serialize_pod)
     }
 }
 
-TEST(Base64Test, corresponding_sizes) {
+TEST(Base64Test, corresponding_sizes)
+{
     for (int i = 0; i < 100; ++i) {
-        auto rt_size = Base64::decoded_bytes( Base64::encoded_bytes(i));
-        switch(i%3) {
-        case 0: {
-            EXPECT_EQ(rt_size, i);
-        } break;
-        case 1: {
-            EXPECT_EQ(rt_size, i + 2);
-        } break;
-        case 2: {
-            EXPECT_EQ(rt_size, i + 1);
-        } break;
-        default: break;
+        auto rt_size = Base64::decoded_bytes(Base64::encoded_bytes(i));
+        switch (i % 3) {
+            case 0: {
+                EXPECT_EQ(rt_size, i);
+            } break;
+            case 1: {
+                EXPECT_EQ(rt_size, i + 2);
+            } break;
+            case 2: {
+                EXPECT_EQ(rt_size, i + 1);
+            } break;
+            default:
+                break;
         }
     }
 }

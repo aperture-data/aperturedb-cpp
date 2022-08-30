@@ -10,7 +10,6 @@
 #include "prometheus_ambassador_defines.h"
 #include "comm/Exception.h"
 
-
 TEST(PromConfigTest, LoadConfig)
 {
     auto cfg = PromConfig::load("test/test-config.json");
@@ -62,12 +61,11 @@ TEST(PromConfigTest, DefaultValues)
     EXPECT_TRUE(cfg.ca_certificate.empty());
 }
 
-
 TEST(PromConfigTest, BadCert)
 {
-    EXPECT_THROW(PromConfig("{\"ca_certificate\":\"file/that/does/not/exist\"}"_json), comm::Exception);
+    EXPECT_THROW(PromConfig("{\"ca_certificate\":\"file/that/does/not/exist\"}"_json),
+                 comm::Exception);
 }
-
 
 TEST(PromConfigTest, BadProtocols)
 {

@@ -37,11 +37,13 @@
 
 using namespace VDMS;
 
-namespace {
-
-std::unique_ptr<AuthToken> process_token_response(const std::string& response, const std::string& object_name)
+namespace
 {
-    auto auth_token = std::unique_ptr<AuthToken>(new AuthToken());
+
+std::unique_ptr< AuthToken > process_token_response(const std::string& response,
+                                                    const std::string& object_name)
+{
+    auto auth_token = std::unique_ptr< AuthToken >(new AuthToken());
 
     auth_token->issued_at = std::chrono::system_clock::now();
 
@@ -60,7 +62,8 @@ std::unique_ptr<AuthToken> process_token_response(const std::string& response, c
                     }
 
                     if (authenticateElement.contains("refresh_token_expires_in")) {
-                        auth_token->refresh_token_expires_in = authenticateElement["refresh_token_expires_in"].get<int32_t>();
+                        auth_token->refresh_token_expires_in =
+                            authenticateElement["refresh_token_expires_in"].get< int32_t >();
                     }
 
                     if (authenticateElement.contains("session_token")) {
@@ -68,7 +71,8 @@ std::unique_ptr<AuthToken> process_token_response(const std::string& response, c
                     }
 
                     if (authenticateElement.contains("session_token_expires_in")) {
-                        auth_token->session_token_expires_in = authenticateElement["session_token_expires_in"].get<int32_t>();
+                        auth_token->session_token_expires_in =
+                            authenticateElement["session_token_expires_in"].get< int32_t >();
                     }
                 }
             }
@@ -82,24 +86,26 @@ std::unique_ptr<AuthToken> process_token_response(const std::string& response, c
     return auth_token;
 }
 
-}
+}  // namespace
 
-VDMSClientImpl::VDMSClientImpl(std::string username, std::string password, const VDMSClientConfig& config)
-: TokenBasedVDMSClient(config)
-, _username(std::move(username))
-, _password(std::move(password))
-, _api_key()
-, _auth_token()
+VDMSClientImpl::VDMSClientImpl(std::string username,
+                               std::string password,
+                               const VDMSClientConfig& config)
+    : TokenBasedVDMSClient(config)
+    , _username(std::move(username))
+    , _password(std::move(password))
+    , _api_key()
+    , _auth_token()
 {
     re_authenticate();
 }
 
 VDMSClientImpl::VDMSClientImpl(std::string api_key, const VDMSClientConfig& config)
-: TokenBasedVDMSClient(config)
-, _username()
-, _password()
-, _api_key(std::move(api_key))
-, _auth_token()
+    : TokenBasedVDMSClient(config)
+    , _username()
+    , _password()
+    , _api_key(std::move(api_key))
+    , _auth_token()
 {
     re_authenticate();
 }
@@ -108,7 +114,8 @@ VDMSClientImpl::~VDMSClientImpl() = default;
 
 bool VDMSClientImpl::needs_re_authentication()
 {
-    auto expiration_point = _auth_token->issued_at + std::chrono::seconds(_auth_token->refresh_token_expires_in);
+    auto expiration_point =
+        _auth_token->issued_at + std::chrono::seconds(_auth_token->refresh_token_expires_in);
     auto now = std::chrono::system_clock::now();
 
     return expiration_point <= now;
@@ -116,24 +123,23 @@ bool VDMSClientImpl::needs_re_authentication()
 
 bool VDMSClientImpl::needs_token_refresh()
 {
-    auto expiration_point = _auth_token->issued_at + std::chrono::seconds(_auth_token->session_token_expires_in);
+    auto expiration_point =
+        _auth_token->issued_at + std::chrono::seconds(_auth_token->session_token_expires_in);
     auto now = std::chrono::system_clock::now();
 
     return expiration_point <= now;
 }
 
 VDMS::Response VDMSClientImpl::query(const std::string& json,
-                                     const std::vector<std::string*> blobs,
+                                     const std::vector< std::string* > blobs,
                                      bool ignore_authentication)
 {
     if (_auth_token && !ignore_authentication) {
-        if (needs_re_authentication())
-        {
+        if (needs_re_authentication()) {
             re_authenticate();
         }
 
-        if (needs_token_refresh())
-        {
+        if (needs_token_refresh()) {
             refresh_token();
         }
 
@@ -148,19 +154,10 @@ void VDMSClientImpl::re_authenticate()
     nlohmann::json requestJson;
 
     if (!_username.empty()) {
-        requestJson = nlohmann::json::array({{
-            {"Authenticate", {
-                {"username", _username},
-                {"password", _password}
-            }}
-        }});
-    }
-    else {
-        requestJson = nlohmann::json::array({{
-            {"Authenticate", {
-                {"token", _api_key}
-            }}
-        }});
+        requestJson = nlohmann::json::array(
+            {{{"Authenticate", {{"username", _username}, {"password", _password}}}}});
+    } else {
+        requestJson = nlohmann::json::array({{{"Authenticate", {{"token", _api_key}}}}});
     }
 
     auto response = query(requestJson.dump(), {}, true);
@@ -170,11 +167,8 @@ void VDMSClientImpl::re_authenticate()
 
 void VDMSClientImpl::refresh_token()
 {
-    auto requestJson = nlohmann::json::array({{
-        {"RefreshToken", {
-            {"refresh_token", _auth_token->refresh_token}
-        }}
-    }});
+    auto requestJson = nlohmann::json::array(
+        {{{"RefreshToken", {{"refresh_token", _auth_token->refresh_token}}}}});
 
     auto response = query(requestJson.dump(), {}, true);
 

@@ -9,13 +9,12 @@
 #include "PromServer.h"
 #include "PromConfig.h"
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     std::string config_file("config.json");
     if (argc == 3 && std::string(argv[1]) == "-cfg") {
         config_file = argv[2];
-    }
-    else if (argc != 1) {
+    } else if (argc != 1) {
         std::cout << "Usage: " << argv[0] << " [-cfg <config_file>]" << std::endl;
         exit(0);
     }

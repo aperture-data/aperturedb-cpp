@@ -40,63 +40,60 @@
 
 class OpenSSLInitializer;
 
-namespace comm {
+namespace comm
+{
 
-    class TCPSocket;
+class TCPSocket;
 
-    struct ConnServerConfig
+struct ConnServerConfig {
+    Protocol allowed_protocols{Protocol::TCP};
+    bool auto_generate_certificate{true};
+    std::string ca_certificate{};
+    std::string tls_certificate{};
+    std::string tls_private_key{};
+    ConnMetrics* metrics{nullptr};
+
+    ConnServerConfig() = default;
+
+    ConnServerConfig(Protocol allowed_protocols_,
+                     bool auto_generate_certificate_ = true,
+                     std::string ca_certificate_     = "",
+                     std::string tls_certificate_    = "",
+                     std::string tls_private_key_    = "",
+                     ConnMetrics* metrics_           = nullptr)
+        : allowed_protocols(allowed_protocols_)
+        , auto_generate_certificate(auto_generate_certificate_)
+        , ca_certificate(std::move(ca_certificate_))
+        , tls_certificate(std::move(tls_certificate_))
+        , tls_private_key(std::move(tls_private_key_))
+        , metrics(metrics_)
     {
-        Protocol allowed_protocols{Protocol::TCP};
-        bool auto_generate_certificate{true};
-        std::string ca_certificate{};
-        std::string tls_certificate{};
-        std::string tls_private_key{};
-        ConnMetrics* metrics{nullptr};
+    }
 
-        ConnServerConfig() = default;
-
-        ConnServerConfig(Protocol allowed_protocols_,
-                         bool auto_generate_certificate_ = true,
-                         std::string ca_certificate_ = "",
-                         std::string tls_certificate_ = "",
-                         std::string tls_private_key_ = "",
-                         ConnMetrics* metrics_ = nullptr) :
-            allowed_protocols(allowed_protocols_),
-            auto_generate_certificate(auto_generate_certificate_),
-            ca_certificate(std::move(ca_certificate_)),
-            tls_certificate(std::move(tls_certificate_)),
-            tls_private_key(std::move(tls_private_key_)),
-            metrics(metrics_)
-        {
-        }
-
-        MOVEABLE_BY_DEFAULT(ConnServerConfig);
-        COPYABLE_BY_DEFAULT(ConnServerConfig);
-    };
-
-    // Implementation of a server
-    class ConnServer final
-    {
-
-    public:
-
-        explicit ConnServer(int port, ConnServerConfig config = {});
-        ~ConnServer();
-
-        MOVEABLE_BY_DEFAULT(ConnServer);
-        NOT_COPYABLE(ConnServer);
-
-        std::unique_ptr<Connection> accept();
-
-        std::unique_ptr<Connection> negotiate_protocol(std::shared_ptr<Connection> conn);
-
-    private:
-
-        ConnServerConfig _config;
-        std::unique_ptr<TCPSocket> _listening_socket;
-        OpenSSLInitializer& _open_ssl_initializer;
-        int _port; // Server port
-        std::shared_ptr<SSL_CTX> _ssl_ctx;
-    };
-
+    MOVEABLE_BY_DEFAULT(ConnServerConfig);
+    COPYABLE_BY_DEFAULT(ConnServerConfig);
 };
+
+// Implementation of a server
+class ConnServer final
+{
+   public:
+    explicit ConnServer(int port, ConnServerConfig config = {});
+    ~ConnServer();
+
+    MOVEABLE_BY_DEFAULT(ConnServer);
+    NOT_COPYABLE(ConnServer);
+
+    std::unique_ptr< Connection > accept();
+
+    std::unique_ptr< Connection > negotiate_protocol(std::shared_ptr< Connection > conn);
+
+   private:
+    ConnServerConfig _config;
+    std::unique_ptr< TCPSocket > _listening_socket;
+    OpenSSLInitializer& _open_ssl_initializer;
+    int _port;  // Server port
+    std::shared_ptr< SSL_CTX > _ssl_ctx;
+};
+
+};  // namespace comm

@@ -36,34 +36,26 @@
 using namespace comm;
 
 Connection::Connection(ConnMetrics* metrics)
-: _max_buffer_size(DEFAULT_BUFFER_SIZE)
-, _metrics(metrics)
+    : _max_buffer_size(DEFAULT_BUFFER_SIZE), _metrics(metrics)
 {
 }
 
 Connection::~Connection() = default;
 
-bool Connection::check_message_size(uint32_t size)
-{
-    return size <= _max_buffer_size;
-}
+bool Connection::check_message_size(uint32_t size) { return size <= _max_buffer_size; }
 
-std::string Connection::msg_size_to_str_KB(uint32_t size)
-{
-    return std::to_string(size / 1024);
-}
+std::string Connection::msg_size_to_str_KB(uint32_t size) { return std::to_string(size / 1024); }
 
 void Connection::send_message(const uint8_t* data, uint32_t size)
 {
     if (size > _max_buffer_size) {
         std::string error_msg = "Cannot send messages larger than " +
-                                msg_size_to_str_KB(_max_buffer_size) + "KB." +
-                                " Message size is " +
+                                msg_size_to_str_KB(_max_buffer_size) + "KB." + " Message size is " +
                                 msg_size_to_str_KB(size) + "KB.";
         THROW_EXCEPTION(InvalidMessageSize, error_msg);
     }
 
-    auto ret0 = write(reinterpret_cast<const uint8_t*>(&size), sizeof(size));
+    auto ret0 = write(reinterpret_cast< const uint8_t* >(&size), sizeof(size));
 
     if (ret0 != sizeof(size)) {
         THROW_EXCEPTION(WriteFail);
@@ -80,12 +72,11 @@ void Connection::send_message(const uint8_t* data, uint32_t size)
     }
 }
 
-const std::basic_string<uint8_t>& Connection::recv_message()
+const std::basic_string< uint8_t >& Connection::recv_message()
 {
     uint32_t recv_message_size;
 
-    auto recv_and_check = [this](uint8_t* buffer, uint32_t size)
-    {
+    auto recv_and_check = [this](uint8_t* buffer, uint32_t size) {
         size_t bytes_recv = 0;
 
         while (bytes_recv < size) {
@@ -95,8 +86,8 @@ const std::basic_string<uint8_t>& Connection::recv_message()
         return bytes_recv;
     };
 
-    size_t bytes_recv = recv_and_check(reinterpret_cast<uint8_t*>(&recv_message_size),
-                                       sizeof(recv_message_size));
+    size_t bytes_recv =
+        recv_and_check(reinterpret_cast< uint8_t* >(&recv_message_size), sizeof(recv_message_size));
 
     if (bytes_recv != sizeof(recv_message_size)) {
         THROW_EXCEPTION(ReadFail, "Short read msg header");

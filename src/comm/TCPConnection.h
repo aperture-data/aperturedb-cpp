@@ -37,31 +37,28 @@
 #include "util/Macros.h"
 #include "comm/TCPSocket.h"
 
-namespace comm {
+namespace comm
+{
 
-    class TCPConnection : public Connection
-    {
+class TCPConnection : public Connection
+{
+    friend class TLSConnClient;
 
-        friend class TLSConnClient;
+   public:
+    explicit TCPConnection(ConnMetrics* metrics = nullptr);
+    explicit TCPConnection(std::unique_ptr< TCPSocket > tcp_socket, ConnMetrics* metrics = nullptr);
 
-    public:
+    MOVEABLE_BY_DEFAULT(TCPConnection);
+    NOT_COPYABLE(TCPConnection);
 
-        explicit TCPConnection(ConnMetrics* metrics = nullptr);
-        explicit TCPConnection(std::unique_ptr<TCPSocket> tcp_socket,
-            ConnMetrics* metrics = nullptr);
+    std::unique_ptr< TCPSocket > release_socket();
+    void shutdown();
 
-        MOVEABLE_BY_DEFAULT(TCPConnection);
-        NOT_COPYABLE(TCPConnection);
+   protected:
+    size_t read(uint8_t* buffer, size_t length) override;
+    size_t write(const uint8_t* buffer, size_t length) override;
 
-        std::unique_ptr<TCPSocket> release_socket();
-        void shutdown();
-
-    protected:
-
-        size_t read(uint8_t* buffer, size_t length) override;
-        size_t write(const uint8_t* buffer, size_t length) override;
-
-        std::unique_ptr<TCPSocket> _tcp_socket;
-    };
-
+    std::unique_ptr< TCPSocket > _tcp_socket;
 };
+
+};  // namespace comm

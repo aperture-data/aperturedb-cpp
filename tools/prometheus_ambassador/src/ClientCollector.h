@@ -22,7 +22,7 @@ ENABLE_WARNING(effc++)
 class ClientCollector : public prometheus::Collectable
 {
     const PromConfig& _config;
-    mutable std::unique_ptr<VDMS::VDMSClient> _client;
+    mutable std::unique_ptr< VDMS::VDMSClient > _client;
     prometheus::Registry& _registry;
 
     class Metrics : public comm::ConnMetrics
@@ -35,7 +35,7 @@ class ClientCollector : public prometheus::Collectable
         prometheus::Family< prometheus::Histogram >& _bytes_transferred;
         prometheus::Histogram::BucketBoundaries _bytes_transferred_buckets;
 
-    public:
+       public:
         prometheus::Gauge& client_connected;
         prometheus::Summary& connect_timer;
         prometheus::Summary& query_timer;
@@ -54,8 +54,8 @@ class ClientCollector : public prometheus::Collectable
 
     void connect() const;
 
-public:
+   public:
     ClientCollector(const PromConfig& config, prometheus::Registry& registry);
 
-    std::vector<prometheus::MetricFamily> Collect() const override;
+    std::vector< prometheus::MetricFamily > Collect() const override;
 };

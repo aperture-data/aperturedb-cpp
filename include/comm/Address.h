@@ -6,12 +6,12 @@
 
 #include <string>
 
-namespace comm {
+namespace comm
+{
 
-    struct Address
-    {
-        std::string addr;
-        int port;
-    };
-
+struct Address {
+    std::string addr;
+    int port;
 };
+
+};  // namespace comm

@@ -43,49 +43,35 @@ VDMSClient::VDMSClient(std::string username,
                        std::string addr,
                        int port,
                        Protocol protocols,
-                       std::string ca_certificate) :
-    _impl(new VDMSClientImpl(std::move(username),
-                             std::move(password),
-                             VDMSClientConfig(std::move(addr),
-                                              port,
-                                              protocols,
-                                              std::move(ca_certificate),
-                                              nullptr)))
+                       std::string ca_certificate)
+    : _impl(new VDMSClientImpl(
+          std::move(username),
+          std::move(password),
+          VDMSClientConfig(std::move(addr), port, protocols, std::move(ca_certificate), nullptr)))
 {
 }
 
-VDMSClient::VDMSClient(std::string api_key,
-                       std::string addr,
-                       int port,
-                       Protocol protocols,
-                       std::string ca_certificate) :
-    _impl(new VDMSClientImpl(std::move(api_key),
-                             VDMSClientConfig(std::move(addr),
-                                              port,
-                                              protocols,
-                                              std::move(ca_certificate),
-                                              nullptr)))
+VDMSClient::VDMSClient(
+    std::string api_key, std::string addr, int port, Protocol protocols, std::string ca_certificate)
+    : _impl(new VDMSClientImpl(
+          std::move(api_key),
+          VDMSClientConfig(std::move(addr), port, protocols, std::move(ca_certificate), nullptr)))
 {
 }
 
-VDMSClient::VDMSClient(std::string username,
-                       std::string password,
-                       const VDMSClientConfig& config)
-: _impl(new VDMSClientImpl(std::move(username),
-                           std::move(password),
-                           config))
+VDMSClient::VDMSClient(std::string username, std::string password, const VDMSClientConfig& config)
+    : _impl(new VDMSClientImpl(std::move(username), std::move(password), config))
 {
 }
 
 VDMSClient::VDMSClient(std::string api_key, const VDMSClientConfig& config)
-: _impl(new VDMSClientImpl(std::move(api_key), config))
+    : _impl(new VDMSClientImpl(std::move(api_key), config))
 {
 }
 
 VDMSClient::~VDMSClient() = default;
 
-VDMS::Response VDMSClient::query(const std::string& json,
-                                 const std::vector<std::string*> blobs)
+VDMS::Response VDMSClient::query(const std::string& json, const std::vector< std::string* > blobs)
 {
     try {
         return _impl->query(json, blobs);

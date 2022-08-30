@@ -12,20 +12,17 @@
 #include <sstream>
 #include <cstring>
 
-std::string print_caught_exception() {
+std::string print_caught_exception()
+{
     try {
         throw;
-    }
-    catch (const VDMS::Exception& e) {
+    } catch (const VDMS::Exception& e) {
         return print_aperture_exception(e);
-    }
-    catch (const comm::Exception& e) {
+    } catch (const comm::Exception& e) {
         return print_aperture_exception(e);
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         return std::string("[") + type_name(e) + "] " + e.what();
-    }
-    catch (...) {
+    } catch (...) {
         return "<unknown exception type>";
     }
 }

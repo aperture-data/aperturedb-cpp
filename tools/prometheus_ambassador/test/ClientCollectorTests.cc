@@ -13,7 +13,7 @@
 #include "metrics/JsonWriter.h"
 
 #define SERVER_PORT_INTERCHANGE 43210
-#define API_TOKEN "MySeCrEtToKeN"
+#define API_TOKEN               "MySeCrEtToKeN"
 
 TEST(ClientCollectorTest, CollectClientMetrics)
 {
@@ -91,8 +91,7 @@ TEST(ClientCollectorTest, CollectClientMetrics)
 
     Barrier barrier(2);
 
-    std::thread server_thread([&]()
-    {
+    std::thread server_thread([&]() {
         comm::ConnServer server(SERVER_PORT_INTERCHANGE);
 
         barrier.wait();
@@ -108,7 +107,7 @@ TEST(ClientCollectorTest, CollectClientMetrics)
 
             VDMS::protobufs::queryMessage res;
             res.set_json(resp.dump());
-            std::basic_string<uint8_t> msg(res.ByteSizeLong(), 0);
+            std::basic_string< uint8_t > msg(res.ByteSizeLong(), 0);
             res.SerializeToArray(msg.data(), msg.length());
             server_conn->send_message(msg.data(), msg.length());
         };
@@ -139,7 +138,7 @@ TEST(ClientCollectorTest, CollectClientMetrics)
 
     server_thread.join();
 
-    metrics::JsonWriter<nlohmann::json> writer;
+    metrics::JsonWriter< nlohmann::json > writer;
     auto round_trip_json = writer.to_json(metrics);
 
     ASSERT_EQ(response[0]["GetMetrics"]["values"], round_trip_json);
@@ -153,7 +152,7 @@ TEST(ClientCollectorTest, UnableToConnect)
     prometheus::Registry reg;
     ClientCollector cc(cfg, reg);
 
-    auto metrics = cc.Collect();
+    auto metrics      = cc.Collect();
     auto self_metrics = reg.Collect();
 
     EXPECT_EQ(metrics.size(), 0);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util/gcc_util.h" // DISABLE_WARNING
+#include "util/gcc_util.h"  // DISABLE_WARNING
 
 // Cleaning after developers of protobuf 3.9.0:
 #ifndef GOOGLE_PROTOBUF_USE_UNALIGNED

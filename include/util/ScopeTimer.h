@@ -18,37 +18,34 @@
 //     });
 //     foo();
 // }
-template<
-    typename TIME_UNIT = std::chrono::seconds,
-    typename TIME_REP = double
->
-class ScopeTimer {
-public:
+template < typename TIME_UNIT = std::chrono::seconds, typename TIME_REP = double >
+class ScopeTimer
+{
+   public:
     using callback_type = std::function< void(TIME_REP) >;
     using duration_type = typename std::chrono::duration< TIME_REP, typename TIME_UNIT::period >;
 
-private:
+   private:
     callback_type _cb;
     timespec _start;
 
-public:
-    explicit ScopeTimer(callback_type cb)
-    : _cb(std::move(cb))
-    , _start()
+   public:
+    explicit ScopeTimer(callback_type cb) : _cb(std::move(cb)), _start()
     {
         clock_gettime(CLOCK_MONOTONIC, &_start);
     }
 
-    ~ScopeTimer() {
+    ~ScopeTimer()
+    {
         try {
             timespec now;
             clock_gettime(CLOCK_MONOTONIC, &now);
             if (_cb) {
-                duration_type dur =
-                    std::chrono::nanoseconds(now.tv_nsec - _start.tv_nsec) +
-                    std::chrono::seconds(now.tv_sec - _start.tv_sec);
+                duration_type dur = std::chrono::nanoseconds(now.tv_nsec - _start.tv_nsec) +
+                                    std::chrono::seconds(now.tv_sec - _start.tv_sec);
                 _cb(std::move(dur).count());
             }
-        } catch (...) {}
+        } catch (...) {
+        }
     }
 };

@@ -37,100 +37,98 @@
 #include "util/Macros.h"
 #include "comm/Protocol.h"
 
-namespace comm {
+namespace comm
+{
 
-    class ConnClient;
-    class Connection;
-    class ConnMetrics;
-}
+class ConnClient;
+class Connection;
+class ConnMetrics;
+}  // namespace comm
 
-namespace VDMS {
+namespace VDMS
+{
 
-    class VDMSClientImpl;
+class VDMSClientImpl;
 
-    constexpr int VDMS_PORT{ 55555 };
+constexpr int VDMS_PORT{55555};
 
-    using Protocol = comm::Protocol;
+using Protocol = comm::Protocol;
 
-    struct Response {
-        std::string json{};
-        std::vector<std::string> blobs{};
-    };
+struct Response {
+    std::string json{};
+    std::vector< std::string > blobs{};
+};
 
-    struct VDMSClientConfig
-    {
-        std::string addr{"localhost"};
-        int port{VDMS_PORT};
-        Protocol protocols{Protocol::Any};
-        std::string ca_certificate{""};
-        comm::ConnMetrics* metrics{nullptr};
+struct VDMSClientConfig {
+    std::string addr{"localhost"};
+    int port{VDMS_PORT};
+    Protocol protocols{Protocol::Any};
+    std::string ca_certificate{""};
+    comm::ConnMetrics* metrics{nullptr};
 
-        VDMSClientConfig(
-            std::string addr_ = "localhost",
-            int port_ = VDMS_PORT,
-            Protocol protocols_ = Protocol::Any,
-            std::string ca_certificate_ = "",
-            comm::ConnMetrics* metrics_ = nullptr
-        )
+    VDMSClientConfig(std::string addr_           = "localhost",
+                     int port_                   = VDMS_PORT,
+                     Protocol protocols_         = Protocol::Any,
+                     std::string ca_certificate_ = "",
+                     comm::ConnMetrics* metrics_ = nullptr)
         : addr(std::move(addr_))
         , port(port_)
         , protocols(protocols_)
         , ca_certificate(std::move(ca_certificate_))
         , metrics(metrics_)
-        {}
+    {
+    }
 
-        COPYABLE_BY_DEFAULT(VDMSClientConfig);
-        MOVEABLE_BY_DEFAULT(VDMSClientConfig);
-    };
-
-    class TokenBasedVDMSClient {
-        // The constructor of the ConnClient class already connects to the
-        // server if instantiated with the right address and port and it gets
-        // disconnected when the class goes out of scope. For now, we
-        // will leave the functioning like that. If the client has a need to
-        // disconnect and connect specifically, then we can add explicit calls.
-        std::unique_ptr<comm::ConnClient> _client;
-        std::shared_ptr<comm::Connection> _connection;
-
-    public:
-        explicit TokenBasedVDMSClient(const VDMSClientConfig& config);
-        ~TokenBasedVDMSClient();
-
-        // Blocking call
-        VDMS::Response query(const std::string& json_query,
-                             const std::vector<std::string*> blobs = {},
-                             const std::string& token = "");
-    };
-
-    class VDMSClient {
-    public:
-
-        VDMSClient(std::string username,
-                   std::string password,
-                   const VDMSClientConfig& config = {});
-        VDMSClient(std::string api_key,
-                   const VDMSClientConfig& config = {});
-
-        // Deprecated positional ctors.
-        // Prefer VDMSClientConfig ctors above.
-        VDMSClient(std::string username,
-                   std::string password,
-                   std::string addr,
-                   int port = VDMS_PORT,
-                   Protocol protocols = Protocol::Any,
-                   std::string ca_certificate = "");
-        VDMSClient(std::string api_key,
-                   std::string addr,
-                   int port,
-                   Protocol protocols = Protocol::Any,
-                   std::string ca_certificate = "");
-        ~VDMSClient();
-
-        // Blocking call
-        VDMS::Response query(const std::string& json_query,
-                             const std::vector<std::string*> blobs = {});
-
-    private:
-        std::unique_ptr<VDMSClientImpl> _impl;
-    };
+    COPYABLE_BY_DEFAULT(VDMSClientConfig);
+    MOVEABLE_BY_DEFAULT(VDMSClientConfig);
 };
+
+class TokenBasedVDMSClient
+{
+    // The constructor of the ConnClient class already connects to the
+    // server if instantiated with the right address and port and it gets
+    // disconnected when the class goes out of scope. For now, we
+    // will leave the functioning like that. If the client has a need to
+    // disconnect and connect specifically, then we can add explicit calls.
+    std::unique_ptr< comm::ConnClient > _client;
+    std::shared_ptr< comm::Connection > _connection;
+
+   public:
+    explicit TokenBasedVDMSClient(const VDMSClientConfig& config);
+    ~TokenBasedVDMSClient();
+
+    // Blocking call
+    VDMS::Response query(const std::string& json_query,
+                         const std::vector< std::string* > blobs = {},
+                         const std::string& token                = "");
+};
+
+class VDMSClient
+{
+   public:
+    VDMSClient(std::string username, std::string password, const VDMSClientConfig& config = {});
+    VDMSClient(std::string api_key, const VDMSClientConfig& config = {});
+
+    // Deprecated positional ctors.
+    // Prefer VDMSClientConfig ctors above.
+    VDMSClient(std::string username,
+               std::string password,
+               std::string addr,
+               int port                   = VDMS_PORT,
+               Protocol protocols         = Protocol::Any,
+               std::string ca_certificate = "");
+    VDMSClient(std::string api_key,
+               std::string addr,
+               int port,
+               Protocol protocols         = Protocol::Any,
+               std::string ca_certificate = "");
+    ~VDMSClient();
+
+    // Blocking call
+    VDMS::Response query(const std::string& json_query,
+                         const std::vector< std::string* > blobs = {});
+
+   private:
+    std::unique_ptr< VDMSClientImpl > _impl;
+};
+};  // namespace VDMS

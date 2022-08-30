@@ -15,9 +15,9 @@
 
 #define SERVER_PORT_INTERCHANGE 43444
 #define SERVER_PORT_MULTIPLE    43444
-#define NUMBER_OF_MESSAGES 20
+#define NUMBER_OF_MESSAGES      20
 
-typedef std::basic_string<uint8_t> BytesBuffer;
+typedef std::basic_string< uint8_t > BytesBuffer;
 
 // Ping-pong messages between server and client
 TEST(TCPConnectionTests, SyncMessages)
@@ -27,8 +27,7 @@ TEST(TCPConnectionTests, SyncMessages)
 
     Barrier barrier(2);
 
-    std::thread server_thread([&]()
-    {
+    std::thread server_thread([&]() {
         comm::ConnServer server(SERVER_PORT_INTERCHANGE);
 
         barrier.wait();
@@ -36,14 +35,14 @@ TEST(TCPConnectionTests, SyncMessages)
         auto server_conn = server.negotiate_protocol(server.accept());
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
-            //Recieve something
+            // Recieve something
             BytesBuffer message_received = server_conn->recv_message();
-            std::string recv_message(reinterpret_cast<char*>(message_received.data()));
+            std::string recv_message(reinterpret_cast< char* >(message_received.data()));
             ASSERT_EQ(0, recv_message.compare(client_to_server));
 
-            //Send something
-            server_conn->send_message(reinterpret_cast<const uint8_t*>(server_to_client.c_str()),
-                                     server_to_client.length());
+            // Send something
+            server_conn->send_message(reinterpret_cast< const uint8_t* >(server_to_client.c_str()),
+                                      server_to_client.length());
         }
     });
 
@@ -55,12 +54,12 @@ TEST(TCPConnectionTests, SyncMessages)
 
     for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
         // Send something
-        connection->send_message(reinterpret_cast<const uint8_t*>(client_to_server.c_str()),
+        connection->send_message(reinterpret_cast< const uint8_t* >(client_to_server.c_str()),
                                  client_to_server.length());
 
         // Receive something
         BytesBuffer message_received = connection->recv_message();
-        std::string recv_message(reinterpret_cast<char*>(message_received.data()));
+        std::string recv_message(reinterpret_cast< char* >(message_received.data()));
         ASSERT_EQ(0, recv_message.compare(server_to_client));
     }
 
@@ -75,8 +74,7 @@ TEST(TCPConnectionTests, AsyncMessages)
 
     Barrier barrier(2);
 
-    std::thread server_thread([&]()
-    {
+    std::thread server_thread([&]() {
         comm::ConnServer server(SERVER_PORT_MULTIPLE);
 
         barrier.wait();
@@ -84,15 +82,15 @@ TEST(TCPConnectionTests, AsyncMessages)
         auto server_conn = server.negotiate_protocol(server.accept());
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
-            //Send something
-            server_conn->send_message(reinterpret_cast<const uint8_t*>(server_to_client.c_str()),
-                                     server_to_client.length());
+            // Send something
+            server_conn->send_message(reinterpret_cast< const uint8_t* >(server_to_client.c_str()),
+                                      server_to_client.length());
         }
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
-            //Recieve something
+            // Recieve something
             BytesBuffer message_received = server_conn->recv_message();
-            std::string recv_message(reinterpret_cast<char*>(message_received.data()));
+            std::string recv_message(reinterpret_cast< char* >(message_received.data()));
             ASSERT_EQ(0, recv_message.compare(client_to_server));
         }
     });
@@ -105,14 +103,14 @@ TEST(TCPConnectionTests, AsyncMessages)
 
     for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
         // Send something
-        connection->send_message(reinterpret_cast<const uint8_t*>(client_to_server.c_str()),
+        connection->send_message(reinterpret_cast< const uint8_t* >(client_to_server.c_str()),
                                  client_to_server.length());
     }
 
     for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
         // Receive something
         BytesBuffer message_received = connection->recv_message();
-        std::string recv_message(reinterpret_cast<char*>(message_received.data()));
+        std::string recv_message(reinterpret_cast< char* >(message_received.data()));
         ASSERT_EQ(0, recv_message.compare(server_to_client));
     }
 
@@ -124,8 +122,7 @@ TEST(TCPConnectionTests, ServerShutdownRecv)
 {
     Barrier barrier(2);
 
-    std::thread server_thread([&]()
-    {
+    std::thread server_thread([&]() {
         comm::ConnServer server(SERVER_PORT_INTERCHANGE);
 
         barrier.wait();
@@ -139,12 +136,9 @@ TEST(TCPConnectionTests, ServerShutdownRecv)
 
     auto connection = conn_client.connect();
 
-    server_thread.join(); // Here the server will close the port.
+    server_thread.join();  // Here the server will close the port.
 
-    ASSERT_THROW(
-        connection->recv_message(),
-        comm::Exception
-    );
+    ASSERT_THROW(connection->recv_message(), comm::Exception);
 }
 
 TEST(TCPConnectionTests, SendArrayInts)
@@ -153,15 +147,14 @@ TEST(TCPConnectionTests, SendArrayInts)
 
     Barrier barrier(2);
 
-    std::thread server_thread([&]()
-    {
+    std::thread server_thread([&]() {
         comm::ConnServer server(SERVER_PORT_INTERCHANGE);
 
         barrier.wait();
 
         auto server_conn = server.negotiate_protocol(server.accept());
 
-        server_conn->send_message(reinterpret_cast<const uint8_t*>(arr), sizeof(arr));
+        server_conn->send_message(reinterpret_cast< const uint8_t* >(arr), sizeof(arr));
     });
 
     comm::ConnClient conn_client({"localhost", SERVER_PORT_INTERCHANGE});
@@ -172,7 +165,7 @@ TEST(TCPConnectionTests, SendArrayInts)
 
     BytesBuffer message_received = connection->recv_message();
 
-    const int* arr_recv = reinterpret_cast<const int*>(message_received.data());
+    const int* arr_recv = reinterpret_cast< const int* >(message_received.data());
     for (int i = 0; i < 10; ++i) {
         ASSERT_EQ(arr[i], arr_recv[i]);
     }
@@ -184,64 +177,43 @@ TEST(TCPConnectionTests, MoveCopy)
 {
     comm::TCPConnection a;
     comm::TCPConnection server_conn;
-    server_conn = std::move(a); // Testing copy with move works
+    server_conn = std::move(a);  // Testing copy with move works
 }
 
 TEST(TCPConnectionTests, Unreachable)
 {
     comm::ConnClient client_1({"unreachable.com.ar.something", 5555});
 
-    ASSERT_THROW (
-        client_1.connect(),
-        comm::Exception
-    );
+    ASSERT_THROW(client_1.connect(), comm::Exception);
 
     comm::ConnClient client_2({"localhost", -1});
 
-    ASSERT_THROW (
-        client_2.connect(),
-        comm::Exception
-    );
+    ASSERT_THROW(client_2.connect(), comm::Exception);
 }
 
 TEST(TCPConnectionTests, ServerWrongPort)
 {
-    ASSERT_THROW (
-        comm::ConnServer server(-22),
-        comm::Exception
-    );
+    ASSERT_THROW(comm::ConnServer server(-22), comm::Exception);
 
-    ASSERT_THROW (
-        comm::ConnServer server(0),
-        comm::Exception
-    );
+    ASSERT_THROW(comm::ConnServer server(0), comm::Exception);
 }
 
 TEST(TCPConnectionTests, ClientWrongAddrOrPort)
 {
     comm::ConnClient client_1({"", 3424});
 
-    ASSERT_THROW (
-        client_1.connect(),
-        comm::Exception
-    );
+    ASSERT_THROW(client_1.connect(), comm::Exception);
 
     comm::ConnClient client_2({"intel.com", -32});
 
-    ASSERT_THROW (
-        client_2.connect(),
-        comm::Exception
-    );
+    ASSERT_THROW(client_2.connect(), comm::Exception);
 
     comm::ConnClient client_3({"intel.com", 0});
 
-    ASSERT_THROW (
-        client_3.connect(),
-        comm::Exception
-    );
+    ASSERT_THROW(client_3.connect(), comm::Exception);
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
 

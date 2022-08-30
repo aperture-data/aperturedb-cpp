@@ -17,7 +17,7 @@ TEST(TimedQueueTest, Histogram)
     Histogram::BucketBoundaries buckets{0.01};
     Histogram timer(buckets);
     Counter pushes;
-    TimedQueue<int> queue(&timer, &pushes);
+    TimedQueue< int > queue(&timer, &pushes);
     EXPECT_EQ(0.0, pushes.Value());
 
     queue.push_back(1);
@@ -45,7 +45,7 @@ TEST(TimedQueueTest, Summary)
     Summary::Quantiles qtiles{};
     Summary timer(qtiles);
     Counter pushes;
-    TimedQueue<int, Summary> queue(&timer, &pushes);
+    TimedQueue< int, Summary > queue(&timer, &pushes);
     EXPECT_EQ(0.0, pushes.Value());
 
     queue.push_back(1);
@@ -65,7 +65,7 @@ TEST(TimedQueueTest, Milliseconds)
     Histogram::BucketBoundaries buckets{10.0};
     Histogram ms_timer(buckets);
     Counter pushes;
-    TimedQueue<int, Histogram, std::chrono::milliseconds> queue(&ms_timer, &pushes);
+    TimedQueue< int, Histogram, std::chrono::milliseconds > queue(&ms_timer, &pushes);
     EXPECT_EQ(0.0, pushes.Value());
 
     queue.push_back(1);

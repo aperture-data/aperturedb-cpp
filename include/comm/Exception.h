@@ -33,86 +33,82 @@
 #include <string>
 #include <iostream>
 
-namespace comm {
+namespace comm
+{
 
-    enum ExceptionType {
-        FATAL_Internal_Error,
+enum ExceptionType {
+    FATAL_Internal_Error,
 
-        WriteFail,    // For write/send failure
-        ReadFail,     // For read/recv failure
-        BindFail,     // Fail to bind a port
-        SocketFail,
-        ListentFail,
+    WriteFail,  // For write/send failure
+    ReadFail,   // For read/recv failure
+    BindFail,   // Fail to bind a port
+    SocketFail,
+    ListentFail,
 
-        ServerAddError,
-        PortError,
-        ConnectionError,
-        ConnectionShutDown,
+    ServerAddError,
+    PortError,
+    ConnectionError,
+    ConnectionShutDown,
 
-        ProtocolError,
-        TLSError,
+    ProtocolError,
+    TLSError,
 
-        AuthenticationError,
+    AuthenticationError,
 
-        InvalidMessageSize,
-        Undefined = 100,// Any undefined error
-    };
-
-    struct Exception {
-        // Which exception
-        const int num;            // Exception number
-        const char *const name;   // Exception name
-
-        // Additional information
-        const std::string msg;
-        const int errno_val;
-        const int ssl_err_code;
-
-        // Where it was thrown
-        const char * const file;   // Source file name
-        const int line;           // Source line number
-
-        Exception(int exc, const char *exc_name, const char *f, int l)
-            : num(exc), name(exc_name),
-              msg(), errno_val(0), ssl_err_code(0),
-              file(f), line(l)
-        {}
-
-        Exception(int exc, const char *exc_name,
-                  const std::string &m,
-                  const char *f, int l)
-            : num(exc), name(exc_name),
-              msg(m), errno_val(0), ssl_err_code(0),
-              file(f), line(l)
-        {}
-
-        Exception(int exc, const char *exc_name,
-                  int err, const char* m,
-                  int ssl_err,
-                  const char *f, int l)
-            : num(exc), name(exc_name),
-              msg(m), errno_val(err), ssl_err_code(ssl_err),
-              file(f), line(l)
-        {}
-
-        Exception(int exc, const char *exc_name,
-                  int err, const std::string &m,
-                  int ssl_err,
-                  const char *f, int l)
-            : num(exc), name(exc_name),
-              msg(m), errno_val(err), ssl_err_code(ssl_err),
-              file(f), line(l)
-        {}
-        Exception() = delete;
-        Exception(const Exception&) = default;
-        Exception& operator=(const Exception&) = delete;
-        friend std::ostream& operator<<(std::ostream&, const Exception&);
-    };
-
-    std::ostream& operator<<(std::ostream&, const Exception&);
+    InvalidMessageSize,
+    Undefined = 100,  // Any undefined error
 };
+
+struct Exception {
+    // Which exception
+    const int num;           // Exception number
+    const char* const name;  // Exception name
+
+    // Additional information
+    const std::string msg;
+    const int errno_val;
+    const int ssl_err_code;
+
+    // Where it was thrown
+    const char* const file;  // Source file name
+    const int line;          // Source line number
+
+    Exception(int exc, const char* exc_name, const char* f, int l)
+        : num(exc), name(exc_name), msg(), errno_val(0), ssl_err_code(0), file(f), line(l)
+    {
+    }
+
+    Exception(int exc, const char* exc_name, const std::string& m, const char* f, int l)
+        : num(exc), name(exc_name), msg(m), errno_val(0), ssl_err_code(0), file(f), line(l)
+    {
+    }
+
+    Exception(
+        int exc, const char* exc_name, int err, const char* m, int ssl_err, const char* f, int l)
+        : num(exc), name(exc_name), msg(m), errno_val(err), ssl_err_code(ssl_err), file(f), line(l)
+    {
+    }
+
+    Exception(int exc,
+              const char* exc_name,
+              int err,
+              const std::string& m,
+              int ssl_err,
+              const char* f,
+              int l)
+        : num(exc), name(exc_name), msg(m), errno_val(err), ssl_err_code(ssl_err), file(f), line(l)
+    {
+    }
+    Exception()                 = delete;
+    Exception(const Exception&) = default;
+    Exception& operator=(const Exception&) = delete;
+    friend std::ostream& operator<<(std::ostream&, const Exception&);
+};
+
+std::ostream& operator<<(std::ostream&, const Exception&);
+};  // namespace comm
 
 #define THROW_EXCEPTION(name, ...) \
     throw comm::Exception(comm::name, #name, ##__VA_ARGS__, __FILE__, __LINE__)
 
-extern void print_exception(const comm::Exception &e, FILE *f = stdout);
+extern void print_exception(const comm::Exception& e, FILE* f = stdout);

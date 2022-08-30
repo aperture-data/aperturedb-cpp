@@ -6,11 +6,12 @@
 
 #include "comm/Protocol.h"
 
-namespace comm {
+namespace comm
+{
 
-    struct HelloMessage {
-        uint32_t version{};
-        Protocol protocol{};
-    };
+struct HelloMessage {
+    uint32_t version{};
+    Protocol protocol{};
+};
 
-}
+}  // namespace comm

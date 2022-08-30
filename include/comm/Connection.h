@@ -33,41 +33,41 @@
 #include <string>
 #include "util/Macros.h"
 
-namespace comm {
+namespace comm
+{
 
-    class ConnMetrics {
-    public:
-        virtual ~ConnMetrics() = 0;
-        virtual void observe_bytes_sent(std::size_t bytes_sent);
-        virtual void observe_bytes_recv(std::size_t bytes_recv);
-    };
-
-    class Connection
-    {
-    public:
-
-        explicit Connection(ConnMetrics* metrics = nullptr);
-        virtual ~Connection();
-
-        MOVEABLE_BY_DEFAULT(Connection);
-        NOT_COPYABLE(Connection);
-
-        void send_message(const uint8_t* data, uint32_t size);
-        const std::basic_string<uint8_t>& recv_message();
-
-        std::string msg_size_to_str_KB(uint32_t size);
-        void set_max_buffer_size(uint32_t max_buffer_size);
-        bool check_message_size(uint32_t size);
-
-    protected:
-
-        virtual size_t read(uint8_t* buffer, size_t length) = 0;
-        virtual size_t write(const uint8_t* buffer, size_t length) = 0;
-
-        std::basic_string<uint8_t> _buffer_str{};
-        uint32_t _max_buffer_size{};
-
-        ConnMetrics* _metrics{nullptr};
-    };
-
+class ConnMetrics
+{
+   public:
+    virtual ~ConnMetrics() = 0;
+    virtual void observe_bytes_sent(std::size_t bytes_sent);
+    virtual void observe_bytes_recv(std::size_t bytes_recv);
 };
+
+class Connection
+{
+   public:
+    explicit Connection(ConnMetrics* metrics = nullptr);
+    virtual ~Connection();
+
+    MOVEABLE_BY_DEFAULT(Connection);
+    NOT_COPYABLE(Connection);
+
+    void send_message(const uint8_t* data, uint32_t size);
+    const std::basic_string< uint8_t >& recv_message();
+
+    std::string msg_size_to_str_KB(uint32_t size);
+    void set_max_buffer_size(uint32_t max_buffer_size);
+    bool check_message_size(uint32_t size);
+
+   protected:
+    virtual size_t read(uint8_t* buffer, size_t length)        = 0;
+    virtual size_t write(const uint8_t* buffer, size_t length) = 0;
+
+    std::basic_string< uint8_t > _buffer_str{};
+    uint32_t _max_buffer_size{};
+
+    ConnMetrics* _metrics{nullptr};
+};
+
+};  // namespace comm

@@ -17,9 +17,8 @@
 
 using namespace comm;
 
-TLSSocket::TLSSocket(std::unique_ptr<TCPSocket> tcp_socket, SSL* ssl) :
-    _ssl(ssl),
-    _tcp_socket(std::move(tcp_socket))
+TLSSocket::TLSSocket(std::unique_ptr< TCPSocket > tcp_socket, SSL* ssl)
+    : _ssl(ssl), _tcp_socket(std::move(tcp_socket))
 {
 }
 
@@ -36,7 +35,7 @@ TLSSocket::~TLSSocket()
 
 void TLSSocket::accept()
 {
-    errno = 0;
+    errno       = 0;
     auto result = ::SSL_accept(_ssl);
     int errno_r = errno;
     ERR_print_errors_fp(stdout);
@@ -47,7 +46,7 @@ void TLSSocket::accept()
 
 void TLSSocket::connect()
 {
-    errno = 0;
+    errno       = 0;
     auto result = ::SSL_connect(_ssl);
     int errno_r = errno;
 
@@ -56,8 +55,8 @@ void TLSSocket::connect()
     }
 }
 
-std::unique_ptr<TLSSocket> TLSSocket::create(std::unique_ptr<TCPSocket> tcp_socket,
-                                             const std::shared_ptr<SSL_CTX>& ssl_ctx)
+std::unique_ptr< TLSSocket > TLSSocket::create(std::unique_ptr< TCPSocket > tcp_socket,
+                                               const std::shared_ptr< SSL_CTX >& ssl_ctx)
 {
     auto ssl = SSL_new(ssl_ctx.get());
 
@@ -66,5 +65,5 @@ std::unique_ptr<TLSSocket> TLSSocket::create(std::unique_ptr<TCPSocket> tcp_sock
     BIO_set_fd(bio, tcp_socket->_socket_fd, BIO_NOCLOSE);
     SSL_set_bio(ssl, bio, bio);
 
-    return std::unique_ptr<TLSSocket>(new TLSSocket(std::move(tcp_socket), ssl));
+    return std::unique_ptr< TLSSocket >(new TLSSocket(std::move(tcp_socket), ssl));
 }

@@ -15,8 +15,7 @@ using namespace VDMS;
 
 std::string AuthEnabledVDMSServer::random_string(size_t length)
 {
-    auto randchar = []() -> char
-    {
+    auto randchar = []() -> char {
         const char charset[] =
             "0123456789"
             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -33,12 +32,12 @@ std::string AuthEnabledVDMSServer::random_string(size_t length)
     return str;
 }
 
-AuthEnabledVDMSServer::AuthEnabledVDMSServer(int port, AuthEnabledVDMSServerConfig config) :
-    _server(port, config.connServerConfig)
+AuthEnabledVDMSServer::AuthEnabledVDMSServer(int port, AuthEnabledVDMSServerConfig config)
+    : _server(port, config.connServerConfig)
 {
-    auto thread_function = [&]()
-    {
-        std::shared_ptr<comm::Connection> server_conn = _server.negotiate_protocol(_server.accept());
+    auto thread_function = [&]() {
+        std::shared_ptr< comm::Connection > server_conn =
+            _server.negotiate_protocol(_server.accept());
 
         while (!_stop_signal) {
             protobufs::queryMessage protobuf_request;
@@ -55,7 +54,7 @@ AuthEnabledVDMSServer::AuthEnabledVDMSServer(int port, AuthEnabledVDMSServerConf
 
             protobufs::queryMessage protobuf_response;
 
-            auto is_authenticate_request_ = is_authenticate_request(protobuf_request);
+            auto is_authenticate_request_  = is_authenticate_request(protobuf_request);
             auto is_refresh_token_request_ = is_refresh_token_request(protobuf_request);
 
             if (is_authenticate_request_ || is_refresh_token_request_) {
@@ -63,28 +62,20 @@ AuthEnabledVDMSServer::AuthEnabledVDMSServer(int port, AuthEnabledVDMSServerConf
 
                 auto command_name = is_authenticate_request_ ? "Authenticate" : "RefreshToken";
 
-                auto responseJson = nlohmann::json::array({{
-                    {command_name, {
-                        {"session_token", session_token},
+                auto responseJson = nlohmann::json::array(
+                    {{{command_name,
+                       {{"session_token", session_token},
                         {"session_token_expires_in", config.session_token_expires_in},
                         {"refresh_token", refresh_token},
                         {"refresh_token_expires_in", config.refresh_token_expires_in},
-                        {"status", 0}
-                    }}
-                }});
+                        {"status", 0}}}}});
 
                 protobuf_response.set_json(responseJson.dump());
-            }
-            else {
+            } else {
                 if (protobuf_request.token() == session_token) {
                     protobuf_response.set_json(protobuf_request.json());
-                }
-                else {
-                    auto responseJson = nlohmann::json::array({{
-                        {"Something", {
-                            {"status", -1}
-                        }}
-                    }});
+                } else {
+                    auto responseJson = nlohmann::json::array({{{"Something", {{"status", -1}}}}});
 
                     protobuf_response.set_json(responseJson.dump());
                 }
@@ -94,7 +85,7 @@ AuthEnabledVDMSServer::AuthEnabledVDMSServer(int port, AuthEnabledVDMSServerConf
         }
     };
 
-    _work_thread = std::unique_ptr<std::thread>(new std::thread(thread_function));
+    _work_thread = std::unique_ptr< std::thread >(new std::thread(thread_function));
 }
 
 AuthEnabledVDMSServer::~AuthEnabledVDMSServer()
@@ -116,7 +107,9 @@ bool AuthEnabledVDMSServer::is_authenticate_request(const protobufs::queryMessag
         if (requestElement.is_object() && requestElement.contains("Authenticate")) {
             const auto& authenticateElement = requestElement["Authenticate"];
 
-            if (authenticateElement.is_object() && authenticateElement.contains("username") && (authenticateElement.contains("password") || authenticateElement.contains("token"))) {
+            if (authenticateElement.is_object() && authenticateElement.contains("username") &&
+                (authenticateElement.contains("password") ||
+                 authenticateElement.contains("token"))) {
                 return true;
             }
         }
@@ -125,7 +118,8 @@ bool AuthEnabledVDMSServer::is_authenticate_request(const protobufs::queryMessag
     return false;
 }
 
-bool AuthEnabledVDMSServer::is_refresh_token_request(const protobufs::queryMessage& protobuf_request)
+bool AuthEnabledVDMSServer::is_refresh_token_request(
+    const protobufs::queryMessage& protobuf_request)
 {
     auto requestJson = nlohmann::json::parse(protobuf_request.json());
 
@@ -144,9 +138,10 @@ bool AuthEnabledVDMSServer::is_refresh_token_request(const protobufs::queryMessa
     return false;
 }
 
-protobufs::queryMessage AuthEnabledVDMSServer::receive_message(const std::shared_ptr<comm::Connection>& connection)
+protobufs::queryMessage AuthEnabledVDMSServer::receive_message(
+    const std::shared_ptr< comm::Connection >& connection)
 {
-    std::basic_string<uint8_t> message_received = connection->recv_message();
+    std::basic_string< uint8_t > message_received = connection->recv_message();
 
     protobufs::queryMessage protobuf_request;
     if (!protobuf_request.ParseFromArray(message_received.data(), message_received.length())) {
@@ -162,9 +157,10 @@ void AuthEnabledVDMSServer::regenerate_tokens()
     session_token = random_string(46);
 }
 
-void AuthEnabledVDMSServer::send_message(const std::shared_ptr<comm::Connection>& connection, const protobufs::queryMessage& protobuf_response)
+void AuthEnabledVDMSServer::send_message(const std::shared_ptr< comm::Connection >& connection,
+                                         const protobufs::queryMessage& protobuf_response)
 {
-    std::basic_string<uint8_t> message(protobuf_response.ByteSizeLong(), 0);
+    std::basic_string< uint8_t > message(protobuf_response.ByteSizeLong(), 0);
     protobuf_response.SerializeToArray(message.data(), message.length());
 
     connection->send_message(message.data(), message.length());
