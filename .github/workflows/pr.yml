@@ -46,3 +46,18 @@ jobs:
       # so your job can access it
       - uses: actions/checkout@v2
       - uses: luisremis/find-trailing-whitespace@master
+
+  formatting-check:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - uses: actions/checkout@v2
+    - name: Run clang-format style check for C/C++/Protobuf programs.
+      uses: jidicula/clang-format-action@v4.8.0
+      with:
+        clang-format-version: '13'
+        # This will recursively check the paths
+        check-path: '.'
+        # Google format is what we use as based for our .clang-format
+        fallback-style: 'Google'
