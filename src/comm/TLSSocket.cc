@@ -67,3 +67,13 @@ std::unique_ptr< TLSSocket > TLSSocket::create(std::unique_ptr< TCPSocket > tcp_
 
     return std::unique_ptr< TLSSocket >(new TLSSocket(std::move(tcp_socket), ssl));
 }
+
+std::string TLSSocket::print_source() 
+{
+	return _tcp_socket->print_source();
+}
+
+short TLSSocket::source_family() 
+{
+	return _tcp_socket->source_family();
+}

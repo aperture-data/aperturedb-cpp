@@ -36,7 +36,7 @@
 using namespace comm;
 
 Connection::Connection(ConnMetrics* metrics)
-    : _max_buffer_size(DEFAULT_BUFFER_SIZE), _metrics(metrics)
+    : _max_buffer_size(DEFAULT_BUFFER_SIZE), _metrics(metrics), _source_family(0)
 {
 }
 
@@ -125,8 +125,13 @@ void Connection::set_max_buffer_size(uint32_t max_buffer_size)
     _max_buffer_size = std::min(MAX_BUFFER_SIZE, _max_buffer_size);
 }
 
+const std::string& Connection::get_source() { return _source; }
+short Connection::get_source_family() { return _source_family; }
+const std::string& Connection::get_encryption() { return _encryption; }
+
 ConnMetrics::~ConnMetrics() = default;
 
 void ConnMetrics::observe_bytes_sent(std::size_t /*bytes_sent*/) {}
 
 void ConnMetrics::observe_bytes_recv(std::size_t /*bytes_recv*/) {}
+

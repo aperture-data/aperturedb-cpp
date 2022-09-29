@@ -6,8 +6,8 @@
 
 #include <cstring>
 #include <netdb.h>
-#include <netinet/ip.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 
 #include "util/gcc_util.h"
@@ -21,8 +21,7 @@ ENABLE_WARNING(effc++)
 #include "comm/Variables.h"
 
 using namespace comm;
-
-TCPSocket::TCPSocket(int socket_fd) : _socket_fd(socket_fd) {}
+TCPSocket::TCPSocket(int socket_fd, const sockaddr_in& address) : _socket_fd(socket_fd), _source_family(AF_INET), _source(address) {}
 
 TCPSocket::~TCPSocket()
 {
@@ -66,7 +65,7 @@ again:
     }
     // MAGICK can be done here
 
-    return std::unique_ptr< TCPSocket >(new TCPSocket(connected_socket));
+    return std::unique_ptr< TCPSocket >(new TCPSocket(connected_socket, clnt_addr));
 }
 
 bool TCPSocket::bind(int port)
@@ -104,12 +103,14 @@ bool TCPSocket::connect(const Address& address)
 std::unique_ptr< TCPSocket > TCPSocket::create()
 {
     int tcp_socket = ::socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in source;
+    memset( &source,0, sizeof( _source ));
 
     if (tcp_socket < 0) {
         THROW_EXCEPTION(SocketFail);
     }
 
-    return std::unique_ptr< TCPSocket >(new TCPSocket(tcp_socket));
+    return std::unique_ptr< TCPSocket >(new TCPSocket(tcp_socket,source));
 }
 
 bool TCPSocket::listen() { return ::listen(_socket_fd, MAX_CONN_QUEUE) == 0; }
@@ -127,3 +128,18 @@ bool TCPSocket::set_timeval_option(int level, int option_name, timeval value)
 }
 
 void TCPSocket::shutdown() { ::shutdown(_socket_fd, SHUT_RDWR); }
+
+std::string TCPSocket::print_source() 
+{
+	if( _source_family == AF_UNSPEC ) {
+		return "";
+	}
+	else {
+		return std::string( inet_ntoa( _source.sin_addr ));
+	}
+}
+
+short TCPSocket::source_family() 
+{
+	return _source_family;
+}
