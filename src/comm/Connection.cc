@@ -33,6 +33,8 @@
 #include "comm/Exception.h"
 #include "comm/Variables.h"
 
+#include <arpa/inet.h>
+
 using namespace comm;
 
 Connection::Connection(ConnMetrics* metrics)
@@ -126,8 +128,23 @@ void Connection::set_max_buffer_size(uint32_t max_buffer_size)
 }
 
 const std::string& Connection::get_source() { return _source; }
+
 short Connection::get_source_family() { return _source_family; }
+
 const std::string& Connection::get_encryption() { return _encryption; }
+
+std::string Connection::source_family_name( short source_family )
+{
+	switch( source_family )
+	{
+		case AF_INET:
+			return "ipv4";
+		case AF_UNSPEC:
+			return "unspec";
+		default:
+			return "unk";
+	}
+}
 
 ConnMetrics::~ConnMetrics() = default;
 
