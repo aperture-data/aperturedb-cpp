@@ -31,6 +31,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 #include "util/Macros.h"
 
 namespace comm
@@ -60,7 +61,7 @@ class Connection
     void set_max_buffer_size(uint32_t max_buffer_size);
     bool check_message_size(uint32_t size);
 
-    std::string source_family_name( short source_family );
+    std::string source_family_name(short source_family);
     const std::string& get_source();
     short get_source_family();
     const std::string& get_encryption();
@@ -76,8 +77,11 @@ class Connection
 
     std::string _source{};
     std::string _encryption{};
-    short _source_family; // from socket(2)
+    short _source_family;  // from socket(2)
 
+    friend class ConnectionTester;
+
+    static std::shared_ptr< Connection > testingConnection();
 };
 
 };  // namespace comm

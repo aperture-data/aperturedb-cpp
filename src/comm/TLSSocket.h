@@ -38,7 +38,6 @@ class TLSSocket
 
     SSL* _ssl{nullptr};
 
-
     // Even if this member is not used, it is necessary to keep it alive
     // until the destructor is called.
     std::unique_ptr< TCPSocket > _tcp_socket;

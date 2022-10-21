@@ -41,19 +41,19 @@
 
 using namespace comm;
 
-TCPConnection::TCPConnection(ConnMetrics* metrics) : Connection(metrics), _tcp_socket() 
+TCPConnection::TCPConnection(ConnMetrics* metrics) : Connection(metrics), _tcp_socket()
 {
-	_encryption = "none";
-	_source_family = _tcp_socket->source_family();
-	_source = _tcp_socket->print_source();
+    _encryption    = "none";
+    _source_family = _tcp_socket->source_family();
+    _source        = _tcp_socket->print_source();
 }
 
 TCPConnection::TCPConnection(std::unique_ptr< TCPSocket > tcp_socket, ConnMetrics* metrics)
     : Connection(metrics), _tcp_socket(std::move(tcp_socket))
 {
-	_encryption = "none";
-	_source_family = _tcp_socket->source_family();
-	_source = _tcp_socket->print_source();
+    _encryption    = "none";
+    _source_family = _tcp_socket->source_family();
+    _source        = _tcp_socket->print_source();
 }
 
 size_t TCPConnection::read(uint8_t* buffer, size_t length)

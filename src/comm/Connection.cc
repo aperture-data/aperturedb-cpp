@@ -133,17 +133,16 @@ short Connection::get_source_family() { return _source_family; }
 
 const std::string& Connection::get_encryption() { return _encryption; }
 
-std::string Connection::source_family_name( short source_family )
+std::string Connection::source_family_name(short source_family)
 {
-	switch( source_family )
-	{
-		case AF_INET:
-			return "ipv4";
-		case AF_UNSPEC:
-			return "unspec";
-		default:
-			return "unk";
-	}
+    switch (source_family) {
+        case AF_INET:
+            return "ipv4";
+        case AF_UNSPEC:
+            return "unspec";
+        default:
+            return "unk";
+    }
 }
 
 ConnMetrics::~ConnMetrics() = default;
@@ -152,3 +151,15 @@ void ConnMetrics::observe_bytes_sent(std::size_t /*bytes_sent*/) {}
 
 void ConnMetrics::observe_bytes_recv(std::size_t /*bytes_recv*/) {}
 
+class TestConnection : public Connection
+{
+   public:
+    TestConnection() : Connection() { _source = "testing"; }
+    size_t read(uint8_t* /*buffer*/, size_t /*length*/) override { return 0; }
+    size_t write(const uint8_t* /*buffer*/, size_t /*length*/) override { return 0; }
+};
+
+std::shared_ptr< Connection > Connection::testingConnection()
+{
+    return std::make_shared< TestConnection >();
+}
