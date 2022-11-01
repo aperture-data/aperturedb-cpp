@@ -45,7 +45,6 @@ class TCPConnection : public Connection
     friend class TLSConnClient;
 
    public:
-    explicit TCPConnection(ConnMetrics* metrics = nullptr);
     explicit TCPConnection(std::unique_ptr< TCPSocket > tcp_socket, ConnMetrics* metrics = nullptr);
 
     MOVEABLE_BY_DEFAULT(TCPConnection);

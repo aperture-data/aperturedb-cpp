@@ -22,10 +22,6 @@ ENABLE_WARNING(effc++)
 
 using namespace comm;
 
-TLSConnection::TLSConnection(ConnMetrics* metrics) : Connection(metrics), _tls_socket()
-{
-}
-
 TLSConnection::TLSConnection(std::unique_ptr< TLSSocket > tls_socket, ConnMetrics* metrics)
     : Connection(metrics), _tls_socket(std::move(tls_socket))
 {

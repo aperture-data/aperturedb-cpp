@@ -17,7 +17,6 @@ namespace comm
 class TLSConnection : public Connection
 {
    public:
-    explicit TLSConnection(ConnMetrics* metrics = nullptr);
     explicit TLSConnection(std::unique_ptr< TLSSocket > tls_socket, ConnMetrics* metrics = nullptr);
 
     MOVEABLE_BY_DEFAULT(TLSConnection);
