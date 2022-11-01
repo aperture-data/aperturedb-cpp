@@ -24,17 +24,11 @@ using namespace comm;
 
 TLSConnection::TLSConnection(ConnMetrics* metrics) : Connection(metrics), _tls_socket()
 {
-    _encryption    = "tls";
-    _source_family = _tls_socket->source_family();
-    _source        = _tls_socket->print_source();
 }
 
 TLSConnection::TLSConnection(std::unique_ptr< TLSSocket > tls_socket, ConnMetrics* metrics)
     : Connection(metrics), _tls_socket(std::move(tls_socket))
 {
-    _encryption    = "tls";
-    _source_family = _tls_socket->source_family();
-    _source        = _tls_socket->print_source();
 }
 
 static long msec_diff(const struct timespec& a, const struct timespec& b)
@@ -93,4 +87,19 @@ size_t TLSConnection::write(const uint8_t* buffer, size_t length)
     }
 
     return static_cast< size_t >(count);
+}
+
+std::string TLSConnection::get_source() const
+{ 
+    return  _tls_socket->print_source();
+}
+
+short TLSConnection::get_source_family()  const
+{
+    return _tls_socket->source_family();
+}
+
+std::string TLSConnection::get_encryption()  const
+{
+	return "tls";
 }

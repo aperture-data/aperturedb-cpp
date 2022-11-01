@@ -65,7 +65,7 @@ class TCPSocket
     short source_family();
 
    private:
-    explicit TCPSocket(int socket_fd, const sockaddr_in&);
+    explicit TCPSocket(int socket_fd, sockaddr_in);
 
     int _socket_fd{-1};
     short _source_family{AF_UNSPEC};

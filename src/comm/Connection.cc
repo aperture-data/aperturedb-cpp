@@ -38,7 +38,7 @@
 using namespace comm;
 
 Connection::Connection(ConnMetrics* metrics)
-    : _max_buffer_size(DEFAULT_BUFFER_SIZE), _metrics(metrics), _source_family(0)
+    : _max_buffer_size(DEFAULT_BUFFER_SIZE), _metrics(metrics)
 {
 }
 
@@ -127,12 +127,6 @@ void Connection::set_max_buffer_size(uint32_t max_buffer_size)
     _max_buffer_size = std::min(MAX_BUFFER_SIZE, _max_buffer_size);
 }
 
-const std::string& Connection::get_source() { return _source; }
-
-short Connection::get_source_family() { return _source_family; }
-
-const std::string& Connection::get_encryption() { return _encryption; }
-
 std::string Connection::source_family_name(short source_family)
 {
     switch (source_family) {
@@ -154,9 +148,12 @@ void ConnMetrics::observe_bytes_recv(std::size_t /*bytes_recv*/) {}
 class TestConnection : public Connection
 {
    public:
-    TestConnection() : Connection() { _source = "testing"; }
+    TestConnection() : Connection() { }
     size_t read(uint8_t* /*buffer*/, size_t /*length*/) override { return 0; }
     size_t write(const uint8_t* /*buffer*/, size_t /*length*/) override { return 0; }
+    std::string get_source() const override { return "testing"; }
+    short get_source_family() const override { return AF_UNSPEC; }
+    std::string get_encryption() const override { return "none"; }
 };
 
 std::shared_ptr< Connection > Connection::testingConnection()

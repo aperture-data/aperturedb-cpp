@@ -43,17 +43,11 @@ using namespace comm;
 
 TCPConnection::TCPConnection(ConnMetrics* metrics) : Connection(metrics), _tcp_socket()
 {
-    _encryption    = "none";
-    _source_family = _tcp_socket->source_family();
-    _source        = _tcp_socket->print_source();
 }
 
 TCPConnection::TCPConnection(std::unique_ptr< TCPSocket > tcp_socket, ConnMetrics* metrics)
     : Connection(metrics), _tcp_socket(std::move(tcp_socket))
 {
-    _encryption    = "none";
-    _source_family = _tcp_socket->source_family();
-    _source        = _tcp_socket->print_source();
 }
 
 size_t TCPConnection::read(uint8_t* buffer, size_t length)
@@ -110,4 +104,20 @@ size_t TCPConnection::write(const uint8_t* buffer, size_t length)
     }
 
     return static_cast< size_t >(count);
+}
+
+
+std::string TCPConnection::get_source() const
+{ 
+    return  _tcp_socket->print_source();
+}
+
+short TCPConnection::get_source_family() const
+{
+    return _tcp_socket->source_family();
+}
+
+std::string TCPConnection::get_encryption() const
+{
+	return "none";
 }

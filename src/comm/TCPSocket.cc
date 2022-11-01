@@ -21,8 +21,8 @@ ENABLE_WARNING(effc++)
 #include "comm/Variables.h"
 
 using namespace comm;
-TCPSocket::TCPSocket(int socket_fd, const sockaddr_in& address)
-    : _socket_fd(socket_fd), _source_family(AF_INET), _source(address)
+TCPSocket::TCPSocket(int socket_fd, sockaddr_in address)
+    : _socket_fd(socket_fd), _source_family(AF_INET), _source(std::move(address))
 {
 }
 
@@ -68,7 +68,7 @@ again:
     }
     // MAGICK can be done here
 
-    return std::unique_ptr< TCPSocket >(new TCPSocket(connected_socket, clnt_addr));
+    return std::unique_ptr< TCPSocket >(new TCPSocket(connected_socket, std::move(clnt_addr)));
 }
 
 bool TCPSocket::bind(int port)
@@ -113,7 +113,7 @@ std::unique_ptr< TCPSocket > TCPSocket::create()
         THROW_EXCEPTION(SocketFail);
     }
 
-    return std::unique_ptr< TCPSocket >(new TCPSocket(tcp_socket, source));
+    return std::unique_ptr< TCPSocket >(new TCPSocket(tcp_socket, std::move(source)));
 }
 
 bool TCPSocket::listen() { return ::listen(_socket_fd, MAX_CONN_QUEUE) == 0; }

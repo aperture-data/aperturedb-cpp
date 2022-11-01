@@ -62,9 +62,9 @@ class Connection
     bool check_message_size(uint32_t size);
 
     std::string source_family_name(short source_family);
-    const std::string& get_source();
-    short get_source_family();
-    const std::string& get_encryption();
+    virtual std::string get_source() const = 0;
+    virtual short get_source_family() const = 0;
+    virtual std::string get_encryption() const = 0;
 
    protected:
     virtual size_t read(uint8_t* buffer, size_t length)        = 0;
@@ -74,10 +74,6 @@ class Connection
     uint32_t _max_buffer_size{};
 
     ConnMetrics* _metrics{nullptr};
-
-    std::string _source{};
-    std::string _encryption{};
-    short _source_family;  // from socket(2)
 
     friend class ConnectionTester;
 

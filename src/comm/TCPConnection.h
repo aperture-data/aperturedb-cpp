@@ -53,6 +53,9 @@ class TCPConnection : public Connection
 
     std::unique_ptr< TCPSocket > release_socket();
     void shutdown();
+    std::string get_source() const override;
+    short get_source_family() const override;
+    std::string get_encryption() const override;
 
    protected:
     size_t read(uint8_t* buffer, size_t length) override;

@@ -23,6 +23,10 @@ class TLSConnection : public Connection
     MOVEABLE_BY_DEFAULT(TLSConnection);
     NOT_COPYABLE(TLSConnection);
 
+    std::string get_source() const override;
+    short get_source_family() const override;
+    std::string get_encryption() const override;
+
    protected:
     size_t read(uint8_t* buffer, size_t length) override;
     size_t write(const uint8_t* buffer, size_t length) override;
