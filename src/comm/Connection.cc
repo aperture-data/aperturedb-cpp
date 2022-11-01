@@ -127,7 +127,7 @@ void Connection::set_max_buffer_size(uint32_t max_buffer_size)
     _max_buffer_size = std::min(MAX_BUFFER_SIZE, _max_buffer_size);
 }
 
-std::string Connection::source_family_name(short source_family)
+std::string Connection::source_family_name(short source_family) const
 {
     switch (source_family) {
         case AF_INET:
@@ -148,7 +148,7 @@ void ConnMetrics::observe_bytes_recv(std::size_t /*bytes_recv*/) {}
 class TestConnection : public Connection
 {
    public:
-    TestConnection() : Connection() { }
+    TestConnection() : Connection() {}
     size_t read(uint8_t* /*buffer*/, size_t /*length*/) override { return 0; }
     size_t write(const uint8_t* /*buffer*/, size_t /*length*/) override { return 0; }
     std::string get_source() const override { return "testing"; }

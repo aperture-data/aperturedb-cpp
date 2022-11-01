@@ -102,18 +102,8 @@ size_t TCPConnection::write(const uint8_t* buffer, size_t length)
     return static_cast< size_t >(count);
 }
 
+std::string TCPConnection::get_source() const { return _tcp_socket->print_source(); }
 
-std::string TCPConnection::get_source() const
-{ 
-    return  _tcp_socket->print_source();
-}
+short TCPConnection::get_source_family() const { return _tcp_socket->source_family(); }
 
-short TCPConnection::get_source_family() const
-{
-    return _tcp_socket->source_family();
-}
-
-std::string TCPConnection::get_encryption() const
-{
-	return "none";
-}
+std::string TCPConnection::get_encryption() const { return "none"; }

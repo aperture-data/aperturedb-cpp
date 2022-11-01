@@ -85,17 +85,8 @@ size_t TLSConnection::write(const uint8_t* buffer, size_t length)
     return static_cast< size_t >(count);
 }
 
-std::string TLSConnection::get_source() const
-{ 
-    return  _tls_socket->print_source();
-}
+std::string TLSConnection::get_source() const { return _tls_socket->print_source(); }
 
-short TLSConnection::get_source_family()  const
-{
-    return _tls_socket->source_family();
-}
+short TLSConnection::get_source_family() const { return _tls_socket->source_family(); }
 
-std::string TLSConnection::get_encryption()  const
-{
-	return "tls";
-}
+std::string TLSConnection::get_encryption() const { return "tls"; }

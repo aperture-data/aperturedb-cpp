@@ -61,9 +61,9 @@ class Connection
     void set_max_buffer_size(uint32_t max_buffer_size);
     bool check_message_size(uint32_t size);
 
-    std::string source_family_name(short source_family);
-    virtual std::string get_source() const = 0;
-    virtual short get_source_family() const = 0;
+    std::string source_family_name(short source_family) const;
+    virtual std::string get_source() const     = 0;
+    virtual short get_source_family() const    = 0;
     virtual std::string get_encryption() const = 0;
 
    protected:
