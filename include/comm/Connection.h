@@ -75,9 +75,6 @@ class Connection
 
     ConnMetrics* _metrics{nullptr};
 
-    friend class ConnectionTester;
-
-    static std::shared_ptr< Connection > testingConnection();
 };
 
 };  // namespace comm

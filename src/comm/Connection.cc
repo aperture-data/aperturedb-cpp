@@ -145,18 +145,3 @@ void ConnMetrics::observe_bytes_sent(std::size_t /*bytes_sent*/) {}
 
 void ConnMetrics::observe_bytes_recv(std::size_t /*bytes_recv*/) {}
 
-class TestConnection : public Connection
-{
-   public:
-    TestConnection() : Connection() {}
-    size_t read(uint8_t* /*buffer*/, size_t /*length*/) override { return 0; }
-    size_t write(const uint8_t* /*buffer*/, size_t /*length*/) override { return 0; }
-    std::string get_source() const override { return "testing"; }
-    short get_source_family() const override { return AF_UNSPEC; }
-    std::string get_encryption() const override { return "none"; }
-};
-
-std::shared_ptr< Connection > Connection::testingConnection()
-{
-    return std::make_shared< TestConnection >();
-}
