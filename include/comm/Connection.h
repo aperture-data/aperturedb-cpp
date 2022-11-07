@@ -74,7 +74,6 @@ class Connection
     uint32_t _max_buffer_size{};
 
     ConnMetrics* _metrics{nullptr};
-
 };
 
 };  // namespace comm
