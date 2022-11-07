@@ -51,6 +51,7 @@ struct ConnServerConfig {
     std::string ca_certificate{};
     std::string tls_certificate{};
     std::string tls_private_key{};
+    std::string unix_socket_path{};
     ConnMetrics* metrics{nullptr};
 
     ConnServerConfig() = default;
