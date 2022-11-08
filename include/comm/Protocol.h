@@ -16,6 +16,7 @@ namespace comm
 // TODO: Make HelloMessage and Protocol a Protobuf message.
 // to prevent this kind of issues, and to prevent
 // potential issues with endianness.
-ENUM_FLAGS(Protocol, uint32_t){None = 0, TCP = 1 << 0, TLS = 1 << 1, UNIX = 1 << 2 Any = TCP | TLS | UNIX };
+ENUM_FLAGS(Protocol, uint32_t){
+    None = 0, TCP = 1 << 0, TLS = 1 << 1, UNIX = 1 << 2, Any = TCP | TLS | UNIX};
 
 }  // namespace comm

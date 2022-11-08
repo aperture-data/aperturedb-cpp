@@ -30,47 +30,16 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <netinet/ip.h>
-
-#include "Socket.h"
-#include "comm/Address.h"
-
-namespace comm
+class Socket
 {
-
-class TCPSocket : public Socket
-{
-    friend class TCPConnection;
-    friend class TLSSocket;
-
    public:
-    TCPSocket(const TCPSocket&) = delete;
-    ~TCPSocket();
+    virtual ~Socket() {}
 
-    TCPSocket& operator=(const TCPSocket&) = delete;
+    virtual bool listen()                                                      = 0;
+    virtual bool set_boolean_option(int level, int option_name, bool value)    = 0;
+    virtual bool set_timeval_option(int level, int option_name, timeval value) = 0;
+    virtual void shutdown()                                                    = 0;
 
-    static std::unique_ptr< TCPSocket > create();
-    static std::unique_ptr< TCPSocket > accept(
-        const std::unique_ptr< TCPSocket >& listening_socket);
-
-    bool bind(int port);
-    bool connect(const Address& address);
-    bool listen() override;
-    bool set_boolean_option(int level, int option_name, bool value) override;
-    bool set_timeval_option(int level, int option_name, timeval value) override;
-    void shutdown() override;
-
-    std::string print_source() override;
-    short source_family() override;
-
-   private:
-    explicit TCPSocket(int socket_fd, sockaddr_in);
-
-    int _socket_fd{-1};
-    short _source_family{AF_UNSPEC};
-    struct sockaddr_in _source;
+    virtual std::string print_source() = 0;
+    virtual short source_family()      = 0;
 };
-
-};  // namespace comm

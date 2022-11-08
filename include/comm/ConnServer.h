@@ -31,6 +31,8 @@
 #pragma once
 
 #include <memory>
+#include <vector>
+#include <unordered_map>
 
 #include <openssl/ssl.h>
 
@@ -51,10 +53,10 @@ struct ConnServerConfig {
     std::string ca_certificate{};
     std::string tls_certificate{};
     std::string tls_private_key{};
-    std::string unix_socket_path{};
     ConnMetrics* metrics{nullptr};
 
-    ConnServerConfig() = default;
+    ConnServerConfig()          = default;
+    virtual ~ConnServerConfig() = default;
 
     ConnServerConfig(Protocol allowed_protocols_,
                      bool auto_generate_certificate_ = true,
@@ -75,11 +77,22 @@ struct ConnServerConfig {
     COPYABLE_BY_DEFAULT(ConnServerConfig);
 };
 
+struct TCPConnServerConfig : public ConnServerConfig {
+    int _port;
+};
+
+struct UnixConnServerConfig : public ConnServerConfig {
+    std::string _path{};
+};
+
+typedef std::vector< std::unique_ptr< ConnServerConfig > > ConnServerConfigList;
+
+class SSLContextMap;
 // Implementation of a server
 class ConnServer final
 {
    public:
-    explicit ConnServer(int port, ConnServerConfig config = {});
+    explicit ConnServer(ConnServerConfigList);
     ~ConnServer();
 
     MOVEABLE_BY_DEFAULT(ConnServer);
@@ -90,11 +103,13 @@ class ConnServer final
     std::unique_ptr< Connection > negotiate_protocol(std::shared_ptr< Connection > conn);
 
    private:
-    ConnServerConfig _config;
-    std::unique_ptr< TCPSocket > _listening_socket;
+    ConnServerConfigList _configs;
+    std::unordered_map< int, std::unique_ptr< TCPSocket > > _id_to_listening_socket_map;
     OpenSSLInitializer& _open_ssl_initializer;
-    int _port;  // Server port
-    std::shared_ptr< SSL_CTX > _ssl_ctx;
+    std::unique_ptr< SSLContextMap > _ssl_ctx_map;
+    // std::unordered_map< int, std::unique_ptr< SSL_CTX > > _id_to_ssl_ctx_map;
+
+    void configure_individual(int id);
 };
 
 };  // namespace comm

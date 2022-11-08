@@ -34,12 +34,13 @@
 #include <string>
 #include <netinet/ip.h>
 
+#include "Socket.h"
 #include "comm/Address.h"
 
 namespace comm
 {
 
-class UnixSocket
+class UnixSocket : public Socket
 {
     friend class TCPConnection;
 
@@ -55,13 +56,13 @@ class UnixSocket
 
     bool bind(std::string path);
     bool connect(const std::string& path);
-    bool listen();
-    bool set_boolean_option(int level, int option_name, bool value);
-    bool set_timeval_option(int level, int option_name, timeval value);
-    void shutdown();
+    bool listen() override;
+    bool set_boolean_option(int level, int option_name, bool value) override;
+    bool set_timeval_option(int level, int option_name, timeval value) override;
+    void shutdown() override;
 
-    std::string print_source();
-    short source_family();
+    std::string print_source() override;
+    short source_family() override;
 
    private:
     explicit UnixSocket(int socket_fd, sockaddr_in);

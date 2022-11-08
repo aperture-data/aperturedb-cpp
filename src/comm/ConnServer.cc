@@ -43,73 +43,111 @@
 #include "comm/HelloMessage.h"
 #include "comm/TCPConnection.h"
 #include "comm/TCPSocket.h"
+#include "comm/UnixSocket.h"
 #include "comm/TLS.h"
 #include "comm/TLSConnection.h"
 #include "comm/Variables.h"
 
 using namespace comm;
 
-ConnServer::ConnServer(int port, ConnServerConfig config)
-    : _config(std::move(config))
-    , _listening_socket()
-    , _open_ssl_initializer(OpenSSLInitializer::instance())
-    , _port(port)
-    , _ssl_ctx(create_server_context())
+class SSLContextMap
 {
+   public:
+    std::unordered_map< int, OpenSSLPointer< SSL_CTX > > map;
+};
+
+ConnServer::ConnServer(ConnServerConfigList config)
+    : _configs(std::move(config))
+    , _id_to_listening_socket_map()
+    , _open_ssl_initializer(OpenSSLInitializer::instance())
+    //, _id_to_ssl_ctx_map()
+    , _ssl_ctx_map()
+{
+    if (config.size() == 0) {
+        THROW_EXCEPTION(ServerConfigError, "A minimum of 1 config is required");
+    }
+    for (int i = 0; i < _configs.size(); i++) {
+        configure_individual(i);
+    }
+}
+
+void ConnServer::configure_individual(int id)
+{
+    auto _config  = _configs.at(id).get();
+    auto _ssl_ctx = create_server_context();
+
     set_default_verify_paths(_ssl_ctx.get());
 
-    if (_config.auto_generate_certificate) {
+    std::unique_ptr< Socket > listening_socket;
+
+    if (_config->auto_generate_certificate) {
         auto certificates = generate_certificate();
 
         ::set_tls_private_key(_ssl_ctx.get(), certificates.private_key);
 
         ::set_tls_certificate(_ssl_ctx.get(), certificates.cert);
     } else {
-        if (!_config.ca_certificate.empty()) {
-            ::set_ca_certificate(_ssl_ctx.get(), _config.ca_certificate);
+        if (!_config->ca_certificate.empty()) {
+            ::set_ca_certificate(_ssl_ctx.get(), _config->ca_certificate);
         }
 
-        if (!_config.tls_certificate.empty()) {
-            ::set_tls_certificate(_ssl_ctx.get(), _config.tls_certificate);
+        if (!_config->tls_certificate.empty()) {
+            ::set_tls_certificate(_ssl_ctx.get(), _config->tls_certificate);
         }
 
-        if (!_config.tls_private_key.empty()) {
-            ::set_tls_private_key(_ssl_ctx.get(), _config.tls_private_key);
+        if (!_config->tls_private_key.empty()) {
+            ::set_tls_private_key(_ssl_ctx.get(), _config->tls_private_key);
         }
     }
 
-    if (_port <= 0 || static_cast< unsigned >(_port) > MAX_PORT_NUMBER) {
-        THROW_EXCEPTION(PortError);
-    }
+    auto tcp_config = dynamic_cast< TCPConnServerConfig* >(_config);
 
-    // Create a TCP/IP socket
-    _listening_socket = TCPSocket::create();
+    if (tcp_config != nullptr) {
+        if (tcp_config->_port <= 0 ||
+            static_cast< unsigned >(tcp_config->_port) > MAX_PORT_NUMBER) {
+            THROW_EXCEPTION(PortError);
+        }
 
-    if (!_listening_socket->set_boolean_option(SOL_SOCKET, SO_REUSEADDR, true)) {
-        THROW_EXCEPTION(SocketFail, "Unable to create reusable socket");
-    }
+        // Create a TCP/IP socket
+        auto tcp_listening_socket = TCPSocket::create();
 
-    if (!_listening_socket->set_boolean_option(IPPROTO_TCP, TCP_NODELAY, true)) {
-        THROW_EXCEPTION(SocketFail, "Unable to turn Nagle's off");
-    }
+        if (!tcp_listening_socket->set_boolean_option(SOL_SOCKET, SO_REUSEADDR, true)) {
+            THROW_EXCEPTION(SocketFail, "Unable to create reusable socket");
+        }
 
-    if (!_listening_socket->set_boolean_option(IPPROTO_TCP, TCP_QUICKACK, true)) {
-        THROW_EXCEPTION(SocketFail, "Unable to turn quick ack on");
-    }
+        if (!tcp_listening_socket->set_boolean_option(IPPROTO_TCP, TCP_NODELAY, true)) {
+            THROW_EXCEPTION(SocketFail, "Unable to turn Nagle's off");
+        }
 
-    struct timeval tv = {MAX_RECV_TIMEOUT_SECS, 0};
-    if (!_listening_socket->set_timeval_option(SOL_SOCKET, SO_RCVTIMEO, tv)) {
-        THROW_EXCEPTION(SocketFail, "Unable to set receive timeout");
-    }
+        if (!tcp_listening_socket->set_boolean_option(IPPROTO_TCP, TCP_QUICKACK, true)) {
+            THROW_EXCEPTION(SocketFail, "Unable to turn quick ack on");
+        }
+        struct timeval tv = {MAX_RECV_TIMEOUT_SECS, 0};
+        if (!tcp_listening_socket->set_timeval_option(SOL_SOCKET, SO_RCVTIMEO, tv)) {
+            THROW_EXCEPTION(SocketFail, "Unable to set receive timeout");
+        }
 
-    if (!_listening_socket->bind(_port)) {
-        THROW_EXCEPTION(BindFail);
+        if (!tcp_listening_socket->bind(tcp_config->_port)) {
+            THROW_EXCEPTION(BindFail);
+        }
+
+        // listening_socket = tcp_listening_socket.get();
+
+    } else {
+        auto unix_config           = dynamic_cast< UnixConnServerConfig* >(_config);
+        auto unix_listening_socket = UnixSocket::create();
+
+        if (!unix_listening_socket->bind(unix_config->_path)) {
+            THROW_EXCEPTION(BindFail);
+        }
+        listening_socket = std::unique_ptr< Socket >(unix_listening_socket.release());  //.get();
     }
 
     // Mark socket as pasive
-    if (!_listening_socket->listen()) {
+    if (!listening_socket->listen()) {
         THROW_EXCEPTION(ListentFail);
     }
+    _ssl_ctx_map->map[id] = _ssl_ctx;
 }
 
 ConnServer::~ConnServer() = default;
@@ -120,7 +158,7 @@ ConnServer::~ConnServer() = default;
 // This protocol can be a virtual method in the future to support arbitrary protocols.
 std::unique_ptr< Connection > ConnServer::negotiate_protocol(std::shared_ptr< Connection > conn)
 {
-    auto tcp_connection = std::static_pointer_cast< TCPConnection >(conn);
+    // auto tcp_connection = std::static_pointer_cast< TCPConnection >(conn);
 
     auto response = tcp_connection->recv_message();
 
