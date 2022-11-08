@@ -30,9 +30,6 @@ class TLSSocket
     void accept();
     void connect();
 
-    std::string print_source();
-    short source_family();
-
    private:
     explicit TLSSocket(std::unique_ptr< TCPSocket > tcp_socket, SSL* ssl);
 

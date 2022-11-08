@@ -32,7 +32,6 @@
 
 #include <memory>
 #include <string>
-#include <netinet/ip.h>
 
 #include "comm/Address.h"
 
@@ -61,15 +60,10 @@ class TCPSocket
     bool set_timeval_option(int level, int option_name, timeval value);
     void shutdown();
 
-    std::string print_source();
-    short source_family();
-
    private:
-    explicit TCPSocket(int socket_fd, sockaddr_in);
+    explicit TCPSocket(int socket_fd);
 
     int _socket_fd{-1};
-    short _source_family{AF_UNSPEC};
-    struct sockaddr_in _source;
 };
 
 };  // namespace comm
