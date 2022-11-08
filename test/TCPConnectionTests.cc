@@ -175,8 +175,8 @@ TEST(TCPConnectionTests, SendArrayInts)
 
 TEST(TCPConnectionTests, MoveCopy)
 {
-    comm::TCPConnection a;
-    comm::TCPConnection server_conn;
+    comm::TCPConnection a(comm::TCPSocket::create());
+    comm::TCPConnection server_conn(comm::TCPSocket::create());
     server_conn = std::move(a);  // Testing copy with move works
 }
 
