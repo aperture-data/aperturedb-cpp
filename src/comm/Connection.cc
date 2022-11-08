@@ -144,4 +144,3 @@ ConnMetrics::~ConnMetrics() = default;
 void ConnMetrics::observe_bytes_sent(std::size_t /*bytes_sent*/) {}
 
 void ConnMetrics::observe_bytes_recv(std::size_t /*bytes_recv*/) {}
-
