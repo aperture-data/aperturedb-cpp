@@ -45,7 +45,6 @@ class TCPConnection : public Connection
     friend class TLSConnClient;
 
    public:
-    explicit TCPConnection(ConnMetrics* metrics = nullptr);
     explicit TCPConnection(std::unique_ptr< TCPSocket > tcp_socket, ConnMetrics* metrics = nullptr);
 
     MOVEABLE_BY_DEFAULT(TCPConnection);
@@ -53,6 +52,9 @@ class TCPConnection : public Connection
 
     std::unique_ptr< TCPSocket > release_socket();
     void shutdown();
+    std::string get_source() const override;
+    short get_source_family() const override;
+    std::string get_encryption() const override;
 
    protected:
     size_t read(uint8_t* buffer, size_t length) override;
