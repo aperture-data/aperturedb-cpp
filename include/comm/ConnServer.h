@@ -91,6 +91,23 @@ struct TCPConnServerConfig : public ConnServerConfig {
     {
     }
 
+    TCPConnServerConfig( ConnServerConfig && config )
+	    : ConnServerConfig( config )
+    {
+    }
+
+    TCPConnServerConfig(int port_, ConnServerConfig && config )
+	    : ConnServerConfig( config )
+	    , _port(port_)
+    {
+    }
+
+    TCPConnServerConfig(int port_, ConnServerConfig & config )
+	    : ConnServerConfig( config )
+	    , _port(port_)
+    {
+    }
+
     TCPConnServerConfig & addPort(int port) {
 	    _port = port;
 	    return *this;
@@ -110,7 +127,7 @@ std::unique_ptr<ConnServerConfig> wrapConnServerConfig( T* config) {
 }
 
 template <class T>
-std::unique_ptr<ConnServerConfig> wrapConnServerConfig( T& config) { 
+std::unique_ptr<ConnServerConfig> wrapConnServerConfig( const T& config) { 
 	return std::unique_ptr<ConnServerConfig>( new T(config) );
 }
 
@@ -150,8 +167,7 @@ class ConnServer final
 
     std::unique_ptr< Connection > accept();
 
-    std::unique_ptr< Connection > negotiate_protocol(std::shared_ptr< Connection > conn,
-                                                     ConnServerConfig& config);
+    std::unique_ptr< Connection > negotiate_protocol(std::shared_ptr< Connection > conn);
 
    private:
     ConnServerConfigList _configs;

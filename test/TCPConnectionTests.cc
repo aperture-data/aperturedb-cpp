@@ -34,7 +34,7 @@ TEST(TCPConnectionTests, SyncMessages)
 
         barrier.wait();
 
-        auto server_conn = server.negotiate_protocol(server.accept(), *config.get());
+        auto server_conn = server.negotiate_protocol(server.accept());
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
             // Recieve something
@@ -82,7 +82,7 @@ TEST(TCPConnectionTests, AsyncMessages)
 
         barrier.wait();
 
-        auto server_conn = server.negotiate_protocol(server.accept(),*config.get());
+        auto server_conn = server.negotiate_protocol(server.accept());
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
             // Send something
@@ -131,7 +131,7 @@ TEST(TCPConnectionTests, ServerShutdownRecv)
 
         barrier.wait();
 
-        auto server_conn = server.negotiate_protocol(server.accept(), *config.get());
+        auto server_conn = server.negotiate_protocol(server.accept());
     });
 
     comm::ConnClient conn_client({"localhost", SERVER_PORT_INTERCHANGE});
@@ -157,7 +157,7 @@ TEST(TCPConnectionTests, SendArrayInts)
 
         barrier.wait();
 
-        auto server_conn = server.negotiate_protocol(server.accept(),*config.get());
+        auto server_conn = server.negotiate_protocol(server.accept());
 
         server_conn->send_message(reinterpret_cast< const uint8_t* >(arr), sizeof(arr));
     });
@@ -180,8 +180,8 @@ TEST(TCPConnectionTests, SendArrayInts)
 
 TEST(TCPConnectionTests, MoveCopy)
 {
-    comm::TCPConnection a(comm::TCPSocket::create());
-    comm::TCPConnection server_conn(comm::TCPSocket::create());
+    comm::TCPConnection a(comm::TCPSocket::create(),0);
+    comm::TCPConnection server_conn(comm::TCPSocket::create(),0);
     server_conn = std::move(a);  // Testing copy with move works
 }
 

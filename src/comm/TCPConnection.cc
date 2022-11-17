@@ -41,8 +41,8 @@
 
 using namespace comm;
 
-TCPConnection::TCPConnection(std::unique_ptr< TCPSocket > tcp_socket, ConnMetrics* metrics)
-    : Connection(metrics), _tcp_socket(std::move(tcp_socket))
+TCPConnection::TCPConnection(std::unique_ptr< TCPSocket > tcp_socket,int config_id, ConnMetrics* metrics)
+    : Connection(config_id,metrics), _tcp_socket(std::move(tcp_socket))
 {
 }
 

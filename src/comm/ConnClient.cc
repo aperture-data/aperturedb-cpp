@@ -94,7 +94,7 @@ std::shared_ptr< Connection > ConnClient::connect()
         }
 
         auto tcp_connection = std::unique_ptr< TCPConnection >(
-            new TCPConnection(std::move(tcp_socket), _config.metrics));
+            new TCPConnection(std::move(tcp_socket),0, _config.metrics));
 
         HelloMessage client_hello_message;
 
@@ -126,7 +126,7 @@ std::shared_ptr< Connection > ConnClient::connect()
             tls_socket->connect();
 
             _connection = std::unique_ptr< TLSConnection >(
-                new TLSConnection(std::move(tls_socket), _config.metrics));
+                new TLSConnection(std::move(tls_socket),0, _config.metrics));
         } else if ((server_hello_message->protocol & Protocol::TCP) == Protocol::TCP) {
             // Nothing to do, already using TCP
             _connection = std::move(tcp_connection);

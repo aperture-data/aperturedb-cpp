@@ -37,11 +37,13 @@ class VDMSServerTests : public testing::Test
 
 TEST_F(VDMSServerTests, SyncMessagesAuthenticated)
 {
+    auto x = comm::TCPConnServerConfig{ 22 , connServerConfig };
     std::string client_to_server = "[{}]";
 
-    VDMS::AuthEnabledVDMSServerConfig config{connServerConfig};
+    //VDMS::AuthEnabledVDMSServerConfig config{SERVER_PORT_INTERCHANGE, {connServerConfig}};
+    VDMS::AuthEnabledVDMSServerConfig config{SERVER_PORT_INTERCHANGE, connServerConfig};
 
-    VDMS::AuthEnabledVDMSServer server(SERVER_PORT_INTERCHANGE, config);
+    VDMS::AuthEnabledVDMSServer server( config);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -63,9 +65,9 @@ TEST_F(VDMSServerTests, SyncMessagesRefreshToken)
 {
     std::string client_to_server = "[{}]";
 
-    VDMS::AuthEnabledVDMSServerConfig config{connServerConfig, 60, 1};
+    VDMS::AuthEnabledVDMSServerConfig config{SERVER_PORT_INTERCHANGE, connServerConfig, 60, 1};
 
-    VDMS::AuthEnabledVDMSServer server(SERVER_PORT_INTERCHANGE, config);
+    VDMS::AuthEnabledVDMSServer server(config);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -88,9 +90,9 @@ TEST_F(VDMSServerTests, SyncMessagesReAuthenticate)
 {
     std::string client_to_server = "[{}]";
 
-    VDMS::AuthEnabledVDMSServerConfig config{connServerConfig, 2, 1};
+    VDMS::AuthEnabledVDMSServerConfig config{SERVER_PORT_INTERCHANGE,connServerConfig, 2, 1};
 
-    VDMS::AuthEnabledVDMSServer server(SERVER_PORT_INTERCHANGE, config);
+    VDMS::AuthEnabledVDMSServer server(config);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 

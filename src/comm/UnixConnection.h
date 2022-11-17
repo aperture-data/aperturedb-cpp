@@ -45,7 +45,7 @@ class UnixConnection : public Connection
     friend class TLSConnClient;
 
    public:
-    explicit UnixConnection(std::unique_ptr< UnixSocket > unix_socket, ConnMetrics* metrics = nullptr);
+    explicit UnixConnection(std::unique_ptr< UnixSocket > unix_socket, int config_id, ConnMetrics* metrics = nullptr);
 
     MOVEABLE_BY_DEFAULT(UnixConnection);
     NOT_COPYABLE(UnixConnection);

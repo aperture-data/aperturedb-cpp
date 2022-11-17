@@ -48,7 +48,7 @@ class ConnMetrics
 class Connection
 {
    public:
-    explicit Connection(ConnMetrics* metrics = nullptr);
+    explicit Connection(int config_id, ConnMetrics* metrics = nullptr);
     virtual ~Connection();
 
     MOVEABLE_BY_DEFAULT(Connection);
@@ -56,6 +56,7 @@ class Connection
 
     void send_message(const uint8_t* data, uint32_t size);
     const std::basic_string< uint8_t >& recv_message();
+    int get_config_id() const;
 
     std::string msg_size_to_str_KB(uint32_t size);
     void set_max_buffer_size(uint32_t max_buffer_size);
@@ -74,6 +75,7 @@ class Connection
     uint32_t _max_buffer_size{};
 
     ConnMetrics* _metrics{nullptr};
+    int _config_id{-1};
 };
 
 };  // namespace comm

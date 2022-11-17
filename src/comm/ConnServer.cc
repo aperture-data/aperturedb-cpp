@@ -57,7 +57,7 @@ class comm::SSLContextMap
     std::unordered_map< int, OpenSSLPointer< SSL_CTX > > map;
 };
 
-ConnServer::ConnServer(ConnServerConfigList config)
+ConnServer::ConnServer(ConnServerConfigList&& config)
     : _configs(std::move(config))
     , _id_to_listening_socket_map()
     , _open_ssl_initializer(OpenSSLInitializer::instance())
@@ -159,12 +159,13 @@ ConnServer::~ConnServer() = default;
 // The ConnServer will implement the protocol negotiation.
 // This right now is a simple handshake, design for ApertureDB Server use-case.
 // This protocol can be a virtual method in the future to support arbitrary protocols.
-std::unique_ptr< Connection > ConnServer::negotiate_protocol(std::shared_ptr< Connection > conn,
-                                                             ConnServerConfig& config)
+std::unique_ptr< Connection > ConnServer::negotiate_protocol(std::shared_ptr< Connection > conn)
 {
     // auto tcp_connection = std::static_pointer_cast< TCPConnection >(conn);
 
+    auto config_id = conn->get_config_id();
     auto response = conn->recv_message();
+    auto config = _configs[config_id].get();
 
     if (response.length() != sizeof(HelloMessage)) {
         THROW_EXCEPTION(ProtocolError);
@@ -179,7 +180,7 @@ std::unique_ptr< Connection > ConnServer::negotiate_protocol(std::shared_ptr< Co
         server_hello_message.protocol = Protocol::None;
     } else {
         server_hello_message.version  = PROTOCOL_VERSION;
-        server_hello_message.protocol = client_hello_message->protocol & config.allowed_protocols;
+        server_hello_message.protocol = client_hello_message->protocol & config->allowed_protocols;
     }
 
     conn->send_message(reinterpret_cast< uint8_t* >(&server_hello_message),
@@ -194,13 +195,13 @@ std::unique_ptr< Connection > ConnServer::negotiate_protocol(std::shared_ptr< Co
         auto tcp_socket = tcp_conn->release_socket();
         if ((server_hello_message.protocol & Protocol::TLS) == Protocol::TLS) {
             auto tls_socket =
-                TLSSocket::create(std::move(tcp_socket), *_ssl_ctx_map->map[config.id].get());
+                TLSSocket::create(std::move(tcp_socket), *_ssl_ctx_map->map[config->id].get());
 
             tls_socket->accept();
-            return std::make_unique< TLSConnection >(std::move(tls_socket), config.metrics);
+            return std::make_unique< TLSConnection >(std::move(tls_socket),config->id, config->metrics);
         } else {
             // Nothing to do, already using TCP
-            return std::make_unique< TCPConnection >(std::move(tcp_socket), config.metrics);
+            return std::make_unique< TCPConnection >(std::move(tcp_socket),config->id, config->metrics);
         }
     } else if ((server_hello_message.protocol & Protocol::UNIX) == Protocol::UNIX) {
         auto unix_conn = dynamic_cast< UnixConnection* >(conn.get());
@@ -211,7 +212,7 @@ std::unique_ptr< Connection > ConnServer::negotiate_protocol(std::shared_ptr< Co
         auto unix_socket = unix_conn->release_socket();
         // Nothing to do, already using TCP
         // return tcp_connection;
-        return std::make_unique< UnixConnection >(std::move(unix_socket), config.metrics);
+        return std::make_unique< UnixConnection >(std::move(unix_socket),config->id, config->metrics);
     } else {
         THROW_EXCEPTION(ProtocolError, "Protocol negotiation failed");
     }
@@ -230,7 +231,7 @@ std::unique_ptr< Connection > ConnServer::accept()
     if (tcp_socket != nullptr) {
         // make tcp or unix based on config type
         connection = std::unique_ptr< Connection >(
-            new TCPConnection(std::unique_ptr< TCPSocket >(tcp_socket), config->metrics));
+            new TCPConnection(std::unique_ptr< TCPSocket >(tcp_socket),config_id, config->metrics));
     } else {
         auto unix_socket = dynamic_cast< UnixSocket* >(connected_socket);
         if (unix_socket != nullptr) {
