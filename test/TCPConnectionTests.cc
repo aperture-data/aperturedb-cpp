@@ -28,11 +28,13 @@ TEST(TCPConnectionTests, SyncMessages)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        comm::ConnServer server(SERVER_PORT_INTERCHANGE);
+    //: _server( createConnList( wrapConnServerConfig( config.connServerConfig.addPort(port) ) ) ) 
+        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_INTERCHANGE));
+        comm::ConnServer server( comm::createConnList( config ));
 
         barrier.wait();
 
-        auto server_conn = server.negotiate_protocol(server.accept());
+        auto server_conn = server.negotiate_protocol(server.accept(), *config.get());
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
             // Recieve something
@@ -75,11 +77,12 @@ TEST(TCPConnectionTests, AsyncMessages)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        comm::ConnServer server(SERVER_PORT_MULTIPLE);
+        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_MULTIPLE));
+        comm::ConnServer server( comm::createConnList( config ));
 
         barrier.wait();
 
-        auto server_conn = server.negotiate_protocol(server.accept());
+        auto server_conn = server.negotiate_protocol(server.accept(),*config.get());
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
             // Send something
@@ -123,11 +126,12 @@ TEST(TCPConnectionTests, ServerShutdownRecv)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        comm::ConnServer server(SERVER_PORT_INTERCHANGE);
+        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_INTERCHANGE));
+        comm::ConnServer server( comm::createConnList( config ));
 
         barrier.wait();
 
-        auto server_conn = server.negotiate_protocol(server.accept());
+        auto server_conn = server.negotiate_protocol(server.accept(), *config.get());
     });
 
     comm::ConnClient conn_client({"localhost", SERVER_PORT_INTERCHANGE});
@@ -148,11 +152,12 @@ TEST(TCPConnectionTests, SendArrayInts)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        comm::ConnServer server(SERVER_PORT_INTERCHANGE);
+        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_INTERCHANGE));
+        comm::ConnServer server( comm::createConnList( config ));
 
         barrier.wait();
 
-        auto server_conn = server.negotiate_protocol(server.accept());
+        auto server_conn = server.negotiate_protocol(server.accept(),*config.get());
 
         server_conn->send_message(reinterpret_cast< const uint8_t* >(arr), sizeof(arr));
     });
@@ -191,11 +196,12 @@ TEST(TCPConnectionTests, Unreachable)
     ASSERT_THROW(client_2.connect(), comm::Exception);
 }
 
+#define withTcpPort(port) comm::createConnList( comm::wrapConnServerConfig( new comm::TCPConnServerConfig( port )))
 TEST(TCPConnectionTests, ServerWrongPort)
 {
-    ASSERT_THROW(comm::ConnServer server(-22), comm::Exception);
+    ASSERT_THROW(comm::ConnServer server(withTcpPort(-22)), comm::Exception);
 
-    ASSERT_THROW(comm::ConnServer server(0), comm::Exception);
+    ASSERT_THROW(comm::ConnServer server(withTcpPort(0)), comm::Exception);
 }
 
 TEST(TCPConnectionTests, ClientWrongAddrOrPort)

@@ -33,11 +33,14 @@ std::string AuthEnabledVDMSServer::random_string(size_t length)
 }
 
 AuthEnabledVDMSServer::AuthEnabledVDMSServer(int port, AuthEnabledVDMSServerConfig config)
-    : _server(port, config.connServerConfig)
+    //: _server( comm::ConnServerConfigList({ wrapConnServerConfig( config.connServerConfig.addPort(port))}))
+    //: _server( { wrapConnServerConfig( config.connServerConfig.addPort(port))})
+    : _server( createConnList( wrapConnServerConfig( config.connServerConfig.addPort(port) ) ) ) 
+    //: _server( createConnList( wrapConnServerConfig( new comm::TCPConnServerConfig(port) ) ) ) 
 {
     auto thread_function = [&]() {
         std::shared_ptr< comm::Connection > server_conn =
-            _server.negotiate_protocol(_server.accept());
+            _server.negotiate_protocol(_server.accept(),config.connServerConfig);
 
         while (!_stop_signal) {
             protobufs::queryMessage protobuf_request;

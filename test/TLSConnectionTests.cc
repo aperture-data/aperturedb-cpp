@@ -35,7 +35,7 @@ class TLSConnectionTests : public testing::Test
     }
 
     comm::ConnClientConfig connClientConfig{};
-    comm::ConnServerConfig connServerConfig{};
+    comm::TCPConnServerConfig connServerConfig{};
 };
 
 // Ping-pong messages between server and client
@@ -47,7 +47,8 @@ TEST_F(TLSConnectionTests, SyncMessages)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        comm::ConnServer server(SERVER_PORT_INTERCHANGE, connServerConfig);
+        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_INTERCHANGE));
+        comm::ConnServer server(comm:SERVER_PORT_INTERCHANGE, connServerConfig);
 
         barrier.wait();
 

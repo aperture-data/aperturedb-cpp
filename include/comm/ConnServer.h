@@ -79,7 +79,23 @@ struct ConnServerConfig {
 };
 
 struct TCPConnServerConfig : public ConnServerConfig {
-    int _port;
+    int _port{-1};
+
+    TCPConnServerConfig() = default;
+    MOVEABLE_BY_DEFAULT(TCPConnServerConfig);
+    COPYABLE_BY_DEFAULT(TCPConnServerConfig);
+
+    TCPConnServerConfig( int port_ ) 
+	    : ConnServerConfig()
+	    , _port(port_)
+    {
+    }
+
+    TCPConnServerConfig & addPort(int port) {
+	    _port = port;
+	    return *this;
+    }
+
 };
 
 struct UnixConnServerConfig : public ConnServerConfig {
@@ -88,13 +104,45 @@ struct UnixConnServerConfig : public ConnServerConfig {
 
 typedef std::vector< std::unique_ptr< ConnServerConfig > > ConnServerConfigList;
 
+template <class T>
+std::unique_ptr<ConnServerConfig> wrapConnServerConfig( T* config) { 
+	return std::unique_ptr<ConnServerConfig>( config );
+}
+
+template <class T>
+std::unique_ptr<ConnServerConfig> wrapConnServerConfig( T& config) { 
+	return std::unique_ptr<ConnServerConfig>( new T(config) );
+}
+
+template<class First>
+void emplaceConnList( ConnServerConfigList & list, First&& item )
+{
+  list.emplace_back( std::move(item));
+}
+
+template<class First, class... Rest>
+void emplaceConnList( ConnServerConfigList & list, First&& item, Rest&&... rest )
+{
+  list.emplace_back( item );
+  createConnList( list, rest... );
+}
+
+template<class... Args>
+ConnServerConfigList createConnList( Args&&... args)
+{
+	ConnServerConfigList list;
+	emplaceConnList(list,args...);
+	return list;
+}
+
+
 class SSLContextMap;
 class Socket;
 // Implementation of a server
 class ConnServer final
 {
    public:
-    explicit ConnServer(ConnServerConfigList);
+    explicit ConnServer(ConnServerConfigList&&);
     ~ConnServer();
 
     MOVEABLE_BY_DEFAULT(ConnServer);
