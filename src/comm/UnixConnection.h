@@ -32,45 +32,35 @@
 
 #include <memory>
 #include <string>
-#include <netinet/ip.h>
 
-#include "Socket.h"
-#include "comm/Address.h"
+#include "comm/Connection.h"
+#include "util/Macros.h"
+#include "comm/UnixSocket.h"
 
 namespace comm
 {
 
-class TCPSocket : public Socket
+class UnixConnection : public Connection
 {
-    friend class TCPConnection;
-    friend class TLSSocket;
+    friend class TLSConnClient;
 
    public:
-    TCPSocket(const TCPSocket&) = delete;
-    ~TCPSocket();
+    explicit UnixConnection(std::unique_ptr< UnixSocket > unix_socket, ConnMetrics* metrics = nullptr);
 
-    TCPSocket& operator=(const TCPSocket&) = delete;
+    MOVEABLE_BY_DEFAULT(UnixConnection);
+    NOT_COPYABLE(UnixConnection);
 
-    static std::unique_ptr< TCPSocket > create();
+    std::unique_ptr< UnixSocket > release_socket();
+    void shutdown();
+    std::string get_source() const override;
+    short get_source_family() const override;
+    std::string get_encryption() const override;
 
-    std::unique_ptr< Socket > accept() override;
+   protected:
+    size_t read(uint8_t* buffer, size_t length) override;
+    size_t write(const uint8_t* buffer, size_t length) override;
 
-    bool bind(int port);
-    bool connect(const Address& address);
-    bool listen() override;
-    bool set_boolean_option(int level, int option_name, bool value) override;
-    bool set_timeval_option(int level, int option_name, timeval value) override;
-    void shutdown() override;
-
-    std::string print_source() override;
-    short source_family() override;
-
-   private:
-    explicit TCPSocket(int socket_fd, sockaddr_in);
-
-    int _socket_fd{-1};
-    short _source_family{AF_UNSPEC};
-    struct sockaddr_in _source;
+    std::unique_ptr< UnixSocket > _unix_socket;
 };
 
 };  // namespace comm

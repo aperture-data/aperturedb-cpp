@@ -38,7 +38,7 @@ static long msec_diff(const struct timespec& a, const struct timespec& b)
     return (a.tv_sec - b.tv_sec) * 1000 + (a.tv_nsec - b.tv_nsec) / 1000000;
 }
 
-std::unique_ptr< TCPSocket > TCPSocket::accept(const std::unique_ptr< TCPSocket >& listening_socket)
+std::unique_ptr< Socket > TCPSocket::accept()
 {
     struct sockaddr_in clnt_addr;
     socklen_t len = sizeof(clnt_addr);  // store size of the address
@@ -50,9 +50,8 @@ again:
     timespec t1;
     clock_gettime(CLOCK_REALTIME_COARSE, &t1);
 
-    errno = 0;
-    int connected_socket =
-        ::accept(listening_socket->_socket_fd, reinterpret_cast< sockaddr* >(&clnt_addr), &len);
+    errno                = 0;
+    int connected_socket = ::accept(_socket_fd, reinterpret_cast< sockaddr* >(&clnt_addr), &len);
 
     int errno_r = errno;
     if (connected_socket < 0) {
@@ -68,7 +67,7 @@ again:
     }
     // MAGICK can be done here
 
-    return std::unique_ptr< TCPSocket >(new TCPSocket(connected_socket, std::move(clnt_addr)));
+    return std::unique_ptr< Socket >(new TCPSocket(connected_socket, std::move(clnt_addr)));
 }
 
 bool TCPSocket::bind(int port)

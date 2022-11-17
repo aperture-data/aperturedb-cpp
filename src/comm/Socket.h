@@ -29,6 +29,9 @@
  */
 
 #pragma once
+#include <vector>
+namespace comm
+{
 
 class Socket
 {
@@ -40,6 +43,12 @@ class Socket
     virtual bool set_timeval_option(int level, int option_name, timeval value) = 0;
     virtual void shutdown()                                                    = 0;
 
+    virtual std::unique_ptr< Socket > accept() = 0;
+
+    static std::pair< int, std::unique_ptr< Socket > > accept(
+        std::vector< std::unique_ptr< Socket > >& listening_sockets);
+
     virtual std::string print_source() = 0;
     virtual short source_family()      = 0;
 };
+}  // namespace comm

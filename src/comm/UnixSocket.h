@@ -51,8 +51,7 @@ class UnixSocket : public Socket
     UnixSocket& operator=(const UnixSocket&) = delete;
 
     static std::unique_ptr< UnixSocket > create();
-    static std::unique_ptr< UnixSocket > accept(
-        const std::unique_ptr< UnixSocket >& listening_socket);
+    std::unique_ptr< Socket > accept() override;
 
     bool bind(std::string path);
     bool connect(const std::string& path);

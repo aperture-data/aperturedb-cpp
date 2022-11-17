@@ -54,6 +54,7 @@ struct ConnServerConfig {
     std::string tls_certificate{};
     std::string tls_private_key{};
     ConnMetrics* metrics{nullptr};
+    int id{-1};
 
     ConnServerConfig()          = default;
     virtual ~ConnServerConfig() = default;
@@ -88,6 +89,7 @@ struct UnixConnServerConfig : public ConnServerConfig {
 typedef std::vector< std::unique_ptr< ConnServerConfig > > ConnServerConfigList;
 
 class SSLContextMap;
+class Socket;
 // Implementation of a server
 class ConnServer final
 {
@@ -100,14 +102,15 @@ class ConnServer final
 
     std::unique_ptr< Connection > accept();
 
-    std::unique_ptr< Connection > negotiate_protocol(std::shared_ptr< Connection > conn);
+    std::unique_ptr< Connection > negotiate_protocol(std::shared_ptr< Connection > conn,
+                                                     ConnServerConfig& config);
 
    private:
     ConnServerConfigList _configs;
     std::unordered_map< int, std::unique_ptr< TCPSocket > > _id_to_listening_socket_map;
     OpenSSLInitializer& _open_ssl_initializer;
     std::unique_ptr< SSLContextMap > _ssl_ctx_map;
-    // std::unordered_map< int, std::unique_ptr< SSL_CTX > > _id_to_ssl_ctx_map;
+    std::vector< std::unique_ptr< Socket > > _listening_sockets;
 
     void configure_individual(int id);
 };

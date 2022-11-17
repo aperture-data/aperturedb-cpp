@@ -121,7 +121,7 @@ std::shared_ptr< Connection > ConnClient::connect()
         } else if ((server_hello_message->protocol & Protocol::TLS) == Protocol::TLS) {
             tcp_socket = tcp_connection->release_socket();
 
-            auto tls_socket = TLSSocket::create(std::move(tcp_socket), _ssl_ctx);
+            auto tls_socket = TLSSocket::create(std::move(tcp_socket), *_ssl_ctx.get());
 
             tls_socket->connect();
 
