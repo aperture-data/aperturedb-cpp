@@ -29,53 +29,29 @@
  */
 
 #pragma once
-
-#include <string>
+#include <vector>
 #include <memory>
-#include "util/Macros.h"
 
 namespace comm
 {
 
-class ConnMetrics
+class Socket
 {
    public:
-    virtual ~ConnMetrics() = 0;
-    virtual void observe_bytes_sent(std::size_t bytes_sent);
-    virtual void observe_bytes_recv(std::size_t bytes_recv);
+    virtual ~Socket() {}
+
+    virtual bool listen()                                                      = 0;
+    virtual bool set_boolean_option(int level, int option_name, bool value)    = 0;
+    virtual bool set_timeval_option(int level, int option_name, timeval value) = 0;
+    virtual void shutdown()                                                    = 0;
+
+    virtual std::unique_ptr< Socket > accept() = 0;
+
+    static std::pair< int, std::unique_ptr< Socket > > accept(
+        std::vector< std::unique_ptr< Socket > >& listening_sockets);
+
+    virtual std::string print_source() = 0;
+    virtual short source_family()      = 0;
+    virtual int fd() const = 0;
 };
-
-class Connection
-{
-   public:
-    explicit Connection(int config_id, ConnMetrics* metrics = nullptr);
-    virtual ~Connection();
-
-    MOVEABLE_BY_DEFAULT(Connection);
-    NOT_COPYABLE(Connection);
-
-    void send_message(const uint8_t* data, uint32_t size);
-    const std::basic_string< uint8_t >& recv_message();
-    int get_config_id() const;
-
-    std::string msg_size_to_str_KB(uint32_t size);
-    void set_max_buffer_size(uint32_t max_buffer_size);
-    bool check_message_size(uint32_t size);
-
-    std::string source_family_name(short source_family) const;
-    virtual std::string get_source() const     = 0;
-    virtual short get_source_family() const    = 0;
-    virtual std::string get_encryption() const = 0;
-
-   protected:
-    virtual size_t read(uint8_t* buffer, size_t length)        = 0;
-    virtual size_t write(const uint8_t* buffer, size_t length) = 0;
-
-    std::basic_string< uint8_t > _buffer_str{};
-    uint32_t _max_buffer_size{};
-
-    ConnMetrics* _metrics{nullptr};
-    int _config_id{-1};
-};
-
-};  // namespace comm
+}  // namespace comm

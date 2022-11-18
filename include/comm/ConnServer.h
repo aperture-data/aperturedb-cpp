@@ -31,6 +31,9 @@
 #pragma once
 
 #include <memory>
+#include <vector>
+#include <iostream>
+#include <unordered_map>
 
 #include <openssl/ssl.h>
 
@@ -52,8 +55,10 @@ struct ConnServerConfig {
     std::string tls_certificate{};
     std::string tls_private_key{};
     ConnMetrics* metrics{nullptr};
+    int id{-1};
 
-    ConnServerConfig() = default;
+    ConnServerConfig()          = default;
+    virtual ~ConnServerConfig() = default;
 
     ConnServerConfig(Protocol allowed_protocols_,
                      bool auto_generate_certificate_ = true,
@@ -74,11 +79,93 @@ struct ConnServerConfig {
     COPYABLE_BY_DEFAULT(ConnServerConfig);
 };
 
+struct TCPConnServerConfig : public ConnServerConfig {
+    int _port{-1};
+
+    TCPConnServerConfig() = default;
+    MOVEABLE_BY_DEFAULT(TCPConnServerConfig);
+    COPYABLE_BY_DEFAULT(TCPConnServerConfig);
+
+    TCPConnServerConfig(int port_) : ConnServerConfig(), _port(port_) {}
+
+    TCPConnServerConfig(ConnServerConfig&& config) : ConnServerConfig(config) {}
+
+    TCPConnServerConfig(int port_, ConnServerConfig&& config)
+        : ConnServerConfig(config), _port(port_)
+    {
+    }
+
+    TCPConnServerConfig(int port_, ConnServerConfig& config)
+        : ConnServerConfig(config), _port(port_)
+    {
+    }
+
+    TCPConnServerConfig& addPort(int port)
+    {
+        _port = port;
+        return *this;
+    }
+};
+
+struct UnixConnServerConfig : public ConnServerConfig {
+    std::string _path{};
+
+    UnixConnServerConfig(std::string path_) : ConnServerConfig(), _path(path_)
+    {
+        allowed_protocols = (allowed_protocols & ~(Protocol::TCP)) | Protocol::UNIX;
+    }
+    UnixConnServerConfig(std::string path_, ConnServerConfig& config)
+        : ConnServerConfig(config), _path(path_)
+    {
+        allowed_protocols = (allowed_protocols & ~(Protocol::TCP)) | Protocol::UNIX;
+    }
+};
+
+typedef std::vector< std::unique_ptr< ConnServerConfig > > ConnServerConfigList;
+
+template < class T >
+std::unique_ptr< ConnServerConfig > wrapConnServerConfig(T* config)
+{
+    return std::unique_ptr< ConnServerConfig >(config);
+}
+
+template < class T >
+std::unique_ptr< ConnServerConfig > wrapConnServerConfig(const T& config)
+{
+    return std::unique_ptr< ConnServerConfig >(new T(config));
+}
+
+template < class First >
+void emplaceConnList(ConnServerConfigList& list, First&& item)
+{
+    list.emplace_back(std::move(item));
+}
+
+template < class First, class... Rest >
+void emplaceConnList(ConnServerConfigList& list, First&& item, Rest&&... rest)
+{
+    list.emplace_back(std::move(item));
+    emplaceConnList(list, rest...);
+}
+
+// takes list of std::unique_ptr and creates a std::vector<std::unique_ptr> of them
+template < class... Args >
+ConnServerConfigList createConnList(Args&&... args)
+{
+    ConnServerConfigList list;
+    emplaceConnList(list, args...);
+    return list;
+}
+
+ConnServerConfigList simpleTCPConfiguration(int port, ConnServerConfig config = {});
+
+class SSLContextMap;
+class Socket;
 // Implementation of a server
 class ConnServer final
 {
    public:
-    explicit ConnServer(int port, ConnServerConfig config = {});
+    explicit ConnServer(ConnServerConfigList&&);
     ~ConnServer();
 
     MOVEABLE_BY_DEFAULT(ConnServer);
@@ -89,11 +176,13 @@ class ConnServer final
     std::unique_ptr< Connection > negotiate_protocol(std::shared_ptr< Connection > conn);
 
    private:
-    ConnServerConfig _config;
-    std::unique_ptr< TCPSocket > _listening_socket;
+    ConnServerConfigList _configs;
+    std::unordered_map< int, std::unique_ptr< TCPSocket > > _id_to_listening_socket_map;
     OpenSSLInitializer& _open_ssl_initializer;
-    int _port;  // Server port
-    std::shared_ptr< SSL_CTX > _ssl_ctx;
+    std::unique_ptr< SSLContextMap > _ssl_ctx_map;
+    std::vector< std::unique_ptr< Socket > > _listening_sockets;
+
+    void configure_individual(int id);
 };
 
 };  // namespace comm

@@ -25,7 +25,7 @@ class TLSSocket
     TLSSocket& operator=(const TLSSocket&) = delete;
 
     static std::unique_ptr< TLSSocket > create(std::unique_ptr< TCPSocket > tcp_socket,
-                                               const std::shared_ptr< SSL_CTX >& ssl_ctx);
+                                               SSL_CTX& ssl_ctx);
 
     void accept();
     void connect();

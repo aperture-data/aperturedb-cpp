@@ -11,7 +11,7 @@
 using namespace VDMS;
 
 VDMSServer::VDMSServer(int port, comm::ConnServerConfig config)
-    : _server(new comm::ConnServer(port, config))
+    : _server(new comm::ConnServer( comm::createConnList( new comm::TCPConnServerConfig( port, config))))
 {
     auto thread_function = [&]() {
         std::shared_ptr< comm::Connection > server_conn =

@@ -28,7 +28,7 @@
  *
  */
 
-#include "comm/TCPConnection.h"
+#include "comm/UnixConnection.h"
 
 #include <assert.h>
 #include <cstdlib>
@@ -41,19 +41,19 @@
 
 using namespace comm;
 
-TCPConnection::TCPConnection(std::unique_ptr< TCPSocket > tcp_socket,int config_id, ConnMetrics* metrics)
-    : Connection(config_id,metrics), _tcp_socket(std::move(tcp_socket))
+UnixConnection::UnixConnection(std::unique_ptr< UnixSocket > tcp_socket,int config_id, ConnMetrics* metrics)
+    : Connection(config_id,metrics), _unix_socket(std::move(tcp_socket))
 {
 }
 
-size_t TCPConnection::read(uint8_t* buffer, size_t length)
+size_t UnixConnection::read(uint8_t* buffer, size_t length)
 {
-    if (!_tcp_socket) {
+    if (!_unix_socket) {
         THROW_EXCEPTION(SocketFail);
     }
 
     errno       = 0;
-    auto count  = ::recv(_tcp_socket->_socket_fd, buffer, length, MSG_WAITALL);
+    auto count  = ::recv(_unix_socket->_socket_fd, buffer, length, MSG_WAITALL);
     int errno_r = errno;
 
     if (count < 0) {
@@ -77,23 +77,23 @@ size_t TCPConnection::read(uint8_t* buffer, size_t length)
     return static_cast< size_t >(count);
 }
 
-std::unique_ptr< TCPSocket > TCPConnection::release_socket() { return std::move(_tcp_socket); }
+std::unique_ptr< UnixSocket > UnixConnection::release_socket() { return std::move(_unix_socket); }
 
-void TCPConnection::shutdown()
+void UnixConnection::shutdown()
 {
-    if (_tcp_socket) {
-        _tcp_socket->shutdown();
+    if (_unix_socket) {
+        _unix_socket->shutdown();
     }
 }
 
-size_t TCPConnection::write(const uint8_t* buffer, size_t length)
+size_t UnixConnection::write(const uint8_t* buffer, size_t length)
 {
-    if (!_tcp_socket) {
+    if (!_unix_socket) {
         THROW_EXCEPTION(SocketFail);
     }
 
     // We need MSG_NOSIGNAL so we don't get SIGPIPE, and we can throw.
-    auto count = ::send(_tcp_socket->_socket_fd, buffer, length, MSG_NOSIGNAL);
+    auto count = ::send(_unix_socket->_socket_fd, buffer, length, MSG_NOSIGNAL);
 
     if (count < 0) {
         THROW_EXCEPTION(WriteFail, "Error sending message.");
@@ -102,8 +102,8 @@ size_t TCPConnection::write(const uint8_t* buffer, size_t length)
     return static_cast< size_t >(count);
 }
 
-std::string TCPConnection::get_source() const { return _tcp_socket->print_source(); }
+std::string UnixConnection::get_source() const { return _unix_socket->print_source(); }
 
-short TCPConnection::get_source_family() const { return _tcp_socket->source_family(); }
+short UnixConnection::get_source_family() const { return _unix_socket->source_family(); }
 
-std::string TCPConnection::get_encryption() const { return "none"; }
+std::string UnixConnection::get_encryption() const { return "none"; }

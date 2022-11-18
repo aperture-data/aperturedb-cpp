@@ -37,12 +37,14 @@
 
 using namespace comm;
 
-Connection::Connection(ConnMetrics* metrics)
-    : _max_buffer_size(DEFAULT_BUFFER_SIZE), _metrics(metrics)
+Connection::Connection(int config_id, ConnMetrics* metrics)
+    : _max_buffer_size(DEFAULT_BUFFER_SIZE), _metrics(metrics), _config_id(config_id)
 {
 }
 
 Connection::~Connection() = default;
+
+int Connection::get_config_id() const { return _config_id; }
 
 bool Connection::check_message_size(uint32_t size) { return size <= _max_buffer_size; }
 

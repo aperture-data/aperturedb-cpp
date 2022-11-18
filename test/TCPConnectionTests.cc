@@ -28,7 +28,9 @@ TEST(TCPConnectionTests, SyncMessages)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        comm::ConnServer server(SERVER_PORT_INTERCHANGE);
+        auto config =
+            comm::wrapConnServerConfig(new comm::TCPConnServerConfig(SERVER_PORT_INTERCHANGE));
+        comm::ConnServer server(comm::createConnList(config));
 
         barrier.wait();
 
@@ -75,7 +77,9 @@ TEST(TCPConnectionTests, AsyncMessages)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        comm::ConnServer server(SERVER_PORT_MULTIPLE);
+        auto config =
+            comm::wrapConnServerConfig(new comm::TCPConnServerConfig(SERVER_PORT_MULTIPLE));
+        comm::ConnServer server(comm::createConnList(config));
 
         barrier.wait();
 
@@ -123,7 +127,9 @@ TEST(TCPConnectionTests, ServerShutdownRecv)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        comm::ConnServer server(SERVER_PORT_INTERCHANGE);
+        auto config =
+            comm::wrapConnServerConfig(new comm::TCPConnServerConfig(SERVER_PORT_INTERCHANGE));
+        comm::ConnServer server(comm::createConnList(config));
 
         barrier.wait();
 
@@ -148,7 +154,9 @@ TEST(TCPConnectionTests, SendArrayInts)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        comm::ConnServer server(SERVER_PORT_INTERCHANGE);
+        auto config =
+            comm::wrapConnServerConfig(new comm::TCPConnServerConfig(SERVER_PORT_INTERCHANGE));
+        comm::ConnServer server(comm::createConnList(config));
 
         barrier.wait();
 
@@ -175,8 +183,8 @@ TEST(TCPConnectionTests, SendArrayInts)
 
 TEST(TCPConnectionTests, MoveCopy)
 {
-    comm::TCPConnection a(comm::TCPSocket::create());
-    comm::TCPConnection server_conn(comm::TCPSocket::create());
+    comm::TCPConnection a(comm::TCPSocket::create(), 0);
+    comm::TCPConnection server_conn(comm::TCPSocket::create(), 0);
     server_conn = std::move(a);  // Testing copy with move works
 }
 
@@ -191,11 +199,13 @@ TEST(TCPConnectionTests, Unreachable)
     ASSERT_THROW(client_2.connect(), comm::Exception);
 }
 
+#define withTcpPort(port) \
+    comm::createConnList(comm::wrapConnServerConfig(new comm::TCPConnServerConfig(port)))
 TEST(TCPConnectionTests, ServerWrongPort)
 {
-    ASSERT_THROW(comm::ConnServer server(-22), comm::Exception);
+    ASSERT_THROW(comm::ConnServer server(withTcpPort(-22)), comm::Exception);
 
-    ASSERT_THROW(comm::ConnServer server(0), comm::Exception);
+    ASSERT_THROW(comm::ConnServer server(withTcpPort(0)), comm::Exception);
 }
 
 TEST(TCPConnectionTests, ClientWrongAddrOrPort)
@@ -211,16 +221,4 @@ TEST(TCPConnectionTests, ClientWrongAddrOrPort)
     comm::ConnClient client_3({"intel.com", 0});
 
     ASSERT_THROW(client_3.connect(), comm::Exception);
-}
-
-int main(int argc, char** argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-
-    // To make GoogleTest silent:
-    // if (true) {
-    //     auto& listeners = ::testing::UnitTest::GetInstance()->listeners();
-    //     delete listeners.Release(listeners.default_result_printer());
-    // }
-    return RUN_ALL_TESTS();
 }

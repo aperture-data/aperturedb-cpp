@@ -4,7 +4,7 @@
 
 #include "Barrier.h"
 
-Barrier::Barrier(std::size_t count) : _count(count) {}
+Barrier::Barrier(std::size_t count) : _count(count), _initial_count(count) {}
 
 void Barrier::wait()
 {
@@ -16,3 +16,5 @@ void Barrier::wait()
         _condition_variable.wait(lock, [this] { return _count == 0; });
     }
 }
+
+void Barrier::reset() { _count = _initial_count; }

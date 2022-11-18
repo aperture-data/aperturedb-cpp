@@ -34,12 +34,13 @@
 #include <string>
 #include <netinet/ip.h>
 
+#include "Socket.h"
 #include "comm/Address.h"
 
 namespace comm
 {
 
-class TCPSocket
+class TCPSocket : public Socket
 {
     friend class TCPConnection;
     friend class TLSSocket;
@@ -51,18 +52,20 @@ class TCPSocket
     TCPSocket& operator=(const TCPSocket&) = delete;
 
     static std::unique_ptr< TCPSocket > create();
-    static std::unique_ptr< TCPSocket > accept(
-        const std::unique_ptr< TCPSocket >& listening_socket);
+
+    std::unique_ptr< Socket > accept() override;
 
     bool bind(int port);
     bool connect(const Address& address);
-    bool listen();
-    bool set_boolean_option(int level, int option_name, bool value);
-    bool set_timeval_option(int level, int option_name, timeval value);
-    void shutdown();
+    bool listen() override;
+    bool set_boolean_option(int level, int option_name, bool value) override;
+    bool set_timeval_option(int level, int option_name, timeval value) override;
+    void shutdown() override;
 
-    std::string print_source();
-    short source_family();
+    std::string print_source() override;
+    short source_family() override;
+
+    int fd() const override { return _socket_fd; }
 
    private:
     explicit TCPSocket(int socket_fd, sockaddr_in);

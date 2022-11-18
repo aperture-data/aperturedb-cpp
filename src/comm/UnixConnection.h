@@ -30,52 +30,37 @@
 
 #pragma once
 
-#include <string>
 #include <memory>
+#include <string>
+
+#include "comm/Connection.h"
 #include "util/Macros.h"
+#include "comm/UnixSocket.h"
 
 namespace comm
 {
 
-class ConnMetrics
+class UnixConnection : public Connection
 {
+    friend class TLSConnClient;
+
    public:
-    virtual ~ConnMetrics() = 0;
-    virtual void observe_bytes_sent(std::size_t bytes_sent);
-    virtual void observe_bytes_recv(std::size_t bytes_recv);
-};
+    explicit UnixConnection(std::unique_ptr< UnixSocket > unix_socket, int config_id, ConnMetrics* metrics = nullptr);
 
-class Connection
-{
-   public:
-    explicit Connection(int config_id, ConnMetrics* metrics = nullptr);
-    virtual ~Connection();
+    MOVEABLE_BY_DEFAULT(UnixConnection);
+    NOT_COPYABLE(UnixConnection);
 
-    MOVEABLE_BY_DEFAULT(Connection);
-    NOT_COPYABLE(Connection);
-
-    void send_message(const uint8_t* data, uint32_t size);
-    const std::basic_string< uint8_t >& recv_message();
-    int get_config_id() const;
-
-    std::string msg_size_to_str_KB(uint32_t size);
-    void set_max_buffer_size(uint32_t max_buffer_size);
-    bool check_message_size(uint32_t size);
-
-    std::string source_family_name(short source_family) const;
-    virtual std::string get_source() const     = 0;
-    virtual short get_source_family() const    = 0;
-    virtual std::string get_encryption() const = 0;
+    std::unique_ptr< UnixSocket > release_socket();
+    void shutdown();
+    std::string get_source() const override;
+    short get_source_family() const override;
+    std::string get_encryption() const override;
 
    protected:
-    virtual size_t read(uint8_t* buffer, size_t length)        = 0;
-    virtual size_t write(const uint8_t* buffer, size_t length) = 0;
+    size_t read(uint8_t* buffer, size_t length) override;
+    size_t write(const uint8_t* buffer, size_t length) override;
 
-    std::basic_string< uint8_t > _buffer_str{};
-    uint32_t _max_buffer_size{};
-
-    ConnMetrics* _metrics{nullptr};
-    int _config_id{-1};
+    std::unique_ptr< UnixSocket > _unix_socket;
 };
 
 };  // namespace comm

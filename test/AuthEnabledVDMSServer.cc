@@ -32,8 +32,11 @@ std::string AuthEnabledVDMSServer::random_string(size_t length)
     return str;
 }
 
-AuthEnabledVDMSServer::AuthEnabledVDMSServer(int port, AuthEnabledVDMSServerConfig config)
-    : _server(port, config.connServerConfig)
+AuthEnabledVDMSServer::AuthEnabledVDMSServer(AuthEnabledVDMSServerConfig config)
+    //: _server( comm::ConnServerConfigList({ wrapConnServerConfig( config.connServerConfig.addPort(port))}))
+    //: _server( { wrapConnServerConfig( config.connServerConfig.addPort(port))})
+    : _server( createConnList( wrapConnServerConfig( config.connServerConfig ) ) ) 
+    //: _server( createConnList( wrapConnServerConfig( new comm::TCPConnServerConfig(port) ) ) ) 
 {
     auto thread_function = [&]() {
         std::shared_ptr< comm::Connection > server_conn =

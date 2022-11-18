@@ -41,6 +41,7 @@
 #include "comm/Exception.h"
 #include "comm/HelloMessage.h"
 #include "comm/TCPConnection.h"
+#include "comm/UnixConnection.h"
 #include "comm/TLS.h"
 #include "comm/TLSConnection.h"
 #include "comm/Variables.h"
@@ -63,48 +64,64 @@ ConnClient::ConnClient(const Address& server_address, ConnClientConfig config)
     if (!_config.ca_certificate.empty()) {
         ::set_ca_certificate(_ssl_ctx.get(), _config.ca_certificate);
     }
+    if (_server.unix_addr != 0) {
+        _config.allowed_protocols = (_config.allowed_protocols & ~(Protocol::TCP)) | Protocol::UNIX;
+    }
 }
 
 ConnClient::~ConnClient() = default;
 
 std::shared_ptr< Connection > ConnClient::connect()
 {
+    std::unique_ptr< Connection > connection;
     if (!_connection) {
-        if (_server.port <= 0 || static_cast< unsigned >(_server.port) > MAX_PORT_NUMBER) {
-            THROW_EXCEPTION(PortError);
+        if (_server.unix_addr == 0) {
+            // this should be in TCPSocket for uniform usage on client and server
+            if (_server.port <= 0 || static_cast< unsigned >(_server.port) > MAX_PORT_NUMBER) {
+                THROW_EXCEPTION(PortError);
+            }
+
+            // Create a TCP/IP socket
+            auto tcp_socket = TCPSocket::create();
+
+            if (!tcp_socket->set_boolean_option(SOL_SOCKET, SO_REUSEADDR, true)) {
+                THROW_EXCEPTION(SocketFail, "Unable to bind client socket");
+            }
+
+            if (!tcp_socket->set_boolean_option(IPPROTO_TCP, TCP_NODELAY, true)) {
+                THROW_EXCEPTION(SocketFail, "Unable to turn Nagle's off");
+            }
+
+            if (!tcp_socket->set_boolean_option(IPPROTO_TCP, TCP_QUICKACK, true)) {
+                THROW_EXCEPTION(SocketFail, "Unable to turn quick ack on");
+            }
+
+            if (!tcp_socket->connect(_server)) {
+                THROW_EXCEPTION(ConnectionError);
+            }
+
+            connection = std::unique_ptr< Connection >(
+                new TCPConnection(std::move(tcp_socket), 0, _config.metrics));
+        } else {  // unix
+            // Create a Unix socket
+            auto unix_socket = UnixSocket::create();
+
+            if (!unix_socket->connect(_server.addr)) {
+                THROW_EXCEPTION(ConnectionError);
+            }
+            connection = std::unique_ptr< Connection >(
+                new UnixConnection(std::move(unix_socket), 0, _config.metrics));
         }
-
-        // Create a TCP/IP socket
-        auto tcp_socket = TCPSocket::create();
-
-        if (!tcp_socket->set_boolean_option(SOL_SOCKET, SO_REUSEADDR, true)) {
-            THROW_EXCEPTION(SocketFail, "Unable to bind client socket");
-        }
-
-        if (!tcp_socket->set_boolean_option(IPPROTO_TCP, TCP_NODELAY, true)) {
-            THROW_EXCEPTION(SocketFail, "Unable to turn Nagle's off");
-        }
-
-        if (!tcp_socket->set_boolean_option(IPPROTO_TCP, TCP_QUICKACK, true)) {
-            THROW_EXCEPTION(SocketFail, "Unable to turn quick ack on");
-        }
-
-        if (!tcp_socket->connect(_server)) {
-            THROW_EXCEPTION(ConnectionError);
-        }
-
-        auto tcp_connection = std::unique_ptr< TCPConnection >(
-            new TCPConnection(std::move(tcp_socket), _config.metrics));
 
         HelloMessage client_hello_message;
 
         client_hello_message.version  = PROTOCOL_VERSION;
         client_hello_message.protocol = _config.allowed_protocols;
 
-        tcp_connection->send_message(reinterpret_cast< uint8_t* >(&client_hello_message),
-                                     sizeof(client_hello_message));
+        connection->send_message(reinterpret_cast< uint8_t* >(&client_hello_message),
+                                 sizeof(client_hello_message));
 
-        auto response = tcp_connection->recv_message();
+        auto response = connection->recv_message();
 
         if (response.length() != sizeof(HelloMessage)) {
             THROW_EXCEPTION(InvalidMessageSize);
@@ -119,17 +136,20 @@ std::shared_ptr< Connection > ConnClient::connect()
         if (server_hello_message->protocol == Protocol::None) {
             THROW_EXCEPTION(ProtocolError, "Server rejected protocol");
         } else if ((server_hello_message->protocol & Protocol::TLS) == Protocol::TLS) {
-            tcp_socket = tcp_connection->release_socket();
+            auto bare_socket = dynamic_cast< TCPConnection* >(connection.get())->release_socket();
 
-            auto tls_socket = TLSSocket::create(std::move(tcp_socket), _ssl_ctx);
+            auto tls_socket = TLSSocket::create(std::move(bare_socket), *_ssl_ctx.get());
 
             tls_socket->connect();
 
             _connection = std::unique_ptr< TLSConnection >(
-                new TLSConnection(std::move(tls_socket), _config.metrics));
+                new TLSConnection(std::move(tls_socket), 0, _config.metrics));
         } else if ((server_hello_message->protocol & Protocol::TCP) == Protocol::TCP) {
             // Nothing to do, already using TCP
-            _connection = std::move(tcp_connection);
+            _connection = std::move(connection);
+        } else if ((server_hello_message->protocol & Protocol::UNIX) == Protocol::UNIX) {
+            // Nothing to do, already using UNIX
+            _connection = std::move(connection);
         } else {
             THROW_EXCEPTION(ProtocolError, "Protocol negotiation failed");
         }

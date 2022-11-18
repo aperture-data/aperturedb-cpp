@@ -23,17 +23,18 @@ class queryMessage;
 }
 
 struct AuthEnabledVDMSServerConfig {
-    comm::ConnServerConfig connServerConfig{};
+    comm::TCPConnServerConfig connServerConfig{};
     int32_t refresh_token_expires_in = 24 * 60 * 60;
     int32_t session_token_expires_in = 60 * 60;
 
-    AuthEnabledVDMSServerConfig(comm::ConnServerConfig connServerConfig_ = {},
+    AuthEnabledVDMSServerConfig(int port, comm::ConnServerConfig connServerConfig_ = {},
                                 int32_t refresh_token_expires_in_        = 24 * 60 * 60,
                                 int32_t session_token_expires_in_        = 60 * 60)
         : connServerConfig(std::move(connServerConfig_))
         , refresh_token_expires_in(refresh_token_expires_in_)
         , session_token_expires_in(session_token_expires_in_)
     {
+	    connServerConfig.addPort( port );
     }
 };
 
@@ -42,7 +43,7 @@ class AuthEnabledVDMSServer
     comm::ConnServer _server;
 
    public:
-    AuthEnabledVDMSServer(int port, AuthEnabledVDMSServerConfig config);
+    AuthEnabledVDMSServer(AuthEnabledVDMSServerConfig config);
     ~AuthEnabledVDMSServer();
 
    private:

@@ -92,7 +92,7 @@ TEST(ClientCollectorTest, CollectClientMetrics)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        comm::ConnServer server(SERVER_PORT_INTERCHANGE);
+        comm::ConnServer server(comm::simpleTCPConfiguration(SERVER_PORT_INTERCHANGE));
 
         barrier.wait();
 

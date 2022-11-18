@@ -30,52 +30,47 @@
 
 #pragma once
 
-#include <string>
 #include <memory>
-#include "util/Macros.h"
+#include <string>
+#include <sys/un.h>
+#include <sys/socket.h>
+
+#include "Socket.h"
+#include "comm/Address.h"
 
 namespace comm
 {
 
-class ConnMetrics
+class UnixSocket : public Socket
 {
+    friend class UnixConnection;
+
    public:
-    virtual ~ConnMetrics() = 0;
-    virtual void observe_bytes_sent(std::size_t bytes_sent);
-    virtual void observe_bytes_recv(std::size_t bytes_recv);
-};
+    UnixSocket(const UnixSocket&) = delete;
+    ~UnixSocket();
 
-class Connection
-{
-   public:
-    explicit Connection(int config_id, ConnMetrics* metrics = nullptr);
-    virtual ~Connection();
+    UnixSocket& operator=(const UnixSocket&) = delete;
 
-    MOVEABLE_BY_DEFAULT(Connection);
-    NOT_COPYABLE(Connection);
+    static std::unique_ptr< UnixSocket > create();
+    std::unique_ptr< Socket > accept() override;
 
-    void send_message(const uint8_t* data, uint32_t size);
-    const std::basic_string< uint8_t >& recv_message();
-    int get_config_id() const;
+    bool bind(const std::string& path);
+    bool connect(const std::string& path);
+    bool listen() override;
+    bool set_boolean_option(int level, int option_name, bool value) override;
+    bool set_timeval_option(int level, int option_name, timeval value) override;
+    void shutdown() override;
 
-    std::string msg_size_to_str_KB(uint32_t size);
-    void set_max_buffer_size(uint32_t max_buffer_size);
-    bool check_message_size(uint32_t size);
+    std::string print_source() override;
+    short source_family() override;
+    int fd() const override { return _socket_fd; }
 
-    std::string source_family_name(short source_family) const;
-    virtual std::string get_source() const     = 0;
-    virtual short get_source_family() const    = 0;
-    virtual std::string get_encryption() const = 0;
+   private:
+    explicit UnixSocket(int socket_fd, sockaddr_un);
 
-   protected:
-    virtual size_t read(uint8_t* buffer, size_t length)        = 0;
-    virtual size_t write(const uint8_t* buffer, size_t length) = 0;
-
-    std::basic_string< uint8_t > _buffer_str{};
-    uint32_t _max_buffer_size{};
-
-    ConnMetrics* _metrics{nullptr};
-    int _config_id{-1};
+    int _socket_fd{-1};
+    short _source_family{AF_UNSPEC};
+    struct sockaddr_un _source;
 };
 
 };  // namespace comm

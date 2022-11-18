@@ -2,12 +2,11 @@
  * @copyright Copyright (c) 2021 ApertureData Inc.
  */
 
-#include "comm/TCPSocket.h"
+#include "comm/UnixSocket.h"
 
 #include <cstring>
 #include <netdb.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+#include <sys/un.h>
 #include <unistd.h>
 
 #include "util/gcc_util.h"
@@ -21,12 +20,12 @@ ENABLE_WARNING(effc++)
 #include "comm/Variables.h"
 
 using namespace comm;
-TCPSocket::TCPSocket(int socket_fd, sockaddr_in address)
-    : _socket_fd(socket_fd), _source_family(AF_INET), _source(std::move(address))
+UnixSocket::UnixSocket(int socket_fd, sockaddr_un address)
+    : _socket_fd(socket_fd), _source_family(AF_UNIX), _source(std::move(address))
 {
 }
 
-TCPSocket::~TCPSocket()
+UnixSocket::~UnixSocket()
 {
     if (_socket_fd != -1) {
         ::close(_socket_fd);
@@ -38,9 +37,9 @@ static long msec_diff(const struct timespec& a, const struct timespec& b)
     return (a.tv_sec - b.tv_sec) * 1000 + (a.tv_nsec - b.tv_nsec) / 1000000;
 }
 
-std::unique_ptr< Socket > TCPSocket::accept()
+std::unique_ptr< Socket > UnixSocket::accept()
 {
-    struct sockaddr_in clnt_addr;
+    struct sockaddr_un clnt_addr;
     socklen_t len = sizeof(clnt_addr);  // store size of the address
 
     // This is where client connects.
@@ -67,77 +66,83 @@ again:
     }
     // MAGICK can be done here
 
-    return std::unique_ptr< Socket >(new TCPSocket(connected_socket, std::move(clnt_addr)));
+    return std::unique_ptr< UnixSocket >(new UnixSocket(connected_socket, std::move(clnt_addr)));
 }
 
-bool TCPSocket::bind(int port)
+#define SUN_PATH_MAX 108
+bool UnixSocket::bind(const std::string& path)
 {
-    struct sockaddr_in svr_addr;
-    memset(&svr_addr, 0, sizeof(svr_addr));
-    svr_addr.sin_family      = AF_INET;
-    svr_addr.sin_addr.s_addr = INADDR_ANY;
-    svr_addr.sin_port        = htons(port);
-
-    // bind socket : "assigning a name to a socket"
-    return ::bind(_socket_fd, reinterpret_cast< const sockaddr* >(&svr_addr), sizeof(svr_addr)) ==
-           0;
-}
-
-bool TCPSocket::connect(const Address& address)
-{
-    struct hostent* server = gethostbyname(address.addr.c_str());
-
-    if (server == NULL) {
-        THROW_EXCEPTION(ServerAddError);
+    if (path.size() + 1 > SUN_PATH_MAX || path.size() == 0) {
+        THROW_EXCEPTION(BindFail, "Path size incorrect");
     }
 
-    struct sockaddr_in svr_addr;
+    struct sockaddr_un svr_addr;
     memset(&svr_addr, 0, sizeof(svr_addr));
-    svr_addr.sin_family = AF_INET;
+    svr_addr.sun_family = AF_UNIX;
+    strncpy(svr_addr.sun_path, path.c_str(), path.size() + 1);
 
-    memcpy(&svr_addr.sin_addr.s_addr, server->h_addr, server->h_length);
-    svr_addr.sin_port = htons(address.port);
+    // bind socket : "assigning a name to a socket"
+    int ret = ::bind(_socket_fd, reinterpret_cast< const sockaddr* >(&svr_addr), sizeof(svr_addr));
+    if (ret != 0) {
+        char errbuf[256];
+        VLOG(3) << "Bind Failed: " << strerror_r(errno, errbuf, 256) << "\n";
+    }
+    return ret == 0;
+    //      return ::bind(
+    //         _socket_fd, reinterpret_cast< const sockaddr* >(&svr_addr), sizeof(svr_addr)) == 0;
+}
+
+bool UnixSocket::connect(const std::string& path)
+{
+    if (path.size() > 107 || path.size() == 0) {
+        THROW_EXCEPTION(ConnectionError, "Path size incorrect");
+    }
+
+    struct sockaddr_un svr_addr;
+    memset(&svr_addr, 0, sizeof(svr_addr));
+    svr_addr.sun_family = AF_UNIX;
+    strncpy(svr_addr.sun_path, path.c_str(), path.size() + 1);
 
     return ::connect(
                _socket_fd, reinterpret_cast< const sockaddr* >(&svr_addr), sizeof(svr_addr)) == 0;
 }
 
-std::unique_ptr< TCPSocket > TCPSocket::create()
+std::unique_ptr< UnixSocket > UnixSocket::create()
 {
-    int tcp_socket = ::socket(AF_INET, SOCK_STREAM, 0);
-    sockaddr_in source;
+    int new_socket = ::socket(AF_UNIX, SOCK_STREAM, 0);
+    sockaddr_un source;
     memset(&source, 0, sizeof(_source));
 
-    if (tcp_socket < 0) {
+    if (new_socket < 0) {
         THROW_EXCEPTION(SocketFail);
     }
 
-    return std::unique_ptr< TCPSocket >(new TCPSocket(tcp_socket, std::move(source)));
+    return std::unique_ptr< UnixSocket >(new UnixSocket(new_socket, std::move(source)));
 }
 
-bool TCPSocket::listen() { return ::listen(_socket_fd, MAX_CONN_QUEUE) == 0; }
+bool UnixSocket::listen() { return ::listen(_socket_fd, MAX_CONN_QUEUE) == 0; }
 
-bool TCPSocket::set_boolean_option(int level, int option_name, bool value)
+bool UnixSocket::set_boolean_option(int level, int option_name, bool value)
 {
     int option = value ? 1 : 0;
 
     return ::setsockopt(_socket_fd, level, option_name, &option, sizeof(option)) == 0;
 }
 
-bool TCPSocket::set_timeval_option(int level, int option_name, timeval value)
+bool UnixSocket::set_timeval_option(int level, int option_name, timeval value)
 {
     return ::setsockopt(_socket_fd, level, option_name, &value, sizeof(value)) == 0;
 }
 
-void TCPSocket::shutdown() { ::shutdown(_socket_fd, SHUT_RDWR); }
+void UnixSocket::shutdown() { ::shutdown(_socket_fd, SHUT_RDWR); }
 
-std::string TCPSocket::print_source()
+std::string UnixSocket::print_source()
 {
     if (_source_family == AF_UNSPEC) {
         return "";
     } else {
-        return std::string(inet_ntoa(_source.sin_addr));
+        return std::string(_source.sun_path);
     }
 }
 
-short TCPSocket::source_family() { return _source_family; }
+short UnixSocket::source_family() { return _source_family; }

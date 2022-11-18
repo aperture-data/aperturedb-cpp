@@ -87,6 +87,9 @@ comm_cc = [
            'src/comm/TLS.cc',
            'src/comm/TLSConnection.cc',
            'src/comm/TLSSocket.cc',
+           'src/comm/Socket.cc',
+           'src/comm/UnixSocket.cc',
+           'src/comm/UnixConnection.cc',
           ]
 
 comm_env.ParseConfig('pkg-config --cflags --libs openssl')
@@ -183,6 +186,8 @@ comm_test_source_files = [
                           'test/Barrier.cc',
                           'test/TCPConnectionTests.cc',
                           'test/TLSConnectionTests.cc',
+                          'test/UnixConnectionTests.cc',
+                          'test/MultipleConnectionTests.cc',
                           'test/VDMSServer.cc',
                           'test/VDMSServerTests.cc',
                           'test/TimedQueueTests.cc',

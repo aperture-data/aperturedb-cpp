@@ -45,6 +45,7 @@ enum ExceptionType {
     SocketFail,
     ListentFail,
 
+    ServerConfigError,
     ServerAddError,
     PortError,
     ConnectionError,
