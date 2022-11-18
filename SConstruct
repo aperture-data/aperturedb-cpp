@@ -226,5 +226,12 @@ env.Alias('install',
                                  source=Glob("include/util/" + "*.h")),
         )
 
+env.Alias('install',
+	 env.Command(target=os.path.join(prefix, "include/aperturedb/version.h"),
+                     source="src/aperturedb/version.h",
+                     action="sed 's/VDMS_VER/APERTUREDB_CPP_VER/g' $SOURCE > $TARGET"
+                     )
+        )
+
 SConscript(os.path.join('tools/prometheus_ambassador', 'SConscript'), exports=['env'])
 SConscript(os.path.join('tools/send_query', 'SConstruct'), exports=['env'])
