@@ -70,9 +70,7 @@ ConnServer::ConnServer(ConnServerConfigList&& config)
     , _ssl_ctx_map(new SSLContextMap())
     , _listening_sockets()
 {
-    std::cout << "testing " << _configs.size() << " \n";
     if (_configs.size() == 0) {
-        std::cout << "csize bad\n";
         THROW_EXCEPTION(ServerConfigError, "A minimum of 1 config is required");
     }
     for (int i = 0; i < _configs.size(); i++) {
@@ -89,7 +87,6 @@ void ConnServer::configure_individual(int id)
     set_default_verify_paths(_ssl_ctx.get());
 
     std::unique_ptr< Socket > listening_socket;
-    std::cout << "SSL context OK\n";
 
     if (_config->auto_generate_certificate) {
         auto certificates = generate_certificate();
@@ -111,12 +108,9 @@ void ConnServer::configure_individual(int id)
         }
     }
 
-    std::cout << "SSL OK\n";
-
     auto tcp_config = dynamic_cast< TCPConnServerConfig* >(_config);
 
     if (tcp_config != nullptr) {
-        std::cout << "in TCP Config\n";
         if (tcp_config->_port <= 0 ||
             static_cast< unsigned >(tcp_config->_port) > MAX_PORT_NUMBER) {
             THROW_EXCEPTION(PortError);
@@ -124,7 +118,6 @@ void ConnServer::configure_individual(int id)
 
         // Create a TCP/IP socket
         auto tcp_listening_socket = TCPSocket::create();
-        std::cout << "TCP socket\n";
 
         if (!tcp_listening_socket->set_boolean_option(SOL_SOCKET, SO_REUSEADDR, true)) {
             THROW_EXCEPTION(SocketFail, "Unable to create reusable socket");
@@ -145,7 +138,6 @@ void ConnServer::configure_individual(int id)
         if (!tcp_listening_socket->bind(tcp_config->_port)) {
             THROW_EXCEPTION(BindFail);
         }
-        std::cout << "TCP socket configured\n";
 
         listening_socket = std::unique_ptr< Socket >(tcp_listening_socket.release());
 
@@ -153,9 +145,7 @@ void ConnServer::configure_individual(int id)
         auto unix_config           = dynamic_cast< UnixConnServerConfig* >(_config);
         auto unix_listening_socket = UnixSocket::create();
 
-        std::cout << "Unix starting on " << unix_config->_path << "\n";
         if (!unix_listening_socket->bind(unix_config->_path)) {
-            std::cout << "Bad Bind\n";
             THROW_EXCEPTION(BindFail);
         }
         listening_socket = std::unique_ptr< Socket >(unix_listening_socket.release());  //.get();
@@ -166,9 +156,7 @@ void ConnServer::configure_individual(int id)
         THROW_EXCEPTION(ListentFail);
     }
     _listening_sockets.push_back(std::move(listening_socket));
-    std::cout << "socket listening\n";
     _ssl_ctx_map->map[id] = std::move(_ssl_ctx);
-    std::cout << "ctx saved\n";
 }
 
 ConnServer::~ConnServer() = default;
@@ -181,7 +169,6 @@ std::unique_ptr< Connection > ConnServer::negotiate_protocol(std::shared_ptr< Co
 {
     // auto tcp_connection = std::static_pointer_cast< TCPConnection >(conn);
 
-    std::cout << "Negotiating Protocol\n";
     auto config_id = conn->get_config_id();
     auto response  = conn->recv_message();
     auto config    = _configs[config_id].get();
@@ -212,7 +199,6 @@ std::unique_ptr< Connection > ConnServer::negotiate_protocol(std::shared_ptr< Co
     auto tcp_conn = dynamic_cast< TCPConnection* >(conn.get());
     if (tcp_conn != nullptr) {
         auto tcp_socket = tcp_conn->release_socket();
-        std::cout << static_cast< int >(server_hello_message.protocol) << " PROTO\n";
         if ((server_hello_message.protocol & Protocol::TLS) == Protocol::TLS) {
             auto tls_socket =
                 TLSSocket::create(std::move(tcp_socket), *_ssl_ctx_map->map[config->id].get());
@@ -245,12 +231,10 @@ std::unique_ptr< Connection > ConnServer::negotiate_protocol(std::shared_ptr< Co
 
 std::unique_ptr< Connection > ConnServer::accept()
 {
-    std::cout << "In Accept\n";
     auto connected_socket_pair = Socket::accept(_listening_sockets);
-    std::cout << "Accepted\n";
-    auto connected_socket = std::move(connected_socket_pair.second).release();
-    auto config_id        = connected_socket_pair.first;  // TCPSocket::accept(_listening_socket);
-    auto& config          = _configs[config_id];
+    auto connected_socket      = std::move(connected_socket_pair.second).release();
+    auto config_id = connected_socket_pair.first;  // TCPSocket::accept(_listening_socket);
+    auto& config   = _configs[config_id];
 
     auto tcp_socket = dynamic_cast< TCPSocket* >(connected_socket);
 

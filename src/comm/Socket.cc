@@ -11,33 +11,39 @@ ENABLE_WARNING(effc++)
 
 using namespace comm;
 
+static long msec_diff(const struct timespec& a, const struct timespec& b)
+{
+    return (a.tv_sec - b.tv_sec) * 1000 + (a.tv_nsec - b.tv_nsec) / 1000000;
+}
+
 std::pair< int, std::unique_ptr< Socket > > Socket::accept(
     std::vector< std::unique_ptr< Socket > >& listening_sockets)
 {
-	std::cout << "Accept Multi: " << listening_sockets.size() <<" \n";
     nfds_t number_fds = listening_sockets.size();
     struct timespec timeout;
     struct pollfd pollfds[number_fds];
     int n = 0;
-    pollfds[n].fd = 0;
-    pollfds[n].events = POLLIN;
 
-    auto config_socket = [&](std::unique_ptr<Socket> & socket ) {
-	        std::cout << "FD! " << socket->fd();
+    auto config_socket = [&](std::unique_ptr< Socket >& socket) {
         pollfds[n].fd     = socket->fd();
-	    pollfds[n].events = POLLIN;
+        pollfds[n].events = POLLIN;
         n++;
     };
 
     std::for_each(listening_sockets.begin(), listening_sockets.end(), config_socket);
 
-    timeout.tv_sec   = 1;
+    timeout.tv_sec  = 1;
     timeout.tv_nsec = 0;
+
+    timespec t1;
+    clock_gettime(CLOCK_REALTIME_COARSE, &t1);
 
     int poll_res = 0;
     while ((poll_res = ::ppoll(&pollfds[0], number_fds, &timeout, NULL)) == 0) {
-	    VLOG(3) << "moo";
-        //VLOG(3) << "accept(): no activity for " << timeout << " msec. Going back to listening";
+        timespec t2;
+        clock_gettime(CLOCK_REALTIME_COARSE, &t2);
+        auto dt = msec_diff(t2, t1);
+        VLOG(3) << "accept(): no activity for " << dt << " msec. Going back to listening";
     }
 
     // error

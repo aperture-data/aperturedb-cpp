@@ -73,7 +73,6 @@ again:
 bool UnixSocket::bind(const std::string& path)
 {
     if (path.size() + 1 > SUN_PATH_MAX || path.size() == 0) {
-        std::cout << "Path Size?\n";
         THROW_EXCEPTION(BindFail, "Path size incorrect");
     }
 
@@ -82,12 +81,11 @@ bool UnixSocket::bind(const std::string& path)
     svr_addr.sun_family = AF_UNIX;
     strncpy(svr_addr.sun_path, path.c_str(), path.size() + 1);
 
-    std::cout << "going ::bind\n";
     // bind socket : "assigning a name to a socket"
     int ret = ::bind(_socket_fd, reinterpret_cast< const sockaddr* >(&svr_addr), sizeof(svr_addr));
     if (ret != 0) {
         char errbuf[256];
-        std::cout << "Failed: " << strerror_r(errno, errbuf, 256) << "\n";
+        VLOG(3) << "Bind Failed: " << strerror_r(errno, errbuf, 256) << "\n";
     }
     return ret == 0;
     //      return ::bind(

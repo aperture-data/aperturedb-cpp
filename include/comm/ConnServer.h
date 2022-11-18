@@ -154,7 +154,6 @@ ConnServerConfigList createConnList(Args&&... args)
 {
     ConnServerConfigList list;
     emplaceConnList(list, args...);
-    std::cout << "CCL " << list.size() << "\n";
     return list;
 }
 

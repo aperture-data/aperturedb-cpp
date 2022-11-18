@@ -151,7 +151,6 @@ std::shared_ptr< Connection > ConnClient::connect()
             // Nothing to do, already using UNIX
             _connection = std::move(connection);
         } else {
-            std::cout << "No Proto\n";
             THROW_EXCEPTION(ProtocolError, "Protocol negotiation failed");
         }
     }
