@@ -144,10 +144,11 @@ void emplaceConnList(ConnServerConfigList& list, First&& item)
 template < class First, class... Rest >
 void emplaceConnList(ConnServerConfigList& list, First&& item, Rest&&... rest)
 {
-    list.emplace_back(item);
-    createConnList(list, rest...);
+    list.emplace_back(std::move(item));
+    emplaceConnList(list, rest...);
 }
 
+// takes list of std::unique_ptr and creates a std::vector<std::unique_ptr> of them
 template < class... Args >
 ConnServerConfigList createConnList(Args&&... args)
 {
