@@ -28,16 +28,13 @@ TEST(TCPConnectionTests, SyncMessages)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-    //: _server( createConnList( wrapConnServerConfig( config.connServerConfig.addPort(port) ) ) ) 
-        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_INTERCHANGE));
-        comm::ConnServer server( comm::createConnList( config ));
-	std::cout << "Server Init\n";
+        auto config =
+            comm::wrapConnServerConfig(new comm::TCPConnServerConfig(SERVER_PORT_INTERCHANGE));
+        comm::ConnServer server(comm::createConnList(config));
 
         barrier.wait();
-	std::cout << "Server Running\n";
 
         auto server_conn = server.negotiate_protocol(server.accept());
-	std::cout << "Server Attached:\n";
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
             // Recieve something
@@ -51,12 +48,9 @@ TEST(TCPConnectionTests, SyncMessages)
         }
     });
 
-	std::cout << "Client Start\n";
     comm::ConnClient conn_client({"localhost", SERVER_PORT_INTERCHANGE});
-	std::cout << "Client Init\n";
 
     barrier.wait();
-	std::cout << "Client Run\n";
 
     auto connection = conn_client.connect();
 
@@ -83,8 +77,9 @@ TEST(TCPConnectionTests, AsyncMessages)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_MULTIPLE));
-        comm::ConnServer server( comm::createConnList( config ));
+        auto config =
+            comm::wrapConnServerConfig(new comm::TCPConnServerConfig(SERVER_PORT_MULTIPLE));
+        comm::ConnServer server(comm::createConnList(config));
 
         barrier.wait();
 
@@ -132,8 +127,9 @@ TEST(TCPConnectionTests, ServerShutdownRecv)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_INTERCHANGE));
-        comm::ConnServer server( comm::createConnList( config ));
+        auto config =
+            comm::wrapConnServerConfig(new comm::TCPConnServerConfig(SERVER_PORT_INTERCHANGE));
+        comm::ConnServer server(comm::createConnList(config));
 
         barrier.wait();
 
@@ -158,8 +154,9 @@ TEST(TCPConnectionTests, SendArrayInts)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_INTERCHANGE));
-        comm::ConnServer server( comm::createConnList( config ));
+        auto config =
+            comm::wrapConnServerConfig(new comm::TCPConnServerConfig(SERVER_PORT_INTERCHANGE));
+        comm::ConnServer server(comm::createConnList(config));
 
         barrier.wait();
 
@@ -186,8 +183,8 @@ TEST(TCPConnectionTests, SendArrayInts)
 
 TEST(TCPConnectionTests, MoveCopy)
 {
-    comm::TCPConnection a(comm::TCPSocket::create(),0);
-    comm::TCPConnection server_conn(comm::TCPSocket::create(),0);
+    comm::TCPConnection a(comm::TCPSocket::create(), 0);
+    comm::TCPConnection server_conn(comm::TCPSocket::create(), 0);
     server_conn = std::move(a);  // Testing copy with move works
 }
 
@@ -202,7 +199,8 @@ TEST(TCPConnectionTests, Unreachable)
     ASSERT_THROW(client_2.connect(), comm::Exception);
 }
 
-#define withTcpPort(port) comm::createConnList( comm::wrapConnServerConfig( new comm::TCPConnServerConfig( port )))
+#define withTcpPort(port) \
+    comm::createConnList(comm::wrapConnServerConfig(new comm::TCPConnServerConfig(port)))
 TEST(TCPConnectionTests, ServerWrongPort)
 {
     ASSERT_THROW(comm::ConnServer server(withTcpPort(-22)), comm::Exception);
@@ -223,16 +221,4 @@ TEST(TCPConnectionTests, ClientWrongAddrOrPort)
     comm::ConnClient client_3({"intel.com", 0});
 
     ASSERT_THROW(client_3.connect(), comm::Exception);
-}
-
-int main(int argc, char** argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-
-    // To make GoogleTest silent:
-    // if (true) {
-    //     auto& listeners = ::testing::UnitTest::GetInstance()->listeners();
-    //     delete listeners.Release(listeners.default_result_printer());
-    // }
-    return RUN_ALL_TESTS();
 }

@@ -32,10 +32,11 @@ class UnixSocketLocker
         if (tmp_fd == -1) {
             throw std::runtime_error("Failed to Create Unix Socket Path");
         }
+	// must unlink so a bind works.
         unlink(path.c_str());
-        // close( tmp_fd );
         fd = tmp_fd;
     }
+    // close fd when locker exits
     ~UnixSocketLocker() { close(fd); }
 
     std::string get_path() { return path; }
@@ -59,13 +60,10 @@ TEST(UnixConnectionTests, SyncMessages)
         auto config =
             comm::wrapConnServerConfig(new comm::UnixConnServerConfig(unix_socket.get_path()));
         comm::ConnServer server(comm::createConnList(config));
-        std::cout << "Server Init\n";
 
         barrier.wait();
-        std::cout << "Server Running\n";
 
         auto server_conn = server.negotiate_protocol(server.accept());
-        std::cout << "Server Attached:\n";
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
             // Recieve something
@@ -79,12 +77,9 @@ TEST(UnixConnectionTests, SyncMessages)
         }
     });
 
-    std::cout << "Client Start\n";
     comm::ConnClient conn_client({unix_socket.get_path(), 0, 1});
-    std::cout << "Client Init\n";
 
     barrier.wait();
-    std::cout << "Client Run\n";
 
     auto connection = conn_client.connect();
 

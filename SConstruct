@@ -187,6 +187,7 @@ comm_test_source_files = [
                           'test/TCPConnectionTests.cc',
                           'test/TLSConnectionTests.cc',
                           'test/UnixConnectionTests.cc',
+                          'test/MultipleConnectionTests.cc',
                           'test/VDMSServer.cc',
                           'test/VDMSServerTests.cc',
                           'test/TimedQueueTests.cc',

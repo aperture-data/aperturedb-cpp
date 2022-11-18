@@ -66,22 +66,16 @@ TEST(MultipleConnectionTests, SequentialSyncMessages)
         auto tcp_config =
             comm::wrapConnServerConfig(new comm::TCPConnServerConfig(SERVER_PORT_INTERCHANGE));
         comm::ConnServer server(comm::createConnList(unix_config, tcp_config));
-        // comm::ConnServer server(comm::createConnList(unix_config));
-        std::cout << "Server Init\n";
 
         int executions = 0;
         while (++executions < client_count + 1) {
-            std::cout << "Server Wait\n";
             barrier.wait();
-            std::cout << "Server Running\n";
 
             auto server_conn = server.negotiate_protocol(server.accept());
             barrier.reset();
-            std::cout << "Server Attached:\n";
 
             for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
                 // Recieve something
-                std::cout << "Server Transmitting\n";
                 BytesBuffer message_received = server_conn->recv_message();
                 std::string recv_message(reinterpret_cast< char* >(message_received.data()));
                 ASSERT_EQ(0, recv_message.compare(client_to_server));
@@ -91,9 +85,7 @@ TEST(MultipleConnectionTests, SequentialSyncMessages)
                     reinterpret_cast< const uint8_t* >(server_to_client.c_str()),
                     server_to_client.length());
             }
-            std::cout << "Server Done\n";
         }
-        std::cout << "Server Complete\n";
     });
 
     std::vector< std::unique_ptr< comm::ConnClient > > clients;
@@ -104,11 +96,7 @@ TEST(MultipleConnectionTests, SequentialSyncMessages)
         new comm::ConnClient({"localhost", SERVER_PORT_INTERCHANGE})));
 
     for (auto& client : clients) {
-        std::cout << "Client Start\n";
-        std::cout << "Client Init\n";
-
         barrier.wait();
-        std::cout << "Client Run\n";
 
         auto connection = client->connect();
 
@@ -122,10 +110,8 @@ TEST(MultipleConnectionTests, SequentialSyncMessages)
             std::string recv_message(reinterpret_cast< char* >(message_received.data()));
             ASSERT_EQ(0, recv_message.compare(server_to_client));
         }
-        std::cout << "Client Done\n";
         // close connection
         client.reset();
-        std::cout << "Client Closed\n";
     }
 
     server_thread.join();
