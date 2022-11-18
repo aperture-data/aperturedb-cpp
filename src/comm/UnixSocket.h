@@ -32,7 +32,8 @@
 
 #include <memory>
 #include <string>
-#include <netinet/ip.h>
+#include <sys/un.h>
+#include <sys/socket.h>
 
 #include "Socket.h"
 #include "comm/Address.h"
@@ -42,7 +43,7 @@ namespace comm
 
 class UnixSocket : public Socket
 {
-    friend class TCPConnection;
+    friend class UnixConnection;
 
    public:
     UnixSocket(const UnixSocket&) = delete;
@@ -53,7 +54,7 @@ class UnixSocket : public Socket
     static std::unique_ptr< UnixSocket > create();
     std::unique_ptr< Socket > accept() override;
 
-    bool bind(std::string path);
+    bool bind(const std::string& path);
     bool connect(const std::string& path);
     bool listen() override;
     bool set_boolean_option(int level, int option_name, bool value) override;
@@ -62,13 +63,14 @@ class UnixSocket : public Socket
 
     std::string print_source() override;
     short source_family() override;
+    int fd() const override { return _socket_fd; }
 
    private:
-    explicit UnixSocket(int socket_fd, sockaddr_in);
+    explicit UnixSocket(int socket_fd, sockaddr_un);
 
     int _socket_fd{-1};
     short _source_family{AF_UNSPEC};
-    struct sockaddr_in _source;
+    struct sockaddr_un _source;
 };
 
 };  // namespace comm

@@ -6,8 +6,7 @@
 
 #include <cstring>
 #include <netdb.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+#include <sys/un.h>
 #include <unistd.h>
 
 #include "util/gcc_util.h"
@@ -21,7 +20,7 @@ ENABLE_WARNING(effc++)
 #include "comm/Variables.h"
 
 using namespace comm;
-UnixSocket::UnixSocket(int socket_fd, sockaddr_in address)
+UnixSocket::UnixSocket(int socket_fd, sockaddr_un address)
     : _socket_fd(socket_fd), _source_family(AF_UNIX), _source(std::move(address))
 {
 }
@@ -38,7 +37,7 @@ static long msec_diff(const struct timespec& a, const struct timespec& b)
     return (a.tv_sec - b.tv_sec) * 1000 + (a.tv_nsec - b.tv_nsec) / 1000000;
 }
 
-std::unique_ptr< UnixSocket > UnixSocket::accept(const std::unique_ptr< UnixSocket >& listening_socket)
+std::unique_ptr< Socket > UnixSocket::accept()
 {
     struct sockaddr_un clnt_addr;
     socklen_t len = sizeof(clnt_addr);  // store size of the address
@@ -52,7 +51,7 @@ again:
 
     errno = 0;
     int connected_socket =
-        ::accept(listening_socket->_socket_fd, reinterpret_cast< sockaddr* >(&clnt_addr), &len);
+        ::accept(_socket_fd, reinterpret_cast< sockaddr* >(&clnt_addr), &len);
 
     int errno_r = errno;
     if (connected_socket < 0) {

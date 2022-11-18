@@ -30,6 +30,8 @@
 
 #pragma once
 #include <vector>
+#include <memory>
+
 namespace comm
 {
 
@@ -50,5 +52,6 @@ class Socket
 
     virtual std::string print_source() = 0;
     virtual short source_family()      = 0;
+    virtual int fd() const = 0;
 };
 }  // namespace comm

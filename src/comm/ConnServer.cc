@@ -57,6 +57,11 @@ class comm::SSLContextMap
     std::unordered_map< int, OpenSSLPointer< SSL_CTX > > map;
 };
 
+ConnServerConfigList simpleTCPConfiguration( int port, ConnServerConfig config )
+{
+	return createConnList( wrapConnServerConfig( TCPConnServerConfig( port, config )));
+}
+
 ConnServer::ConnServer(ConnServerConfigList&& config)
     : _configs(std::move(config))
     , _id_to_listening_socket_map()

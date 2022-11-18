@@ -87,6 +87,9 @@ comm_cc = [
            'src/comm/TLS.cc',
            'src/comm/TLSConnection.cc',
            'src/comm/TLSSocket.cc',
+           'src/comm/Socket.cc',
+           'src/comm/UnixSocket.cc',
+           'src/comm/UnixConnection.cc',
           ]
 
 comm_env.ParseConfig('pkg-config --cflags --libs openssl')

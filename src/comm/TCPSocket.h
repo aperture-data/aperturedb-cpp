@@ -65,6 +65,8 @@ class TCPSocket : public Socket
     std::string print_source() override;
     short source_family() override;
 
+    int fd() const override { return _socket_fd; }
+
    private:
     explicit TCPSocket(int socket_fd, sockaddr_in);
 

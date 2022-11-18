@@ -152,6 +152,7 @@ ConnServerConfigList createConnList( Args&&... args)
 	return list;
 }
 
+ConnServerConfigList simpleTCPConfiguration( int port, ConnServerConfig config = {} );
 
 class SSLContextMap;
 class Socket;
