@@ -135,25 +135,23 @@ std::shared_ptr< Connection > ConnClient::connect()
 
         if (server_hello_message->protocol == Protocol::None) {
             THROW_EXCEPTION(ProtocolError, "Server rejected protocol");
+        } else if ((server_hello_message->protocol & Protocol::TLS) == Protocol::TLS) {
+            auto bare_socket = dynamic_cast< TCPConnection* >(connection.get())->release_socket();
+
+            auto tls_socket = TLSSocket::create(std::move(bare_socket), *_ssl_ctx.get());
+
+            tls_socket->connect();
+
+            _connection = std::unique_ptr< TLSConnection >(
+                new TLSConnection(std::move(tls_socket), 0, _config.metrics));
         } else if ((server_hello_message->protocol & Protocol::TCP) == Protocol::TCP) {
-            if ((server_hello_message->protocol & Protocol::TLS) == Protocol::TLS) {
-                auto bare_socket =
-                    dynamic_cast< TCPConnection* >(connection.get())->release_socket();
-
-                auto tls_socket = TLSSocket::create(std::move(bare_socket), *_ssl_ctx.get());
-
-                tls_socket->connect();
-
-                _connection = std::unique_ptr< TLSConnection >(
-                    new TLSConnection(std::move(tls_socket), 0, _config.metrics));
-            } else {
-                // Nothing to do, already using TCP
-                _connection = std::move(connection);
-            }
+            // Nothing to do, already using TCP
+            _connection = std::move(connection);
         } else if ((server_hello_message->protocol & Protocol::UNIX) == Protocol::UNIX) {
             // Nothing to do, already using UNIX
             _connection = std::move(connection);
         } else {
+            std::cout << "No Proto\n";
             THROW_EXCEPTION(ProtocolError, "Protocol negotiation failed");
         }
     }
