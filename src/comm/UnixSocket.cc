@@ -49,9 +49,8 @@ again:
     timespec t1;
     clock_gettime(CLOCK_REALTIME_COARSE, &t1);
 
-    errno = 0;
-    int connected_socket =
-        ::accept(_socket_fd, reinterpret_cast< sockaddr* >(&clnt_addr), &len);
+    errno                = 0;
+    int connected_socket = ::accept(_socket_fd, reinterpret_cast< sockaddr* >(&clnt_addr), &len);
 
     int errno_r = errno;
     if (connected_socket < 0) {
@@ -70,33 +69,41 @@ again:
     return std::unique_ptr< UnixSocket >(new UnixSocket(connected_socket, std::move(clnt_addr)));
 }
 
+#define SUN_PATH_MAX 108
 bool UnixSocket::bind(const std::string& path)
 {
-    if( path.size() > 107 || path.size() == 0 ) {
-	    THROW_EXCEPTION(BindFail, "Path size incorrect");
-    }
-
-    struct sockaddr_un svr_addr;
-    memset(&svr_addr, 0, sizeof(svr_addr));
-    svr_addr.sun_family      = AF_UNIX;
-    strncpy( svr_addr.sun_path, path.c_str(), path.size() + 1 );
-
-    // bind socket : "assigning a name to a socket"
-    return ::bind(_socket_fd, reinterpret_cast< const sockaddr* >(&svr_addr), sizeof(svr_addr)) ==
-           0;
-}
-
-bool UnixSocket::connect(const std::string& path)
-{
-
-    if( path.size() > 107 || path.size() == 0 ) {
-	    THROW_EXCEPTION(ConnectionError, "Path size incorrect");
+    if (path.size() + 1 > SUN_PATH_MAX || path.size() == 0) {
+        std::cout << "Path Size?\n";
+        THROW_EXCEPTION(BindFail, "Path size incorrect");
     }
 
     struct sockaddr_un svr_addr;
     memset(&svr_addr, 0, sizeof(svr_addr));
     svr_addr.sun_family = AF_UNIX;
-    strncpy( svr_addr.sun_path, path.c_str(), path.size() + 1 );
+    strncpy(svr_addr.sun_path, path.c_str(), path.size() + 1);
+
+    std::cout << "going ::bind\n";
+    // bind socket : "assigning a name to a socket"
+    int ret = ::bind(_socket_fd, reinterpret_cast< const sockaddr* >(&svr_addr), sizeof(svr_addr));
+    if (ret != 0) {
+        char errbuf[256];
+        std::cout << "Failed: " << strerror_r(errno, errbuf, 256) << "\n";
+    }
+    return ret == 0;
+    //      return ::bind(
+    //         _socket_fd, reinterpret_cast< const sockaddr* >(&svr_addr), sizeof(svr_addr)) == 0;
+}
+
+bool UnixSocket::connect(const std::string& path)
+{
+    if (path.size() > 107 || path.size() == 0) {
+        THROW_EXCEPTION(ConnectionError, "Path size incorrect");
+    }
+
+    struct sockaddr_un svr_addr;
+    memset(&svr_addr, 0, sizeof(svr_addr));
+    svr_addr.sun_family = AF_UNIX;
+    strncpy(svr_addr.sun_path, path.c_str(), path.size() + 1);
 
     return ::connect(
                _socket_fd, reinterpret_cast< const sockaddr* >(&svr_addr), sizeof(svr_addr)) == 0;

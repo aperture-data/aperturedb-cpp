@@ -12,6 +12,7 @@ namespace comm
 struct Address {
     std::string addr;
     int port;
+    int unix_addr{0};
 };
 
 };  // namespace comm

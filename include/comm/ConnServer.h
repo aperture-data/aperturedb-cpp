@@ -86,75 +86,78 @@ struct TCPConnServerConfig : public ConnServerConfig {
     MOVEABLE_BY_DEFAULT(TCPConnServerConfig);
     COPYABLE_BY_DEFAULT(TCPConnServerConfig);
 
-    TCPConnServerConfig( int port_ ) 
-	    : ConnServerConfig()
-	    , _port(port_)
+    TCPConnServerConfig(int port_) : ConnServerConfig(), _port(port_) {}
+
+    TCPConnServerConfig(ConnServerConfig&& config) : ConnServerConfig(config) {}
+
+    TCPConnServerConfig(int port_, ConnServerConfig&& config)
+        : ConnServerConfig(config), _port(port_)
     {
     }
 
-    TCPConnServerConfig( ConnServerConfig && config )
-	    : ConnServerConfig( config )
+    TCPConnServerConfig(int port_, ConnServerConfig& config)
+        : ConnServerConfig(config), _port(port_)
     {
     }
 
-    TCPConnServerConfig(int port_, ConnServerConfig && config )
-	    : ConnServerConfig( config )
-	    , _port(port_)
+    TCPConnServerConfig& addPort(int port)
     {
+        _port = port;
+        return *this;
     }
-
-    TCPConnServerConfig(int port_, ConnServerConfig & config )
-	    : ConnServerConfig( config )
-	    , _port(port_)
-    {
-    }
-
-    TCPConnServerConfig & addPort(int port) {
-	    _port = port;
-	    return *this;
-    }
-
 };
 
 struct UnixConnServerConfig : public ConnServerConfig {
     std::string _path{};
+
+    UnixConnServerConfig(std::string path_) : ConnServerConfig(), _path(path_)
+    {
+        allowed_protocols = (allowed_protocols & ~(Protocol::TCP)) | Protocol::UNIX;
+    }
+    UnixConnServerConfig(std::string path_, ConnServerConfig& config)
+        : ConnServerConfig(config), _path(path_)
+    {
+        allowed_protocols = (allowed_protocols & ~(Protocol::TCP)) | Protocol::UNIX;
+    }
 };
 
 typedef std::vector< std::unique_ptr< ConnServerConfig > > ConnServerConfigList;
 
-template <class T>
-std::unique_ptr<ConnServerConfig> wrapConnServerConfig( T* config) { 
-	return std::unique_ptr<ConnServerConfig>( config );
-}
-
-template <class T>
-std::unique_ptr<ConnServerConfig> wrapConnServerConfig( const T& config) { 
-	return std::unique_ptr<ConnServerConfig>( new T(config) );
-}
-
-template<class First>
-void emplaceConnList( ConnServerConfigList & list, First&& item )
+template < class T >
+std::unique_ptr< ConnServerConfig > wrapConnServerConfig(T* config)
 {
-  list.emplace_back( std::move(item));
+    return std::unique_ptr< ConnServerConfig >(config);
 }
 
-template<class First, class... Rest>
-void emplaceConnList( ConnServerConfigList & list, First&& item, Rest&&... rest )
+template < class T >
+std::unique_ptr< ConnServerConfig > wrapConnServerConfig(const T& config)
 {
-  list.emplace_back( item );
-  createConnList( list, rest... );
+    return std::unique_ptr< ConnServerConfig >(new T(config));
 }
 
-template<class... Args>
-ConnServerConfigList createConnList( Args&&... args)
+template < class First >
+void emplaceConnList(ConnServerConfigList& list, First&& item)
 {
-	ConnServerConfigList list;
-	emplaceConnList(list,args...);
-	std::cout << "CCL " << list.size() << "\n";
-	return list;
+    list.emplace_back(std::move(item));
 }
 
-ConnServerConfigList simpleTCPConfiguration( int port, ConnServerConfig config = {} );
+template < class First, class... Rest >
+void emplaceConnList(ConnServerConfigList& list, First&& item, Rest&&... rest)
+{
+    list.emplace_back(item);
+    createConnList(list, rest...);
+}
+
+template < class... Args >
+ConnServerConfigList createConnList(Args&&... args)
+{
+    ConnServerConfigList list;
+    emplaceConnList(list, args...);
+    std::cout << "CCL " << list.size() << "\n";
+    return list;
+}
+
+ConnServerConfigList simpleTCPConfiguration(int port, ConnServerConfig config = {});
 
 class SSLContextMap;
 class Socket;

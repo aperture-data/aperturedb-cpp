@@ -186,6 +186,7 @@ comm_test_source_files = [
                           'test/Barrier.cc',
                           'test/TCPConnectionTests.cc',
                           'test/TLSConnectionTests.cc',
+                          'test/UnixConnectionTests.cc',
                           'test/VDMSServer.cc',
                           'test/VDMSServerTests.cc',
                           'test/TimedQueueTests.cc',

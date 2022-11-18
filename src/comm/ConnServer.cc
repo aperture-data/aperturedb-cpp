@@ -153,7 +153,9 @@ void ConnServer::configure_individual(int id)
         auto unix_config           = dynamic_cast< UnixConnServerConfig* >(_config);
         auto unix_listening_socket = UnixSocket::create();
 
+        std::cout << "Unix starting on " << unix_config->_path << "\n";
         if (!unix_listening_socket->bind(unix_config->_path)) {
+            std::cout << "Bad Bind\n";
             THROW_EXCEPTION(BindFail);
         }
         listening_socket = std::unique_ptr< Socket >(unix_listening_socket.release());  //.get();
@@ -260,7 +262,8 @@ std::unique_ptr< Connection > ConnServer::accept()
     } else {
         auto unix_socket = dynamic_cast< UnixSocket* >(connected_socket);
         if (unix_socket != nullptr) {
-            connection = std::unique_ptr< Connection >(nullptr);
+            connection = std::unique_ptr< Connection >(new UnixConnection(
+                std::unique_ptr< UnixSocket >(unix_socket), config_id, config->metrics));
         } else {
             delete connected_socket;
         }
