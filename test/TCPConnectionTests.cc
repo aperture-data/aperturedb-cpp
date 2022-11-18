@@ -31,10 +31,13 @@ TEST(TCPConnectionTests, SyncMessages)
     //: _server( createConnList( wrapConnServerConfig( config.connServerConfig.addPort(port) ) ) ) 
         auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_INTERCHANGE));
         comm::ConnServer server( comm::createConnList( config ));
+	std::cout << "Server Init\n";
 
         barrier.wait();
+	std::cout << "Server Running\n";
 
         auto server_conn = server.negotiate_protocol(server.accept());
+	std::cout << "Server Attached:\n";
 
         for (int i = 0; i < NUMBER_OF_MESSAGES; ++i) {
             // Recieve something
@@ -48,9 +51,12 @@ TEST(TCPConnectionTests, SyncMessages)
         }
     });
 
+	std::cout << "Client Start\n";
     comm::ConnClient conn_client({"localhost", SERVER_PORT_INTERCHANGE});
+	std::cout << "Client Init\n";
 
     barrier.wait();
+	std::cout << "Client Run\n";
 
     auto connection = conn_client.connect();
 

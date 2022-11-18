@@ -54,12 +54,12 @@ using namespace comm;
 class comm::SSLContextMap
 {
    public:
-    std::unordered_map< int, OpenSSLPointer< SSL_CTX > > map;
+    std::unordered_map< int, OpenSSLPointer< SSL_CTX > > map{};
 };
 
-ConnServerConfigList simpleTCPConfiguration( int port, ConnServerConfig config )
+ConnServerConfigList simpleTCPConfiguration(int port, ConnServerConfig config)
 {
-	return createConnList( wrapConnServerConfig( TCPConnServerConfig( port, config )));
+    return createConnList(wrapConnServerConfig(TCPConnServerConfig(port, config)));
 }
 
 ConnServer::ConnServer(ConnServerConfigList&& config)
@@ -67,10 +67,12 @@ ConnServer::ConnServer(ConnServerConfigList&& config)
     , _id_to_listening_socket_map()
     , _open_ssl_initializer(OpenSSLInitializer::instance())
     //, _id_to_ssl_ctx_map()
-    , _ssl_ctx_map()
+    , _ssl_ctx_map(new SSLContextMap())
     , _listening_sockets()
 {
-    if (config.size() == 0) {
+    std::cout << "testing " << _configs.size() << " \n";
+    if (_configs.size() == 0) {
+        std::cout << "csize bad\n";
         THROW_EXCEPTION(ServerConfigError, "A minimum of 1 config is required");
     }
     for (int i = 0; i < _configs.size(); i++) {
@@ -87,6 +89,7 @@ void ConnServer::configure_individual(int id)
     set_default_verify_paths(_ssl_ctx.get());
 
     std::unique_ptr< Socket > listening_socket;
+    std::cout << "SSL context OK\n";
 
     if (_config->auto_generate_certificate) {
         auto certificates = generate_certificate();
@@ -108,9 +111,12 @@ void ConnServer::configure_individual(int id)
         }
     }
 
+    std::cout << "SSL OK\n";
+
     auto tcp_config = dynamic_cast< TCPConnServerConfig* >(_config);
 
     if (tcp_config != nullptr) {
+        std::cout << "in TCP Config\n";
         if (tcp_config->_port <= 0 ||
             static_cast< unsigned >(tcp_config->_port) > MAX_PORT_NUMBER) {
             THROW_EXCEPTION(PortError);
@@ -118,6 +124,7 @@ void ConnServer::configure_individual(int id)
 
         // Create a TCP/IP socket
         auto tcp_listening_socket = TCPSocket::create();
+        std::cout << "TCP socket\n";
 
         if (!tcp_listening_socket->set_boolean_option(SOL_SOCKET, SO_REUSEADDR, true)) {
             THROW_EXCEPTION(SocketFail, "Unable to create reusable socket");
@@ -138,8 +145,9 @@ void ConnServer::configure_individual(int id)
         if (!tcp_listening_socket->bind(tcp_config->_port)) {
             THROW_EXCEPTION(BindFail);
         }
+        std::cout << "TCP socket configured\n";
 
-        // listening_socket = tcp_listening_socket.get();
+        listening_socket = std::unique_ptr< Socket >(tcp_listening_socket.release());
 
     } else {
         auto unix_config           = dynamic_cast< UnixConnServerConfig* >(_config);
@@ -155,7 +163,10 @@ void ConnServer::configure_individual(int id)
     if (!listening_socket->listen()) {
         THROW_EXCEPTION(ListentFail);
     }
+    _listening_sockets.push_back(std::move(listening_socket));
+    std::cout << "socket listening\n";
     _ssl_ctx_map->map[id] = std::move(_ssl_ctx);
+    std::cout << "ctx saved\n";
 }
 
 ConnServer::~ConnServer() = default;
@@ -168,9 +179,10 @@ std::unique_ptr< Connection > ConnServer::negotiate_protocol(std::shared_ptr< Co
 {
     // auto tcp_connection = std::static_pointer_cast< TCPConnection >(conn);
 
+    std::cout << "Negotiating Protocol\n";
     auto config_id = conn->get_config_id();
-    auto response = conn->recv_message();
-    auto config = _configs[config_id].get();
+    auto response  = conn->recv_message();
+    auto config    = _configs[config_id].get();
 
     if (response.length() != sizeof(HelloMessage)) {
         THROW_EXCEPTION(ProtocolError);
@@ -196,17 +208,22 @@ std::unique_ptr< Connection > ConnServer::negotiate_protocol(std::shared_ptr< Co
     }
 
     auto tcp_conn = dynamic_cast< TCPConnection* >(conn.get());
-    if ((server_hello_message.protocol & Protocol::TCP) == Protocol::TCP && tcp_conn != nullptr) {
+    if (tcp_conn != nullptr) {
         auto tcp_socket = tcp_conn->release_socket();
+        std::cout << static_cast< int >(server_hello_message.protocol) << " PROTO\n";
         if ((server_hello_message.protocol & Protocol::TLS) == Protocol::TLS) {
             auto tls_socket =
                 TLSSocket::create(std::move(tcp_socket), *_ssl_ctx_map->map[config->id].get());
 
             tls_socket->accept();
-            return std::make_unique< TLSConnection >(std::move(tls_socket),config->id, config->metrics);
-        } else {
+            return std::make_unique< TLSConnection >(
+                std::move(tls_socket), config->id, config->metrics);
+        } else if ((server_hello_message.protocol & Protocol::TCP) == Protocol::TCP) {
             // Nothing to do, already using TCP
-            return std::make_unique< TCPConnection >(std::move(tcp_socket),config->id, config->metrics);
+            return std::make_unique< TCPConnection >(
+                std::move(tcp_socket), config->id, config->metrics);
+        } else {
+            THROW_EXCEPTION(ProtocolError, "Protocol negotiation failed");
         }
     } else if ((server_hello_message.protocol & Protocol::UNIX) == Protocol::UNIX) {
         auto unix_conn = dynamic_cast< UnixConnection* >(conn.get());
@@ -217,7 +234,8 @@ std::unique_ptr< Connection > ConnServer::negotiate_protocol(std::shared_ptr< Co
         auto unix_socket = unix_conn->release_socket();
         // Nothing to do, already using TCP
         // return tcp_connection;
-        return std::make_unique< UnixConnection >(std::move(unix_socket),config->id, config->metrics);
+        return std::make_unique< UnixConnection >(
+            std::move(unix_socket), config->id, config->metrics);
     } else {
         THROW_EXCEPTION(ProtocolError, "Protocol negotiation failed");
     }
@@ -225,18 +243,20 @@ std::unique_ptr< Connection > ConnServer::negotiate_protocol(std::shared_ptr< Co
 
 std::unique_ptr< Connection > ConnServer::accept()
 {
+    std::cout << "In Accept\n";
     auto connected_socket_pair = Socket::accept(_listening_sockets);
-    auto connected_socket      = std::move(connected_socket_pair.second).release();
-    auto config_id = connected_socket_pair.first;  // TCPSocket::accept(_listening_socket);
-    auto& config   = _configs[config_id];
+    std::cout << "Accepted\n";
+    auto connected_socket = std::move(connected_socket_pair.second).release();
+    auto config_id        = connected_socket_pair.first;  // TCPSocket::accept(_listening_socket);
+    auto& config          = _configs[config_id];
 
     auto tcp_socket = dynamic_cast< TCPSocket* >(connected_socket);
 
     std::unique_ptr< Connection > connection;
     if (tcp_socket != nullptr) {
         // make tcp or unix based on config type
-        connection = std::unique_ptr< Connection >(
-            new TCPConnection(std::unique_ptr< TCPSocket >(tcp_socket),config_id, config->metrics));
+        connection = std::unique_ptr< Connection >(new TCPConnection(
+            std::unique_ptr< TCPSocket >(tcp_socket), config_id, config->metrics));
     } else {
         auto unix_socket = dynamic_cast< UnixSocket* >(connected_socket);
         if (unix_socket != nullptr) {

@@ -14,16 +14,22 @@ using namespace comm;
 std::pair< int, std::unique_ptr< Socket > > Socket::accept(
     std::vector< std::unique_ptr< Socket > >& listening_sockets)
 {
+	std::cout << "Accept Multi: " << listening_sockets.size() <<" \n";
     nfds_t number_fds = listening_sockets.size();
     struct timespec timeout;
     struct pollfd pollfds[number_fds];
     int n = 0;
-    std::for_each(listening_sockets.cbegin(), listening_sockets.cend(), [&](auto const& socket) {
-        //pollfds[n].fd     = socket->fd();
-        //pollfds[n].events = POLLIN;
-	VLOG(3) << socket->fd();
+    pollfds[n].fd = 0;
+    pollfds[n].events = POLLIN;
+
+    auto config_socket = [&](std::unique_ptr<Socket> & socket ) {
+	        std::cout << "FD! " << socket->fd();
+        pollfds[n].fd     = socket->fd();
+	    pollfds[n].events = POLLIN;
         n++;
-    });
+    };
+
+    std::for_each(listening_sockets.begin(), listening_sockets.end(), config_socket);
 
     timeout.tv_sec   = 1;
     timeout.tv_nsec = 0;

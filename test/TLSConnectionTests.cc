@@ -47,7 +47,7 @@ TEST_F(TLSConnectionTests, SyncMessages)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_INTERCHANGE));
+        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_INTERCHANGE, connServerConfig));
         comm::ConnServer server( comm::createConnList( config ));
 
         barrier.wait();
@@ -95,7 +95,7 @@ TEST_F(TLSConnectionTests, AsyncMessages)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_MULTIPLE));
+        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_MULTIPLE, connServerConfig));
         comm::ConnServer server( comm::createConnList( config ));
 
         barrier.wait();
@@ -144,7 +144,7 @@ TEST_F(TLSConnectionTests, ServerShutdownRecv)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_INTERCHANGE));
+        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_INTERCHANGE, connServerConfig));
         comm::ConnServer server( comm::createConnList( config ));
 
         barrier.wait();
@@ -170,7 +170,7 @@ TEST_F(TLSConnectionTests, SendArrayInts)
     Barrier barrier(2);
 
     std::thread server_thread([&]() {
-        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_INTERCHANGE));
+        auto config = comm::wrapConnServerConfig( new comm::TCPConnServerConfig( SERVER_PORT_INTERCHANGE, connServerConfig));
         comm::ConnServer server( comm::createConnList( config ));
 
         barrier.wait();
