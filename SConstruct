@@ -111,7 +111,8 @@ client_env.Replace(
         #
         # once the lib is build.
         LIBPATH = ['lib/',
-                    os.getenv('PROTOBUF_LIB', default='')
+                    os.getenv('PROTOBUF_LIB', default=''),
+		    env.Literal('\\$$ORIGIN')
                   ],
         )
 
