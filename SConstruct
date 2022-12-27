@@ -47,7 +47,8 @@ env = Environment(
     # otherwise e.g. '/bin/protoc' would be called and the latter would produce
     # *.pb.* of a version different from the one of $PROTOBUF_INCLUDE dir.
     ENV = {'PATH' : os.environ['PATH']},
-    CXXFLAGS="-std=c++2a " + FFLAGS + OPTFLAGS + WFLAGS
+    CXXFLAGS="-std=c++2a " + FFLAGS + OPTFLAGS + WFLAGS,
+    LINKFLAGS=['-Wl,--no-undefined']
 )
 # env.MergeFlags(GetOption('cflags'))
 
@@ -58,7 +59,7 @@ comm_env.Replace(
                    os.getenv('GLOG_INCLUDE', default=''),
                    os.getenv('PROTOBUF_INCLUDE', default='')
                   ],
-        LIBS    = [],
+        LIBS    = ['glog'],
         LIBPATH = []
              )
 
