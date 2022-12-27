@@ -46,9 +46,11 @@ upload_custom_release_file() {
     docker exec aperturedb bash -c "cp /aperturedb-client/lib/* /x64"
     docker exec aperturedb bash -c "mkdir -p /comm; cp /aperturedb-client/include/comm/* /comm"
     docker exec aperturedb bash -c "mkdir -p /aperturedb; cp /aperturedb-client/include/aperturedb/* /aperturedb"
+    docker exec aperturedb bash -c "mkdir -p /util; cp /aperturedb-client/include/util/Macros.h /util/Macros.h"
     docker cp aperturedb:/x64/ /tmp/aperturedb-cpp/lib/
     docker cp aperturedb:/comm/ /tmp/aperturedb-cpp/include/
     docker cp aperturedb:/aperturedb/ /tmp/aperturedb-cpp/include/
+    docker cp aperturedb:/util/ /tmp/aperturedb-cpp/include/
 
     tar -cvzf libs_64.tgz -C /tmp aperturedb-cpp
     docker stop aperturedb
