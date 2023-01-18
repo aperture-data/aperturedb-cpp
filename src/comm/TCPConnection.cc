@@ -107,3 +107,5 @@ std::string TCPConnection::get_source() const { return _tcp_socket->print_source
 short TCPConnection::get_source_family() const { return _tcp_socket->source_family(); }
 
 std::string TCPConnection::get_encryption() const { return "none"; }
+
+bool TCPConnection::is_open() { return _tcp_socket->is_open(); }

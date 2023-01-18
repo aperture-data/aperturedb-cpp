@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <netinet/tcp.h>
 
 #include "util/gcc_util.h"
 DISABLE_WARNING(effc++)
@@ -142,3 +143,18 @@ std::string TCPSocket::print_source()
 }
 
 short TCPSocket::source_family() { return _source_family; }
+
+bool TCPSocket::is_open()
+{
+    tcp_info socket_info;
+    socklen_t socket_info_length = sizeof(socket_info);
+    if (getsockopt(_socket_fd, SOL_TCP, TCP_INFO, &socket_info, &socket_info_length) == -1) {
+        return false;
+    }
+    if (socket_info.tcpi_state == TCP_CLOSE || socket_info.tcpi_state == TCP_CLOSE_WAIT ||
+        socket_info.tcpi_state == TCP_LAST_ACK || socket_info.tcpi_state == TCP_LISTEN ||
+        socket_info.tcpi_state == TCP_CLOSING) {
+        return false;
+    }
+    return true;
+}
