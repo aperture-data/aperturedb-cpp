@@ -90,3 +90,5 @@ std::string TLSConnection::get_source() const { return _tls_socket->print_source
 short TLSConnection::get_source_family() const { return _tls_socket->source_family(); }
 
 std::string TLSConnection::get_encryption() const { return "tls"; }
+
+bool TLSConnection::is_open() { return _tls_socket->_tcp_socket->is_open(); }
