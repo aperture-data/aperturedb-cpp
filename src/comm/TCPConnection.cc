@@ -79,13 +79,6 @@ size_t TCPConnection::read(uint8_t* buffer, size_t length)
 
 std::unique_ptr< TCPSocket > TCPConnection::release_socket() { return std::move(_tcp_socket); }
 
-void TCPConnection::shutdown()
-{
-    if (_tcp_socket) {
-        _tcp_socket->shutdown();
-    }
-}
-
 size_t TCPConnection::write(const uint8_t* buffer, size_t length)
 {
     if (!_tcp_socket) {
@@ -109,3 +102,10 @@ short TCPConnection::get_source_family() const { return _tcp_socket->source_fami
 std::string TCPConnection::get_encryption() const { return "none"; }
 
 bool TCPConnection::is_open() { return _tcp_socket->is_open(); }
+
+void TCPConnection::shutdown()
+{
+    if (_tcp_socket) {
+        _tcp_socket->shutdown();
+    }
+}

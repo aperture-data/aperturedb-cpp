@@ -26,6 +26,7 @@ class TLSConnection : public Connection
     short get_source_family() const override;
     std::string get_encryption() const override;
     bool is_open() override;
+    void shutdown() override;
 
    protected:
     size_t read(uint8_t* buffer, size_t length) override;

@@ -29,7 +29,6 @@ class TLSSocket
 
     void accept();
     void connect();
-    bool is_open();
 
     std::string print_source();
     short source_family();

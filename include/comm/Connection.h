@@ -66,6 +66,7 @@ class Connection
     virtual short get_source_family() const    = 0;
     virtual std::string get_encryption() const = 0;
     virtual bool is_open()                     = 0;
+    virtual void shutdown()                    = 0;
 
    protected:
     virtual size_t read(uint8_t* buffer, size_t length)        = 0;
