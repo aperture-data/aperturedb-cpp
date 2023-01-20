@@ -92,3 +92,10 @@ short TLSConnection::get_source_family() const { return _tls_socket->source_fami
 std::string TLSConnection::get_encryption() const { return "tls"; }
 
 bool TLSConnection::is_open() { return _tls_socket->_tcp_socket->is_open(); }
+
+void TLSConnection::shutdown()
+{
+    if (_tls_socket && _tls_socket->_tcp_socket) {
+        _tls_socket->_tcp_socket->shutdown();
+    }
+}

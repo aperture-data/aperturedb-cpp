@@ -59,8 +59,8 @@ class TCPSocket
     bool listen();
     bool set_boolean_option(int level, int option_name, bool value);
     bool set_timeval_option(int level, int option_name, timeval value);
-    void shutdown();
     bool is_open();
+    void shutdown();
 
     std::string print_source();
     short source_family();
